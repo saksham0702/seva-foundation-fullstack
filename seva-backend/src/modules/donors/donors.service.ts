@@ -1,0 +1,94 @@
+import { DonorModel, IDonor } from "./donors.model";
+
+const createDonor = async (payload: Partial<IDonor>) => {
+  const donor = await DonorModel.create({
+    campaign: payload.campaign,
+    name: payload.name,
+    email: payload.email,
+    phone: payload.phone,
+    pan: payload.pan,
+    address: payload.address,
+    city: payload.city,
+    state: payload.state,
+    pincode: payload.pincode,
+    isAnonymous: payload.isAnonymous || false,
+    status: payload.status || "FILLED_NOT_PAID",
+    createdBy: payload.createdBy,
+    updatedBy: payload.updatedBy,
+  });
+
+  return donor;
+};
+
+const getAllDonors = async (query: {
+  campaign?: string;
+  status?: string;
+  search?: string;
+}) => {
+  const filter: any = {
+    isDeleted: false,
+  };
+
+  if (query.campaign) {
+    filter.campaign = query.campaign;
+  }
+
+  if (query.status) {
+    filter.status = query.status;
+  }
+
+  if (query.search) {
+    filter.$or = [
+      { name: { $regex: query.search, $options: "i" } },
+      { email: { $regex: query.search, $options: "i" } },
+      { phone: { $regex: query.search, $options: "i" } },
+    ];
+  }
+
+  return await DonorModel.find(filter)
+    .populate("campaign")
+    .sort({ createdAt: -1 });
+};
+
+const getDonorById = async (id: string) => {
+  return await DonorModel.findOne({
+    _id: id,
+    isDeleted: false,
+  }).populate("campaign");
+};
+
+const updateDonor = async (
+  id: string,
+  payload: Partial<IDonor>
+) => {
+  return await DonorModel.findByIdAndUpdate(
+    id,
+    {
+      $set: payload,
+    },
+    {
+      new: true,
+      runValidators: true,
+    }
+  ).populate("campaign");
+};
+
+const deleteDonor = async (id: string) => {
+  return await DonorModel.findByIdAndUpdate(
+    id,
+    {
+      isDeleted: true,
+    },
+    {
+      new: true,
+    }
+  );
+};
+
+export const DonorService = {
+  createDonor,
+  getAllDonors,
+  getDonorById,
+  updateDonor,
+  deleteDonor,
+};

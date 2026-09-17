@@ -1,0 +1,23 @@
+node_modules
+.next
+.git
+.gitignore
+
+# Environment files — never bake secrets into images; pass via -e or --env-file at runtime
+.env
+.env.*
+.env.local
+.env.*.local
+
+# Build cache — rebuilt fresh inside Docker
+*.tsbuildinfo
+
+# Build noise
+npm-debug.log*
+
+# Documentation
+README.md
+
+# Docker meta files themselves
+Dockerfile
+.dockerignore
