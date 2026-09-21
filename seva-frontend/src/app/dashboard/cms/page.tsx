@@ -20,8 +20,14 @@ import {
   HelpCircle,
   Share2,
   HeartHandshake,
+  Plus,
+  Trash2,
+  Upload,
+  Tag,
+  Layers,
+  Check,
 } from "lucide-react";
-import { getCmsPages, getCmsPageBySlug, saveCmsPage, CmsPage, CmsSection } from "@/app/api/cms";
+import { getCmsPages, getCmsPageBySlug, saveCmsPage, deleteCmsSection, uploadCmsImageFile, CmsPage, CmsSection } from "@/app/api/cms";
 import { PermissionGuard } from "@/components/dashboard/PermissionGuard";
 
 const CMS_PAGES_META = [
@@ -95,6 +101,8 @@ export default function CmsDashboardPage() {
 
   // Local form state
   const [formData, setFormData] = useState<Partial<CmsPage>>({});
+  const [activeInitiativeIndex, setActiveInitiativeIndex] = useState(0);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
 
   // Sync loaded pageData into formData
   React.useEffect(() => {
@@ -102,6 +110,81 @@ export default function CmsDashboardPage() {
       setFormData(pageData);
     }
   }, [pageData]);
+
+  const handleInitiativeImageUpload = async (file: File, secIndex: number) => {
+    try {
+      setIsUploadingImage(true);
+      const url = await uploadCmsImageFile(file);
+      if (url) {
+        const updatedSections = [...(formData.sections || [])];
+        if (updatedSections[secIndex]) {
+          updatedSections[secIndex] = {
+            ...updatedSections[secIndex],
+            image: url,
+          };
+          setFormData({ ...formData, sections: updatedSections });
+          setSuccessMessage("Image uploaded successfully!");
+          setTimeout(() => setSuccessMessage(null), 3000);
+        }
+      }
+    } catch (err: any) {
+      setErrorMessage(err?.response?.data?.message || "Failed to upload image");
+      setTimeout(() => setErrorMessage(null), 4000);
+    } finally {
+      setIsUploadingImage(false);
+    }
+  };
+
+  // Deleting initiative state
+  const [isDeletingInitiative, setIsDeletingInitiative] = useState(false);
+  const [deletingInitiativeKey, setDeletingInitiativeKey] = useState<string | null>(null);
+
+  // Proper CRUD Delete Initiative
+  const handleDeleteInitiative = async (sec: CmsSection, index: number) => {
+    const displayName = sec.title || sec.name || sec.key || `Initiative ${index + 1}`;
+    if (!confirm(`Are you sure you want to permanently delete "${displayName}" from the website and database?`)) {
+      return;
+    }
+
+    setIsDeletingInitiative(true);
+    setDeletingInitiativeKey(sec.key || String(index));
+    try {
+      const remainingSections = (formData.sections || []).filter((_, i) => i !== index);
+
+      let updatedPage: CmsPage | null = null;
+      if (sec.key) {
+        try {
+          updatedPage = await deleteCmsSection(activeSlug, sec.key);
+        } catch (subErr) {
+          console.warn("deleteCmsSection fallback to saveCmsPage", subErr);
+        }
+      }
+
+      // If backend didn't return updated document, save the filtered sections array directly
+      if (!updatedPage || !updatedPage.sections) {
+        updatedPage = await saveCmsPage(activeSlug, {
+          ...formData,
+          sections: remainingSections,
+        });
+      }
+
+      // Sync state and react-query caches
+      setFormData(updatedPage || { ...formData, sections: remainingSections });
+      setActiveInitiativeIndex(Math.max(0, index - 1));
+      queryClient.invalidateQueries({ queryKey: ["cms-page", activeSlug] });
+      queryClient.invalidateQueries({ queryKey: ["cms-pages"] });
+
+      setSuccessMessage(`Initiative "${displayName}" successfully deleted from database!`);
+      setErrorMessage(null);
+      setTimeout(() => setSuccessMessage(null), 4000);
+    } catch (err: any) {
+      setErrorMessage(err?.response?.data?.message || "Failed to delete initiative from server");
+      setTimeout(() => setErrorMessage(null), 5000);
+    } finally {
+      setIsDeletingInitiative(false);
+      setDeletingInitiativeKey(null);
+    }
+  };
 
   const saveMutation = useMutation({
     mutationFn: (payload: Partial<CmsPage>) => saveCmsPage(activeSlug, payload),
@@ -199,27 +282,24 @@ export default function CmsDashboardPage() {
                     setSuccessMessage(null);
                     setErrorMessage(null);
                   }}
-                  className={`w-full text-left p-4 rounded-2xl border transition-all flex items-start gap-3.5 ${
-                    isActive
+                  className={`w-full text-left p-4 rounded-2xl border transition-all flex items-start gap-3.5 ${isActive
                       ? "bg-[#0f2347] text-white border-[#0f2347] shadow-md shadow-[#0f2347]/10"
                       : "bg-white dark:bg-panel border-gray-100 dark:border-border text-gray-700 dark:text-text-primary hover:border-gray-200 hover:bg-gray-50/50"
-                  }`}
+                    }`}
                 >
                   <div
-                    className={`p-2 rounded-xl mt-0.5 shrink-0 ${
-                      isActive
+                    className={`p-2 rounded-xl mt-0.5 shrink-0 ${isActive
                         ? "bg-white/10 text-white"
                         : "bg-gray-100 dark:bg-bg text-gray-600 dark:text-muted"
-                    }`}
+                      }`}
                   >
                     <Icon size={16} />
                   </div>
                   <div>
                     <h4 className="text-xs font-bold leading-snug">{p.name}</h4>
                     <p
-                      className={`text-[11px] mt-1 line-clamp-2 leading-relaxed ${
-                        isActive ? "text-gray-300" : "text-gray-400 dark:text-muted"
-                      }`}
+                      className={`text-[11px] mt-1 line-clamp-2 leading-relaxed ${isActive ? "text-gray-300" : "text-gray-400 dark:text-muted"
+                        }`}
                     >
                       {p.description}
                     </p>
@@ -421,6 +501,423 @@ export default function CmsDashboardPage() {
                         />
                       </div>
                     </div>
+                  </div>
+                )}
+
+                {/* 2.5 Our Work Initiatives CMS */}
+                {activeSlug === "our-work" && (
+                  <div className="bg-white dark:bg-panel rounded-2xl border border-gray-100 dark:border-border p-6 shadow-sm space-y-6">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-gray-100 dark:border-border">
+                      <div>
+                        <h3 className="text-sm font-bold text-[#0f2347] dark:text-text-primary flex items-center gap-2">
+                          <Layout size={16} className="text-[#E8542A]" />
+                          Our Work & Initiatives Management
+                        </h3>
+                        <p className="text-xs text-gray-500 mt-1">
+                          Configure all 7 core pillars, lead paragraphs, imagery, alt tags, FAQs, and impact metrics.
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const currentSections = formData.sections || [];
+                          const newKey = `initiative-${Date.now()}`;
+                          const newSec: CmsSection = {
+                            key: newKey,
+                            name: "NEW INITIATIVE",
+                            title: "NEW INITIATIVE",
+                            subtitle: "Brief lead summary highlighting the mission.",
+                            description: "Detailed description of the program and its impact.",
+                            image: "",
+                            extra: {
+                              eyebrow: "OUR INITIATIVES",
+                              alt: "Image describing this initiative",
+                              features: ["KEY FEATURE 1", "KEY FEATURE 2"],
+                              faqs: [{ question: "Common question?", answer: "Helpful explanatory answer." }],
+                              impactMetrics: [
+                                { value: "1,000+", label: "PEOPLE SUPPORTED" },
+                                { value: "50+", label: "COMMUNITIES REACHED" },
+                              ],
+                            },
+                          };
+                          const nextSections = [...currentSections, newSec];
+                          setFormData({ ...formData, sections: nextSections });
+                          setActiveInitiativeIndex(nextSections.length - 1);
+                        }}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#0f2347] hover:bg-[#1a3a6b] text-white text-xs font-bold rounded-lg transition-colors"
+                      >
+                        <Plus size={14} />
+                        Add Initiative
+                      </button>
+                    </div>
+
+                    {/* Initiative Tabs with Quick Delete Icons */}
+                    <div className="flex flex-wrap gap-2 pb-2">
+                      {(formData.sections || []).map((sec, idx) => {
+                        const isSelected = activeInitiativeIndex === idx;
+                        const isThisDeleting =
+                          isDeletingInitiative &&
+                          deletingInitiativeKey === (sec.key || String(idx));
+
+                        return (
+                          <div
+                            key={sec.key || idx}
+                            className={`group/tab relative inline-flex items-center rounded-lg transition-all border ${isSelected
+                                ? "bg-[#E8542A] border-[#E8542A] text-white shadow-sm"
+                                : "bg-white dark:bg-bg border-slate-200 dark:border-border text-slate-700 dark:text-gray-300 hover:bg-slate-50"
+                              }`}
+                          >
+                            <button
+                              type="button"
+                              onClick={() => setActiveInitiativeIndex(idx)}
+                              className="px-3 py-1.5 text-xs font-bold uppercase tracking-wider pr-7"
+                            >
+                              {sec.name || sec.title || `Initiative ${idx + 1}`}
+                            </button>
+                            <button
+                              type="button"
+                              title={`Delete ${sec.name || sec.title || sec.key}`}
+                              disabled={isDeletingInitiative}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteInitiative(sec, idx);
+                              }}
+                              className={`absolute right-1 p-1 rounded transition-opacity ${isSelected
+                                  ? "text-white/80 hover:text-white hover:bg-black/20 opacity-90"
+                                  : "text-slate-400 hover:text-red-600 hover:bg-red-50 opacity-0 group-hover/tab:opacity-100"
+                                }`}
+                            >
+                              {isThisDeleting ? (
+                                <Loader2 size={11} className="animate-spin text-white" />
+                              ) : (
+                                <Trash2 size={11} />
+                              )}
+                            </button>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {/* Selected Initiative Form */}
+                    {formData.sections && formData.sections[activeInitiativeIndex] && (() => {
+                      const sec = formData.sections[activeInitiativeIndex];
+                      const updateCurrentSec = (partial: Partial<CmsSection>) => {
+                        const updated = [...formData.sections!];
+                        updated[activeInitiativeIndex] = {
+                          ...updated[activeInitiativeIndex],
+                          ...partial,
+                        };
+                        setFormData({ ...formData, sections: updated });
+                      };
+                      const updateExtra = (partialExtra: Record<string, any>) => {
+                        const updated = [...formData.sections!];
+                        updated[activeInitiativeIndex] = {
+                          ...updated[activeInitiativeIndex],
+                          extra: {
+                            ...(updated[activeInitiativeIndex].extra || {}),
+                            ...partialExtra,
+                          },
+                        };
+                        setFormData({ ...formData, sections: updated });
+                      };
+
+                      return (
+                        <div className="space-y-5 pt-2">
+                          <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-border">
+                            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                              Editing: {sec.name || sec.title || sec.key}
+                            </span>
+                            <button
+                              type="button"
+                              disabled={isDeletingInitiative}
+                              onClick={() => handleDeleteInitiative(sec, activeInitiativeIndex)}
+                              className="text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/20 px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors disabled:opacity-50"
+                            >
+                              {isDeletingInitiative &&
+                              deletingInitiativeKey === (sec.key || String(activeInitiativeIndex)) ? (
+                                <>
+                                  <Loader2 size={13} className="animate-spin" />
+                                  <span>Deleting from server...</span>
+                                </>
+                              ) : (
+                                <>
+                                  <Trash2 size={13} />
+                                  <span>Delete This Initiative</span>
+                                </>
+                              )}
+                            </button>
+                          </div>
+
+                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                            <div>
+                              <label className="block text-xs font-bold text-slate-900 dark:text-text-primary uppercase mb-1">
+                                Initiative Name / Title
+                              </label>
+                              <input
+                                type="text"
+                                value={sec.title || sec.name || ""}
+                                onChange={(e) => updateCurrentSec({ title: e.target.value, name: e.target.value })}
+                                placeholder="e.g. VIDHYA (EDUCATION)"
+                                className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-border bg-white dark:bg-bg text-xs font-bold text-slate-900 dark:text-text-primary placeholder:text-slate-400 focus:outline-none focus:border-slate-800"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-xs font-bold text-slate-900 dark:text-text-primary uppercase mb-1">
+                                Slug / Key (URL Identifier)
+                              </label>
+                              <input
+                                type="text"
+                                value={sec.key || ""}
+                                onChange={(e) => updateCurrentSec({ key: e.target.value.toLowerCase().replace(/\s+/g, "-") })}
+                                placeholder="e.g. vidhya"
+                                className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-border bg-white dark:bg-bg text-xs font-mono text-slate-900 dark:text-text-primary placeholder:text-slate-400 focus:outline-none focus:border-slate-800"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-xs font-bold text-slate-900 dark:text-text-primary uppercase mb-1">
+                                Eyebrow Tag
+                              </label>
+                              <input
+                                type="text"
+                                value={sec.extra?.eyebrow || "OUR INITIATIVES"}
+                                onChange={(e) => updateExtra({ eyebrow: e.target.value })}
+                                placeholder="e.g. OUR INITIATIVES"
+                                className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-border bg-white dark:bg-bg text-xs font-semibold text-slate-900 dark:text-text-primary placeholder:text-slate-400 focus:outline-none focus:border-slate-800"
+                              />
+                            </div>
+                          </div>
+
+                          {/* Subtitle / Lead Quote */}
+                          <div>
+                            <label className="block text-xs font-bold text-slate-900 dark:text-text-primary uppercase mb-1">
+                              Lead Summary / Quote (Paragraph 1)
+                            </label>
+                            <textarea
+                              rows={2}
+                              value={sec.subtitle || ""}
+                              onChange={(e) => updateCurrentSec({ subtitle: e.target.value })}
+                              placeholder="Rural children often leave school to support their families..."
+                              className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-border bg-white dark:bg-bg text-xs text-slate-900 dark:text-text-primary placeholder:text-slate-400 focus:outline-none focus:border-slate-800 leading-relaxed font-medium"
+                            />
+                          </div>
+
+                          {/* Full Story / Description */}
+                          <div>
+                            <label className="block text-xs font-bold text-slate-900 dark:text-text-primary uppercase mb-1">
+                              Detailed Description Narrative (Paragraph 2)
+                            </label>
+                            <textarea
+                              rows={4}
+                              value={sec.description || ""}
+                              onChange={(e) => updateCurrentSec({ description: e.target.value })}
+                              placeholder="The 'Vidhya (Education)' Program is a robust, nationwide initiative..."
+                              className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-border bg-white dark:bg-bg text-xs text-slate-900 dark:text-text-primary placeholder:text-slate-400 focus:outline-none focus:border-slate-800 leading-relaxed font-medium"
+                            />
+                          </div>
+
+                          {/* Image & Alt Tag */}
+                          <div className="p-4 rounded-xl bg-orange-50/40 dark:bg-bg border border-orange-100 dark:border-border space-y-4">
+                            <h4 className="text-xs font-bold text-slate-900 dark:text-text-primary uppercase flex items-center gap-1.5">
+                              <ImageIcon size={14} className="text-[#E8542A]" />
+                              Initiative Photo & SEO Alt Tag
+                            </h4>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                              <div>
+                                <label className="block text-[11px] font-semibold text-slate-700 dark:text-muted mb-1">
+                                  Image URL
+                                </label>
+                                <div className="flex gap-2">
+                                  <input
+                                    type="text"
+                                    value={sec.image || ""}
+                                    onChange={(e) => updateCurrentSec({ image: e.target.value })}
+                                    placeholder="https://images.unsplash.com/... or /uploads/cms/..."
+                                    className="flex-1 px-3 py-2 rounded-xl border border-slate-300 dark:border-border bg-white dark:bg-panel text-xs text-slate-900 dark:text-text-primary placeholder:text-slate-400 focus:outline-none focus:border-slate-800"
+                                  />
+                                  <label className="cursor-pointer inline-flex items-center gap-1 px-3 py-2 bg-white dark:bg-panel border border-slate-300 dark:border-border hover:bg-slate-50 text-xs font-semibold rounded-xl text-slate-900 dark:text-text-primary">
+                                    <Upload size={13} />
+                                    <span>Upload</span>
+                                    <input
+                                      type="file"
+                                      accept="image/*"
+                                      className="hidden"
+                                      onChange={async (e) => {
+                                        const file = e.target.files?.[0];
+                                        if (file) {
+                                          await handleInitiativeImageUpload(file, activeInitiativeIndex);
+                                        }
+                                      }}
+                                    />
+                                  </label>
+                                </div>
+                                {isUploadingImage && (
+                                  <p className="text-[11px] text-[#E8542A] mt-1 flex items-center gap-1">
+                                    <Loader2 size={12} className="animate-spin" /> Uploading image to server...
+                                  </p>
+                                )}
+                              </div>
+                              <div>
+                                <label className="block text-[11px] font-semibold text-slate-700 dark:text-muted mb-1">
+                                  Image Alt Tag (SEO & Missing Image Fallback)
+                                </label>
+                                <input
+                                  type="text"
+                                  value={sec.extra?.alt || ""}
+                                  onChange={(e) => updateExtra({ alt: e.target.value })}
+                                  placeholder="e.g. Children smiling in rural bridge school"
+                                  className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-border bg-white dark:bg-panel text-xs text-slate-900 dark:text-text-primary placeholder:text-slate-400 focus:outline-none focus:border-slate-800 font-medium"
+                                />
+                                <p className="text-[10px] text-slate-500 mt-1">
+                                  Displayed to search engines and shown as text fallback if the image is missing.
+                                </p>
+                              </div>
+                            </div>
+                            {sec.image && (
+                              <div className="flex items-center gap-3 pt-2">
+                                <img
+                                  src={sec.image}
+                                  alt={sec.extra?.alt || sec.title}
+                                  className="w-16 h-16 rounded-xl object-cover border border-slate-300"
+                                />
+                                <span className="text-xs text-slate-700 font-medium">Preview: {sec.extra?.alt || "No alt provided"}</span>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Key Feature Pills */}
+                          <div className="p-4 rounded-xl bg-slate-50 dark:bg-bg border border-slate-200 dark:border-border space-y-2">
+                            <label className="block text-xs font-bold text-slate-900 dark:text-text-primary uppercase">
+                              Key Feature Pills (comma-separated tags with checkmarks)
+                            </label>
+                            <input
+                              type="text"
+                              value={(sec.extra?.features || []).join(", ")}
+                              onChange={(e) => {
+                                const feats = e.target.value.split(",").map((s) => s.trim()).filter(Boolean);
+                                updateExtra({ features: feats });
+                              }}
+                              placeholder="RURAL BRIDGE SCHOOLS, TEACHER TRAINING, SCHOLARSHIPS, RESOURCE SUPPORT"
+                              className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-border bg-white dark:bg-panel text-xs text-slate-900 dark:text-text-primary placeholder:text-slate-400 focus:outline-none focus:border-slate-800 font-medium"
+                            />
+                            <div className="flex flex-wrap gap-1.5 pt-1">
+                              {(sec.extra?.features || []).map((f: string, i: number) => (
+                                <span key={i} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-orange-100 text-slate-900 text-[11px] font-bold">
+                                  <Check size={11} className="text-[#E8542A]" />
+                                  {f}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+
+                          {/* Common Questions (FAQs) */}
+                          <div className="p-4 rounded-xl bg-slate-50 dark:bg-bg border border-slate-200 dark:border-border space-y-3">
+                            <div className="flex items-center justify-between">
+                              <label className="block text-xs font-bold text-slate-900 dark:text-text-primary uppercase flex items-center gap-1.5">
+                                <HelpCircle size={14} className="text-[#E8542A]" />
+                                Common Questions (FAQs Accordion)
+                              </label>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const currentFaqs = sec.extra?.faqs || [];
+                                  updateExtra({
+                                    faqs: [...currentFaqs, { question: "NEW QUESTION?", answer: "Answer details..." }],
+                                  });
+                                }}
+                                className="text-[11px] text-[#E8542A] hover:underline font-bold flex items-center gap-1"
+                              >
+                                <Plus size={12} /> Add FAQ
+                              </button>
+                            </div>
+                            {(sec.extra?.faqs || []).map((faq: any, fIndex: number) => (
+                              <div key={fIndex} className="p-3 bg-white dark:bg-panel rounded-xl border border-slate-200 dark:border-border space-y-2">
+                                <div className="flex items-center justify-between gap-2">
+                                  <input
+                                    type="text"
+                                    value={faq.question || ""}
+                                    onChange={(e) => {
+                                      const updatedFaqs = [...(sec.extra?.faqs || [])];
+                                      updatedFaqs[fIndex] = { ...updatedFaqs[fIndex], question: e.target.value };
+                                      updateExtra({ faqs: updatedFaqs });
+                                    }}
+                                    placeholder="WHAT IS A BRIDGE SCHOOL?"
+                                    className="flex-1 px-2.5 py-1.5 rounded-lg border border-slate-300 dark:border-border text-xs font-bold uppercase text-slate-900 bg-white placeholder:text-slate-400 focus:outline-none focus:border-slate-800"
+                                  />
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      const updatedFaqs = (sec.extra?.faqs || []).filter((_: any, i: number) => i !== fIndex);
+                                      updateExtra({ faqs: updatedFaqs });
+                                    }}
+                                    className="text-red-500 hover:text-red-700 p-1"
+                                  >
+                                    <Trash2 size={13} />
+                                  </button>
+                                </div>
+                                <textarea
+                                  rows={2}
+                                  value={faq.answer || ""}
+                                  onChange={(e) => {
+                                    const updatedFaqs = [...(sec.extra?.faqs || [])];
+                                    updatedFaqs[fIndex] = { ...updatedFaqs[fIndex], answer: e.target.value };
+                                    updateExtra({ faqs: updatedFaqs });
+                                  }}
+                                  placeholder="Bridge schools are transitional educational centres..."
+                                  className="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 dark:border-border text-xs text-slate-800 dark:text-text-primary bg-white placeholder:text-slate-400 focus:outline-none focus:border-slate-800 leading-relaxed font-medium"
+                                />
+                              </div>
+                            ))}
+                          </div>
+
+                          {/* Impact Metrics */}
+                          <div className="p-4 rounded-xl bg-slate-50 dark:bg-bg border border-slate-200 dark:border-border space-y-3">
+                            <label className="block text-xs font-bold text-slate-900 dark:text-text-primary uppercase flex items-center gap-1.5">
+                              <Layers size={14} className="text-[#E8542A]" />
+                              Impact Metrics (Shown in Dark Navy Card)
+                            </label>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                              {[0, 1, 2, 3].map((mIndex) => {
+                                const metric = (sec.extra?.impactMetrics || [])[mIndex] || { value: "", label: "" };
+                                return (
+                                  <div key={mIndex} className="p-3 bg-white dark:bg-panel rounded-xl border border-slate-200 dark:border-border flex gap-2 items-center">
+                                    <div className="w-1/2">
+                                      <label className="block text-[10px] text-slate-600 font-semibold mb-0.5">Value (e.g. 100,000+)</label>
+                                      <input
+                                        type="text"
+                                        value={metric.value || ""}
+                                        onChange={(e) => {
+                                          const metrics = [...(sec.extra?.impactMetrics || [])];
+                                          while (metrics.length <= mIndex) metrics.push({ value: "", label: "" });
+                                          metrics[mIndex] = { ...metrics[mIndex], value: e.target.value };
+                                          updateExtra({ impactMetrics: metrics });
+                                        }}
+                                        placeholder="100,000+"
+                                        className="w-full px-2 py-1 rounded-lg border border-slate-300 dark:border-border text-xs font-bold text-[#E8542A] bg-white placeholder:text-slate-400 focus:outline-none focus:border-slate-800"
+                                      />
+                                    </div>
+                                    <div className="w-1/2">
+                                      <label className="block text-[10px] text-slate-600 font-semibold mb-0.5">Label (e.g. STUDENTS ENROLLED)</label>
+                                      <input
+                                        type="text"
+                                        value={metric.label || ""}
+                                        onChange={(e) => {
+                                          const metrics = [...(sec.extra?.impactMetrics || [])];
+                                          while (metrics.length <= mIndex) metrics.push({ value: "", label: "" });
+                                          metrics[mIndex] = { ...metrics[mIndex], label: e.target.value };
+                                          updateExtra({ impactMetrics: metrics });
+                                        }}
+                                        placeholder="STUDENTS ENROLLED"
+                                        className="w-full px-2 py-1 rounded-lg border border-slate-300 dark:border-border text-xs uppercase font-bold text-slate-900 bg-white placeholder:text-slate-400 focus:outline-none focus:border-slate-800"
+                                      />
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })()}
                   </div>
                 )}
 

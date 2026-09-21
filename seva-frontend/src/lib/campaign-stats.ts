@@ -104,6 +104,9 @@ export function toCampaignCardData(
   // Use authoritative DB fields — these are updated on every successful payment
   const raised = campaign.raisedAmount ?? 0;
   const donors = campaign.donorCount ?? 0;
+  const productsCount = Array.isArray(parsedContent.products)
+    ? parsedContent.products.length
+    : 0;
 
   return {
     _id: campaign._id,
@@ -117,5 +120,6 @@ export function toCampaignCardData(
     daysLeft,
     status: campaign.status || "active",
     urgent: campaign.urgent ?? false,
+    productsCount,
   };
 }

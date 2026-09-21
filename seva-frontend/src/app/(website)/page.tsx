@@ -1,6 +1,5 @@
 import CampaignsSection from "@/components/website/home/CampaignSection";
 import HeroSection from "@/components/website/home/HeroSection";
-import OurDonorsSection from "@/components/website/home/OurDonorSection";
 import JsonLd from "@/components/common/JsonLd";
 import { constructMetadata, getOrganizationSchema } from "@/lib/seo";
 import React from "react";
@@ -20,7 +19,6 @@ export default function LandingPage() {
       <JsonLd data={orgSchema} />
       <HeroSection />
       <CampaignsSection />
-      <OurDonorsSection />
     </>
   );
 }

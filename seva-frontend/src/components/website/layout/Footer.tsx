@@ -144,10 +144,10 @@ const Footer = () => {
         <div className="bg-[#16233F] rounded-3xl p-6 sm:p-10 shadow-xl flex flex-col md:flex-row items-center justify-between gap-6 relative overflow-hidden">
           <div className="absolute -right-10 -bottom-10 w-48 h-48 bg-[#F5A623]/10 rounded-full blur-2xl pointer-events-none" />
           <div className="max-w-xl text-center md:text-left">
-            <span className="text-[#F5A623] text-xs font-bold uppercase tracking-widest">
+            <span className="text-[#F5A623] text-xs font-semibold uppercase tracking-widest">
               Join Our Impact Community
             </span>
-            <h3 className="text-xl sm:text-2xl font-serif font-bold text-white mt-1">
+            <h3 className="text-xl sm:text-2xl font-serif font-semibold text-white mt-1">
               Subscribe to Seva Foundation Updates
             </h3>
             <p className="text-xs sm:text-sm text-slate-300 mt-1.5 leading-relaxed">
@@ -241,7 +241,7 @@ const Footer = () => {
 
           {/* --- Quick Links column --- */}
           <div>
-            <h4 className="font-serif text-sm font-bold uppercase tracking-widest text-[#16233F] mb-5">
+            <h4 className="font-serif text-sm font-semibold uppercase tracking-widest text-[#16233F] mb-5">
               Quick Links
             </h4>
             <ul className="space-y-3">
@@ -260,7 +260,7 @@ const Footer = () => {
 
           {/* --- Legal column --- */}
           <div>
-            <h4 className="font-serif text-sm font-bold uppercase tracking-widest text-[#16233F] mb-5">
+            <h4 className="font-serif text-sm font-semibold uppercase tracking-widest text-[#16233F] mb-5">
               Legal
             </h4>
             <ul className="space-y-3">
@@ -279,7 +279,7 @@ const Footer = () => {
 
           {/* --- Contact Us column --- */}
           <div>
-            <h4 className="font-serif text-sm font-bold uppercase tracking-widest text-[#16233F] mb-5">
+            <h4 className="font-serif text-sm font-semibold uppercase tracking-widest text-[#16233F] mb-5">
               Contact Us
             </h4>
             <ul className="space-y-4">

@@ -4,6 +4,7 @@ export interface Product {
   product: string;
   requiredUnit: string;
   totalPrice: string;
+  image?: string;
 }
 
 export interface FAQ {

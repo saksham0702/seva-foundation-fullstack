@@ -28,7 +28,7 @@ export default function VerifyCertificateIndexPage() {
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-amber-100 text-amber-600 mb-4 shadow-sm">
             <ShieldCheck size={36} />
           </div>
-          <h1 className="text-3xl font-extrabold text-[#0B2C6B] tracking-tight">
+          <h1 className="text-3xl font-semibold text-[#0B2C6B] tracking-tight">
             Verify Certificate
           </h1>
           <p className="mt-2 text-sm text-gray-600">

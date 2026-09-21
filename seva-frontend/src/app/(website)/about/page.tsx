@@ -59,7 +59,7 @@ function HeroSection({ data }: { data?: CmsPage | null }) {
 
       {/* Centered content */}
       <div className="relative z-10 text-center px-4 max-w-4xl mx-auto">
-        <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold tracking-wide text-white">
+        <h1 className="text-4xl md:text-6xl lg:text-7xl font-semibold tracking-wide text-white">
           {title.includes(" ") ? (
             <>
               <span className="text-white">{title.split(" ").slice(0, -1).join(" ")} </span>
@@ -93,7 +93,7 @@ function SacredPromiseSection({ data }: { data?: CmsPage | null }) {
     <section className="py-20 lg:py-28 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section heading */}
-        <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-[#0B1120] mb-12">
+        <h2 className="text-3xl md:text-4xl lg:text-5xl font-semibold text-[#0B1120] mb-12">
           {storySection?.name || "The Sacred Promise"}
         </h2>
 
@@ -251,7 +251,7 @@ function AreasOfFocusSection() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Heading */}
         <div className="text-center mb-16">
-          <h2 className="text-3xl md:text-4xl  font-bold text-[#0B1120] mb-3">
+          <h2 className="text-3xl md:text-4xl font-semibold text-[#0B1120] mb-3">
             AREAS OF <span className="text-[#f5a623]">FOCUS</span>
           </h2>
           <p className="text-[#4f46e5] text-base">
@@ -312,7 +312,7 @@ function TangibleResultsSection() {
     <section className="py-20 lg:py-28 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16">
-          <h2 className="text-3xl md:text-4xl  font-bold text-[#0B1120] mb-3">
+          <h2 className="text-3xl md:text-4xl font-semibold text-[#0B1120] mb-3">
             TANGIBLE <span className="text-[#f5a623]">RESULTS</span>
           </h2>
           <p className="text-[#4f46e5] text-base max-w-2xl mx-auto">
@@ -356,10 +356,10 @@ function LeprosySection() {
         <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-start">
           {/* LEFT CONTENT */}
           <div>
-            <h2 className="text-3xl md:text-4xl lg:text-5xl  font-bold text-[#0B1120] mb-2">
+            <h2 className="text-3xl md:text-4xl lg:text-5xl font-semibold text-[#0B1120] mb-2">
               A BEACON OF HOPE FOR
             </h2>
-            <h2 className="text-3xl md:text-4xl lg:text-5xl  font-bold text-blue-500 mb-8">
+            <h2 className="text-3xl md:text-4xl lg:text-5xl font-semibold text-blue-500 mb-8">
               LEPROSY PATIENTS
             </h2>
 
@@ -470,10 +470,10 @@ function TransparencySection() {
                 </span>
               </div>
 
-              <h2 className="text-3xl md:text-4xl lg:text-5xl  font-bold text-white mb-2">
+              <h2 className="text-3xl md:text-4xl lg:text-5xl font-semibold text-white mb-2">
                 100% TRANSPARENT
               </h2>
-              <h2 className="text-3xl md:text-4xl lg:text-5xl  font-bold text-[#f5a623] mb-6">
+              <h2 className="text-3xl md:text-4xl lg:text-5xl font-semibold text-[#f5a623] mb-6">
                 & ACCOUNTABLE
               </h2>
 
@@ -535,7 +535,7 @@ function TeamSection() {
     <section className="py-20 lg:py-28 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16">
-          <h2 className="text-3xl md:text-4xl  font-bold text-[#0B1120] mb-3">
+          <h2 className="text-3xl md:text-4xl font-semibold text-[#0B1120] mb-3">
             STEWARDS OF <span className="text-[#f5a623]">THE MISSION</span>
           </h2>
           <p className="text-[#4f46e5] text-base max-w-2xl mx-auto">
@@ -586,7 +586,7 @@ function WisdomCircleSection() {
         <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
           {/* LEFT */}
           <div>
-            <h2 className="text-3xl md:text-4xl  font-bold text-[#0B1120] mb-6">
+            <h2 className="text-3xl md:text-4xl font-semibold text-[#0B1120] mb-6">
               The Wisdom Circle
             </h2>
             <p className="text-[#4f46e5] leading-relaxed mb-8">
@@ -640,7 +640,7 @@ function OurSphereSection() {
     <section className="py-20 lg:py-28 bg-[#0B1120]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16">
-          <h2 className="text-3xl md:text-4xl  font-bold text-white mb-3">
+          <h2 className="text-3xl md:text-4xl font-semibold text-white mb-3">
             OUR <span className="text-[#f5a623]">SPHERE</span>
           </h2>
           <p className="text-blue-200/70 text-base">
@@ -710,7 +710,7 @@ function ArchitectureSection() {
     <section className="py-20 lg:py-28 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16">
-          <h2 className="text-3xl md:text-4xl  font-bold text-[#0B1120] mb-3">
+          <h2 className="text-3xl md:text-4xl font-semibold text-[#0B1120] mb-3">
             THE ARCHITECTURE OF <span className="text-[#f5a623]">CHANGE</span>
           </h2>
           <p className="text-[#4f46e5] text-base">
@@ -748,7 +748,7 @@ function StewardshipSection() {
     <section className="py-20 lg:py-28 bg-gray-50">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="bg-white rounded-[2.5rem] shadow-xl border border-gray-100 p-8 md:p-12 lg:p-16 text-center">
-          <h2 className="text-2xl md:text-3xl lg:text-4xl  font-bold text-[#0B1120] mb-2">
+          <h2 className="text-2xl md:text-3xl lg:text-4xl font-semibold text-[#0B1120] mb-2">
             THE STEWARDSHIP OF YOUR TRUST
           </h2>
           <div className="w-12 h-1 bg-[#f5a623] mx-auto mb-6" />
@@ -805,7 +805,7 @@ function AwardsSection() {
     <section className="py-20 lg:py-28 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16">
-          <h2 className="text-3xl md:text-4xl  font-bold text-[#0B1120]">
+          <h2 className="text-3xl md:text-4xl font-semibold text-[#0B1120]">
             Awards & Recognition
           </h2>
         </div>
@@ -842,7 +842,7 @@ function LegalSection() {
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             {/* LEFT */}
             <div>
-              <h2 className="text-3xl md:text-4xl  font-bold text-white mb-4">
+              <h2 className="text-3xl md:text-4xl font-semibold text-white mb-4">
                 LEGAL & COMPLIANCE
               </h2>
               <p className="text-blue-200/70 mb-10">
@@ -915,7 +915,7 @@ function AlliesSection() {
     <section className="py-20 lg:py-28 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16">
-          <h2 className="text-3xl md:text-4xl  font-bold text-[#0B1120] mb-3">
+          <h2 className="text-3xl md:text-4xl font-semibold text-[#0B1120] mb-3">
             ALLIES <span className="text-[#f5a623]">IN IMPACT</span>
           </h2>
           <p className="text-[#4f46e5] text-base">

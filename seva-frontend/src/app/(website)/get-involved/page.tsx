@@ -173,7 +173,7 @@ function SectionHeading({
         {eyebrow}
       </span>
       <h2
-        className={`text-3xl sm:text-4xl font-bold leading-tight ${dark ? "text-white" : "text-[#0f2347]"} max-w-2xl mx-auto`}
+        className={`text-3xl sm:text-4xl font-semibold leading-tight ${dark ? "text-white" : "text-[#0f2347]"} max-w-2xl mx-auto`}
       >
         {title}
       </h2>
@@ -329,7 +329,7 @@ export default function GetInvolvedPage() {
               <Heart size={14} fill="currentColor" />
               Join 200+ Volunteers Across India
             </div>
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white leading-[1.1] mb-6">
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-semibold text-white leading-[1.1] mb-6">
               Your time is the most valuable thing you can give
             </h1>
             <p className="text-lg text-gray-300 leading-relaxed mb-8 max-w-lg">
@@ -383,7 +383,7 @@ export default function GetInvolvedPage() {
             
             {/* Left 7 Columns: Selection Part */}
             <div className="lg:col-span-7">
-              <h2 className="text-3xl sm:text-4xl font-bold text-[#0f2347] mb-3">
+              <h2 className="text-3xl sm:text-4xl font-semibold text-[#0f2347] mb-3">
                 Select Your <span className="text-[#E8542A]">Role</span>
               </h2>
               <p className="text-gray-500 text-sm sm:text-base mb-8 max-w-xl">
@@ -923,7 +923,7 @@ export default function GetInvolvedPage() {
             <HandHeart size={14} />
             Not Ready to Volunteer?
           </div>
-          <h2 className="text-3xl sm:text-4xl font-bold text-[#0f2347] mb-6 leading-tight">
+          <h2 className="text-3xl sm:text-4xl font-semibold text-[#0f2347] mb-6 leading-tight">
             You can still make a difference
           </h2>
           <p className="text-gray-500 text-lg mb-10 max-w-2xl mx-auto">

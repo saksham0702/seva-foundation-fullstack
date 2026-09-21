@@ -7,9 +7,14 @@ import { CertificateService } from "../certificates/certificates.service";
 import { LeadService } from "../leads/leads.service";
 
 export interface InitiatePaymentInput {
-  campaignId: string;
+  campaignId?: string;
+  initiative?: string;
+  targetType?: "CAMPAIGN" | "INITIATIVE" | "GENERAL";
+  frequency?: "ONE_TIME" | "MONTHLY";
+  tribute?: string;
+  message?: string;
   amount: number;
-  donationType: "MONEY" | "PRODUCT";
+  donationType?: "MONEY" | "PRODUCT";
   campaignProduct?: string;
   quantity?: number;
   items?: IDonationItem[];
@@ -34,9 +39,14 @@ export interface VerifyPaymentInput {
   razorpayPaymentId: string;
   razorpaySignature: string;
   donorId: string;
-  campaignId: string;
+  campaignId?: string;
+  initiative?: string;
+  targetType?: "CAMPAIGN" | "INITIATIVE" | "GENERAL";
+  frequency?: "ONE_TIME" | "MONTHLY";
+  tribute?: string;
+  message?: string;
   amount: number;
-  donationType: "MONEY" | "PRODUCT";
+  donationType?: "MONEY" | "PRODUCT";
   campaignProduct?: string;
   quantity?: number;
   items?: IDonationItem[];
@@ -45,11 +55,29 @@ export interface VerifyPaymentInput {
 }
 
 const initiatePaymentOrder = async (input: InitiatePaymentInput) => {
-  const { campaignId, amount, donorInfo, donationType, campaignProduct, quantity, items, remarks, createdBy } = input;
+  const {
+    campaignId,
+    initiative,
+    targetType = initiative ? "INITIATIVE" : "CAMPAIGN",
+    frequency = "ONE_TIME",
+    tribute = "No Tribute",
+    message = "",
+    amount,
+    donorInfo,
+    donationType = "MONEY",
+    campaignProduct,
+    quantity,
+    items,
+    remarks,
+    createdBy,
+  } = input;
 
-  const campaign = await CampaignModel.findOne({ _id: campaignId, isDeleted: false });
-  if (!campaign) {
-    throw new Error("Campaign not found");
+  let campaign = null;
+  if (campaignId) {
+    campaign = await CampaignModel.findOne({ _id: campaignId, isDeleted: false });
+    if (!campaign && !initiative) {
+      throw new Error("Campaign not found");
+    }
   }
 
   let donor;
@@ -60,7 +88,12 @@ const initiatePaymentOrder = async (input: InitiatePaymentInput) => {
   if (!donor) {
     // Create new donor lead
     donor = await DonorModel.create({
-      campaign: campaignId,
+      campaign: campaign?._id || undefined,
+      targetType,
+      initiative,
+      frequency,
+      tribute,
+      message,
       name: donorInfo.name || "Anonymous Donor",
       email: donorInfo.email,
       phone: donorInfo.phone,
@@ -79,6 +112,12 @@ const initiatePaymentOrder = async (input: InitiatePaymentInput) => {
       donor._id,
       {
         $set: {
+          campaign: campaign?._id || donor.campaign,
+          targetType: targetType || donor.targetType,
+          initiative: initiative || donor.initiative,
+          frequency: frequency || donor.frequency,
+          tribute: tribute || donor.tribute,
+          message: message || donor.message,
           name: donorInfo.name || donor.name,
           email: donorInfo.email || donor.email,
           phone: donorInfo.phone || donor.phone,
@@ -101,8 +140,11 @@ const initiatePaymentOrder = async (input: InitiatePaymentInput) => {
     currency: "INR",
     receipt: `rcpt_${Date.now().toString().slice(-8)}`,
     notes: {
-      campaignId: String(campaignId),
-      campaignName: campaign.name,
+      campaignId: campaign ? String(campaign._id) : "",
+      campaignName: campaign ? campaign.name : "",
+      initiative: initiative || "",
+      targetType,
+      frequency,
       donorId: String(donor!._id),
       donorName: donor?.name || "",
       donationType,
@@ -112,7 +154,9 @@ const initiatePaymentOrder = async (input: InitiatePaymentInput) => {
   return {
     order,
     donorId: donor!._id,
-    campaignId: campaign._id,
+    campaignId: campaign?._id,
+    initiative,
+    frequency,
     amount,
     keyId: order.keyId,
   };
@@ -125,6 +169,11 @@ const verifyPayment = async (input: VerifyPaymentInput) => {
     razorpaySignature,
     donorId,
     campaignId,
+    initiative,
+    targetType = initiative ? "INITIATIVE" : "CAMPAIGN",
+    frequency = "ONE_TIME",
+    tribute = "No Tribute",
+    message = "",
     amount,
     donationType,
     campaignProduct,
@@ -149,7 +198,12 @@ const verifyPayment = async (input: VerifyPaymentInput) => {
     // Record failed donation record for audit
     await DonationModel.create({
       donor: donorId,
-      campaign: campaignId,
+      campaign: campaignId || undefined,
+      targetType,
+      initiative,
+      frequency,
+      tribute,
+      message,
       campaignProduct,
       items,
       quantity,
@@ -169,11 +223,15 @@ const verifyPayment = async (input: VerifyPaymentInput) => {
   }
 
   // 1. Mark donor as PAID
-  const donor = await DonorModel.findByIdAndUpdate(
+  await DonorModel.findByIdAndUpdate(
     donorId,
-    { status: "PAID" },
+    {
+      status: "PAID",
+      ...(initiative ? { initiative } : {}),
+      ...(frequency ? { frequency } : {}),
+    },
     { new: true }
-  ).populate("campaign");
+  );
 
   // 2. Generate receipt number
   const receiptNumber = `REC-${Date.now().toString(36).toUpperCase()}-${Math.floor(1000 + Math.random() * 9000)}`;
@@ -181,7 +239,12 @@ const verifyPayment = async (input: VerifyPaymentInput) => {
   // 3. Create successful donation record
   const donation = await DonationModel.create({
     donor: donorId,
-    campaign: campaignId,
+    campaign: campaignId || undefined,
+    targetType,
+    initiative,
+    frequency,
+    tribute,
+    message,
     campaignProduct,
     items,
     quantity,
@@ -198,11 +261,13 @@ const verifyPayment = async (input: VerifyPaymentInput) => {
     createdBy,
   });
 
-  // 4. Update campaign raised amount and donor count
-  try {
-    await CampaignService.incrementCampaignRaised(campaignId, amount);
-  } catch (err) {
-    console.error("Failed to increment campaign raised amount:", err);
+  // 4. Update campaign raised amount and donor count if campaign
+  if (campaignId) {
+    try {
+      await CampaignService.incrementCampaignRaised(campaignId, amount);
+    } catch (err) {
+      console.error("Failed to increment campaign raised amount:", err);
+    }
   }
 
   // 5. Generate 80G Certificate automatically
@@ -275,6 +340,7 @@ const createDonation = async (payload: Partial<IDonation>) => {
 
   if (
     payload.campaign &&
+    donor.campaign &&
     donor.campaign.toString() !== payload.campaign.toString()
   ) {
     return null;
@@ -338,13 +404,32 @@ const createDonation = async (payload: Partial<IDonation>) => {
     .populate("campaignProduct");
 };
 
-const getAllDonations = async (query?: { campaign?: string; status?: string; search?: string }) => {
+const getAllDonations = async (query?: {
+  campaign?: string;
+  initiative?: string;
+  targetType?: string;
+  frequency?: string;
+  status?: string;
+  search?: string;
+}) => {
   const filter: Record<string, unknown> = {
     isDeleted: false,
   };
 
   if (query?.campaign && query.campaign !== "all") {
     filter.campaign = query.campaign;
+  }
+
+  if (query?.targetType && query.targetType !== "all") {
+    filter.targetType = query.targetType;
+  }
+
+  if (query?.initiative && query.initiative !== "all") {
+    filter.initiative = query.initiative;
+  }
+
+  if (query?.frequency && query.frequency !== "all") {
+    filter.frequency = query.frequency;
   }
 
   if (query?.status && query.status !== "all") {

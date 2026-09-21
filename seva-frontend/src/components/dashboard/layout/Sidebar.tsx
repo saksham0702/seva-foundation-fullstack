@@ -150,6 +150,12 @@ const NAV_CONFIG: NavSection[] = [
         permission: "donations",
       },
       {
+        label: "Initiative Donations",
+        href: "/dashboard/donors/initiatives",
+        icon: Heart,
+        permission: "donations",
+      },
+      {
         label: "Tax & Compliance Center",
         href: "/dashboard/tax",
         icon: FileText,

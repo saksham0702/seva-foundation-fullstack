@@ -31,6 +31,7 @@ export default function PaymentStep({
   onResult,
 }: PaymentStepProps) {
   const [amount, setAmount] = useState<number>(initialAmount || 500);
+  const [frequency, setFrequency] = useState<"ONE_TIME" | "MONTHLY">("ONE_TIME");
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [razorpayReady, setRazorpayReady] = useState(false);
@@ -63,6 +64,8 @@ export default function PaymentStep({
       const orderData = await initiatePaymentOrder({
         campaignId,
         amount,
+        frequency,
+        targetType: "CAMPAIGN",
         donationType: "MONEY",
         donorInfo: {
           donorId: donor._id,
@@ -83,6 +86,8 @@ export default function PaymentStep({
           donorId: donor._id,
           campaignId,
           amount,
+          frequency,
+          targetType: "CAMPAIGN",
           donationType: "MONEY",
         });
         onResult(verified.donation);
@@ -95,7 +100,7 @@ export default function PaymentStep({
         amount: orderData.order.amount,
         currency: orderData.order.currency || "INR",
         name: "Seva Foundation",
-        description: "Donation for Campaign",
+        description: `${frequency === "MONTHLY" ? "Monthly" : "One-Time"} Donation for Campaign`,
         order_id: orderData.order.id,
         prefill: {
           name: donor.name || "",
@@ -118,6 +123,8 @@ export default function PaymentStep({
               razorpaySignature: response.razorpay_signature,
               donorId: donor._id,
               campaignId,
+              frequency,
+              targetType: "CAMPAIGN",
               amount,
               donationType: "MONEY",
             });
@@ -224,6 +231,35 @@ export default function PaymentStep({
       <p className="text-sm text-gray-500 mb-6">
         Hi <strong className="text-[#0f2347]">{donor.name || "Donor"}</strong>, confirm your contribution amount below.
       </p>
+
+      {/* Frequency Toggle */}
+      <div className="bg-slate-100 p-1 rounded-xl grid grid-cols-2 gap-1 mb-5 border border-slate-200">
+        <button
+          type="button"
+          onClick={() => setFrequency("ONE_TIME")}
+          className={`py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all ${
+            frequency === "ONE_TIME"
+              ? "bg-white text-slate-900 shadow-sm"
+              : "text-slate-600 hover:text-slate-900"
+          }`}
+        >
+          ONE-TIME
+        </button>
+        <button
+          type="button"
+          onClick={() => setFrequency("MONTHLY")}
+          className={`py-2 rounded-lg text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all ${
+            frequency === "MONTHLY"
+              ? "bg-white text-slate-900 shadow-sm"
+              : "text-slate-600 hover:text-slate-900"
+          }`}
+        >
+          <span>MONTHLY</span>
+          <span className="bg-[#E8542A] text-white text-[9px] font-bold px-1.5 py-0.2 rounded uppercase">
+            REC
+          </span>
+        </button>
+      </div>
 
       <div className="mb-6">
         <label className="block text-xs font-semibold text-gray-500 mb-1.5">

@@ -247,7 +247,7 @@ export default function DonorMarqueeSection() {
             Voices of Change
             <span className="w-6 h-px bg-[#E8542A]" />
           </span>
-          <h2 className="text-3xl sm:text-4xl font-bold text-[#0f2347] leading-tight">
+          <h2 className="text-3xl sm:text-4xl font-semibold text-[#0f2347] leading-tight">
             What our donors say.
             <br className="hidden sm:block" />
             <span className="text-[#E8542A]"> Real stories, real impact.</span>

@@ -16,9 +16,11 @@ import {
   HelpCircle,
   Trophy,
   CheckCircle,
+  Package,
 } from "lucide-react";
 
 import { getCampaignBySlug, getCampaignDonors, type Campaign, type PublicDonor } from "@/app/api/campaign";
+import { getProducts, type Product as APIProduct } from "@/app/api/product";
 import { getImageUrl, resolveRichTextHtml } from "@/lib/image";
 
 const fmt = (n: number) =>
@@ -191,6 +193,21 @@ export default function CampaignDetailPage() {
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [activeTab, setActiveTab] = useState<"money" | "products">("money");
   const [selectedProductQuantities, setSelectedProductQuantities] = useState<Record<number, number>>({});
+  const [allProducts, setAllProducts] = useState<APIProduct[]>([]);
+
+  useEffect(() => {
+    getProducts().then(setAllProducts).catch(() => {});
+  }, []);
+
+  const getProductImg = (p: { product: string; image?: string }) => {
+    if (p.image) return p.image;
+    const match = allProducts.find(
+      (item) =>
+        item.name.toLowerCase().trim() === (p.product || "").toLowerCase().trim() ||
+        item._id === p.product
+    );
+    return match?.image || null;
+  };
 
   useEffect(() => {
     if (!slug) return;
@@ -255,7 +272,7 @@ export default function CampaignDetailPage() {
     goal?: string;
     faqs?: { question: string; answer: string }[];
     youtubeUrl?: string;
-    products?: { product: string; requiredUnit?: string; totalPrice: string; unitPrice?: string }[];
+    products?: { product: string; requiredUnit?: string; totalPrice: string; unitPrice?: string; image?: string }[];
   } = {};
 
   try {
@@ -395,7 +412,7 @@ export default function CampaignDetailPage() {
             </div>
 
             <div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-[#0f2347] leading-snug mb-4">
+              <h1 className="text-2xl sm:text-3xl font-semibold text-[#0f2347] leading-snug mb-4">
                 {c.name}
               </h1>
               <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500">
@@ -442,6 +459,72 @@ export default function CampaignDetailPage() {
               )}
             </div>
 
+            {/* Sponsorship Items & Supplies Needed Grid */}
+            {productsList.length > 0 && (
+              <div className="bg-white rounded-2xl border border-gray-100 p-6 sm:p-8 shadow-sm">
+                <div className="flex items-center gap-2 mb-6">
+                  <Package className="text-[#E8542A]" size={20} />
+                  <h2 className="text-lg font-bold text-[#0f2347]">
+                    Sponsorship Items &amp; Supplies Needed ({productsList.length})
+                  </h2>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {productsList.map((p, idx) => {
+                    const price = Number(p.totalPrice || p.unitPrice || 0);
+                    const imgUrl = getProductImg(p);
+                    return (
+                      <div
+                        key={idx}
+                        className="flex items-center gap-3.5 p-3.5 rounded-xl border border-gray-100 bg-gray-50/50 hover:bg-gray-50 transition-colors group"
+                      >
+                        {imgUrl ? (
+                          <div className="w-16 h-16 rounded-xl overflow-hidden border border-gray-200/80 bg-white shrink-0 relative shadow-sm">
+                            <img
+                              src={getImageUrl(imgUrl)}
+                              alt={p.product}
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                            />
+                          </div>
+                        ) : (
+                          <div className="w-16 h-16 rounded-xl border border-gray-200/60 bg-orange-50 text-[#E8542A] flex items-center justify-center shrink-0 shadow-sm">
+                            <Package size={24} />
+                          </div>
+                        )}
+                        <div className="min-w-0 flex-1">
+                          <h3 className="text-sm font-semibold text-[#0f2347] truncate">
+                            {p.product}
+                          </h3>
+                          {p.requiredUnit && (
+                            <p className="text-[11px] text-gray-500">
+                              Unit: {p.requiredUnit}
+                            </p>
+                          )}
+                          <p className="text-xs font-bold text-[#E8542A] mt-0.5">
+                            ₹{price.toLocaleString("en-IN")}
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setActiveTab("products");
+                            setSelectedProductQuantities((prev) => ({
+                              ...prev,
+                              [idx]: (prev[idx] || 0) + 1,
+                            }));
+                            const el = document.getElementById("donation-panel");
+                            if (el) el.scrollIntoView({ behavior: "smooth" });
+                          }}
+                          className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-[#E8542A] text-white hover:bg-[#c9431d] transition-colors shrink-0 shadow-sm"
+                        >
+                          Sponsor
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
             {/* FAQs Accordion */}
             {faqs.length > 0 && (
               <div className="bg-white rounded-2xl border border-gray-100 p-6 sm:p-8 shadow-sm">
@@ -483,7 +566,7 @@ export default function CampaignDetailPage() {
 
           {/* ────────── RIGHT: donate panel ────────── */}
           <div className="lg:col-span-1">
-            <div className="sticky top-24 space-y-4">
+            <div id="donation-panel" className="sticky top-24 space-y-4">
               <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
                 <div className="flex justify-between items-baseline mb-1">
                   <span className="text-2xl font-bold text-[#0f2347]">
@@ -607,20 +690,36 @@ export default function CampaignDetailPage() {
                         {productsList.map((p, idx) => {
                           const qty = selectedProductQuantities[idx] || 0;
                           const price = Number(p.totalPrice || p.unitPrice || 0);
+                          const imgUrl = getProductImg(p);
                           return (
                             <div
                               key={idx}
-                              className="flex items-center justify-between p-3 rounded-xl border border-gray-100 bg-gray-50/50 hover:bg-gray-50"
+                              className="flex items-center justify-between p-3 rounded-xl border border-gray-100 bg-gray-50/50 hover:bg-gray-50 gap-2.5"
                             >
-                              <div className="min-w-0 pr-2">
-                                <p className="text-xs font-bold text-[#0f2347] truncate">
-                                  {p.product}
-                                </p>
-                                <p className="text-[11px] text-[#E8542A] font-semibold">
-                                  ₹{price.toLocaleString("en-IN")} / unit
-                                </p>
+                              <div className="flex items-center gap-2.5 min-w-0 pr-1">
+                                {imgUrl ? (
+                                  <div className="w-11 h-11 rounded-lg overflow-hidden border border-gray-200/80 bg-white shrink-0 shadow-sm">
+                                    <img
+                                      src={getImageUrl(imgUrl)}
+                                      alt={p.product}
+                                      className="w-full h-full object-cover"
+                                    />
+                                  </div>
+                                ) : (
+                                  <div className="w-11 h-11 rounded-lg border border-gray-200/60 bg-orange-50 text-[#E8542A] flex items-center justify-center shrink-0">
+                                    <Package size={18} />
+                                  </div>
+                                )}
+                                <div className="min-w-0">
+                                  <p className="text-xs font-semibold text-[#0f2347] truncate">
+                                    {p.product}
+                                  </p>
+                                  <p className="text-[11px] text-[#E8542A] font-semibold">
+                                    ₹{price.toLocaleString("en-IN")} {p.requiredUnit ? `/ ${p.requiredUnit}` : "/ unit"}
+                                  </p>
+                                </div>
                               </div>
-                              <div className="flex items-center gap-2">
+                              <div className="flex items-center gap-2 shrink-0">
                                 <button
                                   type="button"
                                   onClick={() =>

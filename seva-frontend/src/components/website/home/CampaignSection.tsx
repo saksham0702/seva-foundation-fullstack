@@ -22,13 +22,29 @@ export default function CampaignsSection() {
       try {
         setLoading(true);
         setError(null);
-        const [campaignsData, donationsData] = await Promise.all([
+        const [campaignsResult, donationsResult] = await Promise.allSettled([
           getCampaigns(),
           getDonations(),
         ]);
+
         if (!cancelled) {
-          setCampaigns(campaignsData.slice(0, FEATURED_COUNT));
-          setDonations(donationsData);
+          if (
+            campaignsResult.status === "fulfilled" &&
+            Array.isArray(campaignsResult.value)
+          ) {
+            setCampaigns(campaignsResult.value.slice(0, FEATURED_COUNT));
+          } else if (campaignsResult.status === "rejected") {
+            setError("Couldn't load campaigns right now.");
+          }
+
+          if (
+            donationsResult.status === "fulfilled" &&
+            Array.isArray(donationsResult.value)
+          ) {
+            setDonations(donationsResult.value);
+          } else {
+            setDonations([]);
+          }
         }
       } catch (err) {
         if (!cancelled) setError("Couldn't load campaigns right now.");
@@ -50,7 +66,7 @@ export default function CampaignsSection() {
               <span className="w-6 h-px bg-[#E8542A]" />
               Active Campaigns
             </span>
-            <h2 className="text-3xl sm:text-4xl font-bold text-[#0f2347] leading-tight">
+            <h2 className="text-3xl sm:text-4xl font-semibold text-[#0f2347] leading-tight">
               Every cause needs a champion.
               <br className="hidden sm:block" />
               <span className="text-[#E8542A]"> Be one today.</span>

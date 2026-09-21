@@ -17,6 +17,9 @@ const createDonor = asyncHandler(async (req: Request, res: Response) => {
 const getAllDonors = asyncHandler(async (req: Request, res: Response) => {
   const result = await DonorService.getAllDonors({
     campaign: req.query.campaign as string,
+    initiative: req.query.initiative as string,
+    targetType: req.query.targetType as string,
+    frequency: req.query.frequency as string,
     status: req.query.status as string,
     search: req.query.search as string,
   });

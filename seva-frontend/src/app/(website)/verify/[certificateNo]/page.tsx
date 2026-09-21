@@ -139,7 +139,7 @@ export default function CertificateVerificationPage() {
                 <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-amber-50 text-amber-600 mb-2">
                   <Award size={26} />
                 </div>
-                <h2 className="text-2xl sm:text-3xl font-serif font-black text-[#0B2C6B] tracking-wide">
+                <h2 className="text-2xl sm:text-3xl font-serif font-semibold text-[#0B2C6B] tracking-wide">
                   SEVA INDIA FOUNDATION
                 </h2>
                 <p className="text-[11px] sm:text-xs text-gray-500 font-medium mt-1">
@@ -147,13 +147,13 @@ export default function CertificateVerificationPage() {
                 </p>
                 <div className="w-48 h-0.5 bg-gradient-to-r from-transparent via-[#D4A843] to-transparent mx-auto mt-4 mb-5" />
 
-                <h3 className="text-lg sm:text-2xl font-serif font-bold text-[#0B2C6B] uppercase tracking-wider">
+                <h3 className="text-lg sm:text-2xl font-serif font-semibold text-[#0B2C6B] uppercase tracking-wider">
                   {TYPE_LABELS[cert.certificateType] || "Certificate of Appreciation"}
                 </h3>
                 <p className="text-xs sm:text-sm text-gray-500 italic mt-3">
                   This digital certificate is proudly presented to
                 </p>
-                <h1 className="text-2xl sm:text-4xl font-serif font-black text-gray-900 mt-2 tracking-tight">
+                <h1 className="text-2xl sm:text-4xl font-serif font-semibold text-gray-900 mt-2 tracking-tight">
                   {cert.recipientName}
                 </h1>
               </div>

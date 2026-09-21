@@ -141,7 +141,7 @@ export default function NewsListingPage() {
           <div className="inline-flex items-center gap-2 bg-[#F5A623]/20 border border-[#F5A623]/40 text-[#F5A623] px-3.5 py-1 rounded-full text-xs font-bold uppercase tracking-widest mb-4">
             <Newspaper size={13} /> Official News & Media
           </div>
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold leading-[1.1] mb-6">
+          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-semibold leading-[1.1] mb-6">
             <span className="text-white">Press & </span>
             <span className="text-[#F5A623]">Announcements</span>
           </h1>

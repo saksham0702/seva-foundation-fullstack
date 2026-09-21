@@ -18,6 +18,7 @@ import {
 import DonorForm from "@/components/website/donations/DonorForm";
 import PaymentStep from "@/components/website/donations/PaymentStep";
 import DonationResult from "@/components/website/donations/DonationResult";
+import InitiativeDonationSection from "@/components/website/donations/InitiativeDonationSection";
 import { getImageUrl } from "@/lib/image";
 
 type Step = "donor" | "payment" | "success" | "failed";
@@ -77,7 +78,6 @@ function DonateFlow() {
 
   useEffect(() => {
     if (!campaignSlug) {
-      setCampaignError("No campaign was selected.");
       setLoadingCampaign(false);
       return;
     }
@@ -102,6 +102,14 @@ function DonateFlow() {
       cancelled = true;
     };
   }, [campaignSlug]);
+
+  if (!campaignSlug) {
+    return (
+      <div className="min-h-screen bg-[#FDFBF7]">
+        <InitiativeDonationSection />
+      </div>
+    );
+  }
 
   if (loadingCampaign) {
     return (

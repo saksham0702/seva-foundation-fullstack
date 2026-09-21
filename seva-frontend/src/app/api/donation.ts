@@ -27,13 +27,18 @@ export interface Donation {
     pincode?: string;
     status?: string;
   };
-  campaign: string | {
+  campaign?: string | {
     _id: string;
     name?: string;
     slug?: string;
     goal?: number;
     raisedAmount?: number;
   };
+  targetType?: "CAMPAIGN" | "INITIATIVE" | "GENERAL";
+  initiative?: string;
+  frequency?: "ONE_TIME" | "MONTHLY";
+  tribute?: string;
+  message?: string;
   amount: number;
   quantity: number;
   campaignProduct?: string | {
@@ -59,9 +64,14 @@ export interface Donation {
 }
 
 export interface InitiateOrderPayload {
-  campaignId: string;
+  campaignId?: string;
+  initiative?: string;
+  targetType?: "CAMPAIGN" | "INITIATIVE" | "GENERAL";
+  frequency?: "ONE_TIME" | "MONTHLY";
+  tribute?: string;
+  message?: string;
   amount: number;
-  donationType: DonationType;
+  donationType?: DonationType;
   campaignProduct?: string;
   quantity?: number;
   items?: DonationItem[];
@@ -91,7 +101,9 @@ export interface InitiateOrderResponse {
     isMock?: boolean;
   };
   donorId: string;
-  campaignId: string;
+  campaignId?: string;
+  initiative?: string;
+  frequency?: "ONE_TIME" | "MONTHLY";
   amount: number;
   keyId: string;
 }
@@ -101,9 +113,14 @@ export interface VerifyPaymentPayload {
   razorpayPaymentId: string;
   razorpaySignature: string;
   donorId: string;
-  campaignId: string;
+  campaignId?: string;
+  initiative?: string;
+  targetType?: "CAMPAIGN" | "INITIATIVE" | "GENERAL";
+  frequency?: "ONE_TIME" | "MONTHLY";
+  tribute?: string;
+  message?: string;
   amount: number;
-  donationType: DonationType;
+  donationType?: DonationType;
   campaignProduct?: string;
   quantity?: number;
   items?: DonationItem[];
@@ -124,7 +141,12 @@ export interface VerifyPaymentResponse {
 
 export interface CreateDonationPayload {
   donor: string;
-  campaign: string;
+  campaign?: string;
+  initiative?: string;
+  targetType?: "CAMPAIGN" | "INITIATIVE" | "GENERAL";
+  frequency?: "ONE_TIME" | "MONTHLY";
+  tribute?: string;
+  message?: string;
   amount: number;
   quantity?: number;
   campaignProduct?: string;
@@ -166,6 +188,9 @@ export const recordPaymentFailed = async (payload: {
 
 export const getDonations = async (params?: {
   campaign?: string;
+  initiative?: string;
+  targetType?: string;
+  frequency?: string;
   status?: string;
   search?: string;
 }): Promise<Donation[]> => {

@@ -138,7 +138,7 @@ export default function HeroSection() {
 
             {/* Headline */}
             <div>
-              <h1 className="text-4xl sm:text-5xl lg:text-[3.4rem] font-bold text-white leading-[1.1] mb-5">
+              <h1 className="text-4xl sm:text-5xl lg:text-[3.4rem] font-semibold text-white leading-[1.1] mb-5">
                 Give with <span className="text-[#E8542A]">confidence</span>.
                 <br />
                 See the <span className="text-[#E8542A]">impact</span>.

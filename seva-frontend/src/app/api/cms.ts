@@ -63,6 +63,26 @@ export const deleteCmsPage = async (slug: string): Promise<void> => {
   await axiosInstance.delete(endpoint.cms.deletePage(slug));
 };
 
+export const deleteCmsSection = async (
+  slug: string,
+  sectionKey: string
+): Promise<CmsPage> => {
+  const response = await axiosInstance.delete(
+    endpoint.cms.deleteSection(slug, sectionKey)
+  );
+  return response.data?.data || response.data;
+};
+
+export const uploadCmsImageFile = async (file: File): Promise<string> => {
+  const formData = new FormData();
+  formData.append("image", file);
+  const response = await axiosInstance.post(endpoint.cms.uploadImage, formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+  return response.data?.data?.url || response.data?.url || "";
+};
+
+
 // ── Blogs / Stories / Events / News CMS API ─────────────────────────────────
 
 const buildFormData = (contentType: CmsContentType, form: CmsForm): FormData => {

@@ -160,6 +160,23 @@ const getCampaignDonors = asyncHandler(async (req: Request, res: Response) => {
   });
 });
 
+const uploadProductImage = asyncHandler(async (req: Request, res: Response) => {
+  if (!req.file) {
+    return sendResponse(res, {
+      statusCode: 400,
+      success: false,
+      message: "No image file provided",
+    });
+  }
+  const url = filePathToUrl(req.file.path);
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "Product image uploaded successfully",
+    data: { url },
+  });
+});
+
 export const CampaignController = {
   createCampaign,
   getAllCampaigns,
@@ -170,4 +187,5 @@ export const CampaignController = {
   deleteCampaign,
   getCampaignOptions,
   getCampaignDonors,
+  uploadProductImage,
 };

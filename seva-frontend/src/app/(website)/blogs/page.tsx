@@ -150,7 +150,7 @@ export default function BlogListingPage() {
           <div className="inline-flex items-center gap-2 bg-[#E8542A]/20 border border-[#E8542A]/40 text-[#E8542A] px-3.5 py-1 rounded-full text-xs font-bold uppercase tracking-widest mb-4">
             Official Stories & Impact
           </div>
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold leading-[1.1] mb-6">
+          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-semibold leading-[1.1] mb-6">
             <span className="text-white">Our </span>
             <span className="text-[#E8542A]">Blog</span>
           </h1>

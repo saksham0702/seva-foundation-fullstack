@@ -5,6 +5,7 @@ export interface CreateGalleryItemInput {
   imageUrl: string;
   title?: string;
   caption?: string;
+  alt?: string;
   category?: string;
   createdBy?: string;
 }
@@ -24,6 +25,7 @@ const createGalleryImages = async (
     imageUrl: item.imageUrl,
     title: item.title || "",
     caption: item.caption || "",
+    alt: item.alt || item.title || "",
     category: item.category || "general",
     isActive: true,
     isDeleted: false,
@@ -170,11 +172,39 @@ const deleteGalleryImage = async (id: string, updatedBy?: string) => {
   return galleryItem;
 };
 
+const updateGalleryItem = async (
+  id: string,
+  payload: { title?: string; alt?: string; caption?: string; category?: string },
+  updatedBy?: string
+) => {
+  const galleryItem = await GalleryModel.findOne({
+    _id: id,
+    isDeleted: false,
+  });
+
+  if (!galleryItem) {
+    return null;
+  }
+
+  if (payload.title !== undefined) galleryItem.title = payload.title;
+  if (payload.alt !== undefined) galleryItem.alt = payload.alt;
+  if (payload.caption !== undefined) galleryItem.caption = payload.caption;
+  if (payload.category !== undefined) galleryItem.category = payload.category;
+  if (updatedBy) {
+    galleryItem.updatedBy = updatedBy as any;
+  }
+
+  await galleryItem.save();
+  return galleryItem;
+};
+
 export const GalleryService = {
   createGalleryImages,
   getPublicGallery,
   getAllGalleryAdmin,
   getGalleryById,
   toggleGalleryStatus,
+  updateGalleryItem,
   deleteGalleryImage,
 };
+

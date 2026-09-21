@@ -25,14 +25,32 @@ type NavItem = {
 /*  DATA                                                               */
 /* ------------------------------------------------------------------ */
 
-// Main navigation. Add `children: [{ label, href }, ...]` to any item
-// below to turn it into a dropdown — the markup already supports it.
-const navLinks: NavItem[] = [
+export const DEFAULT_OUR_WORK_ITEMS: NavChild[] = [
+  { label: "VIDHYA (EDUCATION)", href: "/our-work/vidhya" },
+  { label: "AROGYA (HEALTHCARE)", href: "/our-work/arogya" },
+  { label: "SAMMAAN (ELDERLY CARE)", href: "/our-work/sammaan" },
+  { label: "SHAKTI (WOMEN)", href: "/our-work/shakti" },
+  { label: "ANNAPURNA (HUNGER)", href: "/our-work/annapurna" },
+  { label: "GRAMODAYA (RURAL)", href: "/our-work/gramodaya" },
+  { label: "RAKSHAK (DISASTER)", href: "/our-work/rakshak" },
+];
+
+export const DEFAULT_GET_INVOLVED_ITEMS: NavChild[] = [
+  { label: "INDIVIDUAL", href: "/get-involved" },
+  { label: "CORPORATE", href: "/get-involved?tab=corporate" },
+  { label: "VOLUNTEER", href: "/get-involved?tab=volunteer" },
+  { label: "CAREERS", href: "/get-involved?tab=careers" },
+  { label: "TRANSPARENCY", href: "/about" },
+  { label: "VERIFY CERTIFICATE", href: "/verify" },
+  { label: "DONOR PORTAL", href: "/donations" },
+];
+
+const defaultNavLinks: NavItem[] = [
   { label: "Home", href: "/" },
-  { label: "About Us", href: "/about", children: [] },
-  { label: "Our Work", href: "/our-work", children: [] },
+  { label: "About Us", href: "/about" },
+  { label: "Our Work", href: "/our-work", children: DEFAULT_OUR_WORK_ITEMS },
   { label: "Campaigns", href: "/campaigns" },
-  { label: "Get Involved", href: "/get-involved", children: [] },
+  { label: "Get Involved", href: "/get-involved", children: DEFAULT_GET_INVOLVED_ITEMS },
   {
     label: "Media Center",
     href: "/blogs",
@@ -104,6 +122,7 @@ const Header = () => {
   );
   const [scrolled, setScrolled] = useState(false);
   const [cmsSettings, setCmsSettings] = useState<any>(null);
+  const [ourWorkItems, setOurWorkItems] = useState<NavChild[]>(DEFAULT_OUR_WORK_ITEMS);
   const pathname = usePathname();
 
   useEffect(() => {
@@ -113,22 +132,45 @@ const Header = () => {
   }, []);
 
   useEffect(() => {
-    const fetchCmsSettings = async () => {
+    const fetchCmsData = async () => {
       try {
         const { getCmsPageBySlug } = await import("@/app/api/cms");
-        const res = await getCmsPageBySlug("header-footer");
-        if (res && res.settings) {
-          setCmsSettings(res.settings);
+        const [hfRes, ourWorkRes] = await Promise.allSettled([
+          getCmsPageBySlug("header-footer"),
+          getCmsPageBySlug("our-work"),
+        ]);
+
+        if (hfRes.status === "fulfilled" && hfRes.value?.settings) {
+          setCmsSettings(hfRes.value.settings);
+        }
+
+        if (
+          ourWorkRes.status === "fulfilled" &&
+          ourWorkRes.value?.sections &&
+          ourWorkRes.value.sections.length > 0
+        ) {
+          const items: NavChild[] = ourWorkRes.value.sections.map((s: any) => ({
+            label: s.name || s.title || s.key.toUpperCase(),
+            href: `/our-work/${s.key}`,
+          }));
+          setOurWorkItems(items);
         }
       } catch (e) {
         // Fallback silently to defaults
       }
     };
-    fetchCmsSettings();
+    fetchCmsData();
   }, []);
 
   const phone = cmsSettings?.phone || "+91 94565 17577";
   const email = cmsSettings?.email || "info@sevaindiafoundation.org";
+
+  const navLinks: NavItem[] = defaultNavLinks.map((item) => {
+    if (item.href === "/our-work") {
+      return { ...item, children: ourWorkItems };
+    }
+    return item;
+  });
 
   return (
     <header className="bg-white sticky top-0 z-50">
@@ -237,7 +279,7 @@ const Header = () => {
             </Link>
 
             {/* --- Desktop nav --- */}
-            <nav className="hidden xl:flex items-center gap-1">
+            <nav className="hidden lg:flex items-center gap-0.5">
               {navLinks.map((link) => {
                 const isActive =
                   pathname === link.href ||
@@ -248,16 +290,16 @@ const Header = () => {
                   <div key={link.href} className="relative group">
                     <Link
                       href={link.href}
-                      className={`flex items-center gap-1 px-3.5 py-2 text-sm  font-semibold uppercase  transition-colors ${
+                      className={`flex items-center gap-0.5 px-2.5 py-2 text-[13.5px] font-semibold uppercase tracking-wide transition-colors whitespace-nowrap ${
                         isActive
                           ? "text-[#F5A623]"
-                          : "text-slate-700 hover:text-[#16233F]"
+                          : "text-slate-700 hover:text-[#F5A623]"
                       }`}
                     >
                       {link.label}
                       {hasChildren && (
                         <svg
-                          className="w-3 h-3 mt-[1px] transition-transform group-hover:rotate-180"
+                          className="w-2.5 h-2.5 ml-0.5 mt-[1px] transition-transform group-hover:rotate-180 opacity-60"
                           fill="none"
                           viewBox="0 0 24 24"
                           stroke="currentColor"
@@ -274,22 +316,35 @@ const Header = () => {
 
                     {/* Active-state underline */}
                     {isActive && (
-                      <span className="absolute bottom-0 left-3.5 right-3.5 h-[2px] bg-[#F5A623]" />
+                      <span className="absolute bottom-0 left-2.5 right-2.5 h-[2px] bg-[#F5A623] rounded-full" />
                     )}
 
-                    {/* Dropdown panel — renders only once `children` is populated */}
+                    {/* Dropdown panel */}
                     {hasChildren && (
-                      <div className="absolute left-0 top-full pt-2 hidden group-hover:block">
-                        <div className="bg-white rounded-lg shadow-xl border border-gray-100 py-2 min-w-[190px]">
-                          {link.children!.map((child) => (
-                            <Link
-                              key={child.href}
-                              href={child.href}
-                              className="block px-4 py-2 text-[13px] text-slate-600 hover:bg-gray-50 hover:text-[#F5A623] transition-colors"
-                            >
-                              {child.label}
-                            </Link>
-                          ))}
+                      <div className="absolute left-0 top-full pt-2 hidden group-hover:block z-50">
+                        <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden min-w-[230px] animate-in fade-in slide-in-from-top-1 duration-150">
+                          <div className="h-1 bg-gradient-to-r from-[#F5A623] to-[#e8542a]" />
+                          <div className="py-2">
+                            {link.children!.map((child, ci) => {
+                              const isChildActive = pathname === child.href;
+                              return (
+                                <Link
+                                  key={child.href}
+                                  href={child.href}
+                                  className={`flex items-center gap-2.5 px-4 py-2.5 text-[13px] font-semibold uppercase tracking-wider transition-all group/item ${
+                                    isChildActive
+                                      ? "text-[#F5A623] bg-orange-50"
+                                      : "text-slate-700 hover:text-[#F5A623] hover:bg-orange-50/60"
+                                  }`}
+                                >
+                                  <span className={`w-1 h-1 rounded-full shrink-0 transition-colors ${
+                                    isChildActive ? "bg-[#F5A623]" : "bg-slate-300 group-hover/item:bg-[#F5A623]"
+                                  }`} />
+                                  {child.label}
+                                </Link>
+                              );
+                            })}
+                          </div>
                         </div>
                       </div>
                     )}
@@ -299,26 +354,10 @@ const Header = () => {
             </nav>
 
             {/* --- Right-side actions --- */}
-            <div className="hidden xl:flex items-center gap-3 flex-shrink-0">
-              <button
-                aria-label="Search"
-                className="w-9 h-9 rounded-full flex items-center justify-center text-slate-600 hover:bg-gray-100 transition-colors"
-              >
-                <svg
-                  className="w-4 h-4"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth={2}
-                >
-                  <circle cx="11" cy="11" r="7" />
-                  <path strokeLinecap="round" d="M21 21l-4.35-4.35" />
-                </svg>
-              </button>
-
+            <div className="hidden lg:flex items-center gap-3 flex-shrink-0">
               <Link
                 href="/donations"
-                className="bg-[#F5A623] hover:bg-[#e0951a] text-white text-[13px] rounded-lg font-bold uppercase tracking-wider px-6 py-2.5 transition-colors shadow-sm"
+                className="bg-[#F5A623] hover:bg-[#e0951a] text-white text-[12.5px] rounded-lg font-semibold uppercase tracking-wider px-5 py-2 transition-colors shadow-sm whitespace-nowrap"
               >
                 Donate Now
               </Link>
@@ -326,7 +365,7 @@ const Header = () => {
 
             {/* --- Mobile toggle --- */}
             <button
-              className="xl:hidden flex items-center justify-center w-9 h-9 text-[#16233F]"
+              className="lg:hidden flex items-center justify-center w-9 h-9 text-[#16233F]"
               onClick={() => setMenuOpen(!menuOpen)}
               aria-label="Toggle menu"
             >
@@ -360,7 +399,7 @@ const Header = () => {
       {/*  SECTION 3 — MOBILE MENU                                       */}
       {/* ============================================================ */}
       {menuOpen && (
-        <div className="xl:hidden bg-white border-b border-gray-200 max-h-[80vh] overflow-y-auto">
+        <div className="lg:hidden bg-white border-b border-gray-200 max-h-[80vh] overflow-y-auto">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
             <div className="space-y-0">
               {navLinks.map((link) => {
@@ -421,7 +460,7 @@ const Header = () => {
                             key={child.href}
                             href={child.href}
                             onClick={() => setMenuOpen(false)}
-                            className="block py-1.5 text-[12px] text-slate-500"
+                            className="block py-2 text-[12px] font-semibold uppercase tracking-wider text-slate-700 hover:text-[#F5A623]"
                           >
                             {child.label}
                           </Link>
@@ -436,7 +475,7 @@ const Header = () => {
                 <Link
                   href="/donations"
                   onClick={() => setMenuOpen(false)}
-                  className="block w-full text-center bg-[#F5A623] text-white text-[13px] font-bold uppercase tracking-wider py-3 rounded-lg"
+                  className="block w-full text-center bg-[#F5A623] text-white text-[13px] font-semibold uppercase tracking-wider py-3 rounded-lg"
                 >
                   Donate Now
                 </Link>

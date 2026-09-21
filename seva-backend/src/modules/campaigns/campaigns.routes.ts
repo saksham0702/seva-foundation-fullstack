@@ -16,7 +16,13 @@ router.get("/slug/:slug", CampaignController.getCampaignBySlug);
 router.get("/slug/:slug/donors", CampaignController.getCampaignDonors);
 router.get("/:id", CampaignController.getCampaignById);
 
-// Admin-only mutations
+router.post(
+  "/upload-product-image",
+  ...guard,
+  uploadCampaignImage.single("image"),
+  CampaignController.uploadProductImage
+);
+
 router.post(
   "/",
   ...guard,

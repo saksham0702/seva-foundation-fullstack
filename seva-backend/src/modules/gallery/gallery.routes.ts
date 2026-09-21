@@ -30,6 +30,18 @@ router.patch(
   GalleryController.toggleGalleryStatus
 );
 
+router.put(
+  "/:id",
+  ...guard,
+  GalleryController.updateGalleryItem
+);
+
+router.patch(
+  "/:id",
+  ...guard,
+  GalleryController.updateGalleryItem
+);
+
 router.delete(
   "/:id",
   ...guard,

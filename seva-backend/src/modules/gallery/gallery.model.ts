@@ -4,6 +4,7 @@ export interface IGallery extends Document {
   imageUrl: string;
   title?: string;
   caption?: string;
+  alt?: string;
   category?: string;
   isActive: boolean;
   order: number;
@@ -27,6 +28,11 @@ const GallerySchema = new Schema<IGallery>(
       default: "",
     },
     caption: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+    alt: {
       type: String,
       trim: true,
       default: "",

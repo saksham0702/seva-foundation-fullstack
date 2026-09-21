@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import {
   ChevronLeft,
   ChevronRight,
@@ -7,15 +8,24 @@ import {
   Plus,
   Trash2,
   Loader2,
+  Upload,
+  X,
+  Image as ImageIcon,
 } from "lucide-react";
 import { Field, inputCls } from "@/components/dashboard/field/Field";
 import { useCampaign } from "../../provider";
 import { type Product } from "../../utils";
 import { useQuery } from "@tanstack/react-query";
 import { getProducts, Product as APIProduct } from "@/app/api/product";
+import { uploadCampaignProductImage } from "@/app/api/campaign";
+import { getImageUrl } from "@/lib/image";
+import { useToast } from "@/lib/toast";
+import { extractErrorMessage } from "@/lib/api-error";
 
 export function StepFunding() {
   const { form, set, setStep } = useCampaign();
+  const toast = useToast();
+  const [uploadingIndex, setUploadingIndex] = useState<number | null>(null);
   const { data: backendProducts = [], isLoading: productsLoading } =
     useQuery<APIProduct[]>({
       queryKey: ["products"],
@@ -60,7 +70,7 @@ export function StepFunding() {
   function addProduct() {
     set("products", [
       ...form.products,
-      { product: "", requiredUnit: "", totalPrice: "" },
+      { product: "", requiredUnit: "", totalPrice: "", image: "" },
     ]);
   }
 
@@ -77,6 +87,37 @@ export function StepFunding() {
     );
     set("products", updated);
   }
+
+  const handleProductSelect = (index: number, value: string) => {
+    const found = backendProducts.find((pr) => pr.name === value || pr._id === value);
+    const updated = form.products.map((item, idx) => {
+      if (idx !== index) return item;
+      if (found) {
+        return {
+          ...item,
+          product: found.name,
+          requiredUnit: item.requiredUnit || (found.unit && found.unitType ? `${found.unit} ${found.unitType}` : ""),
+          totalPrice: item.totalPrice || (found.price ? String(found.price) : ""),
+          image: item.image || found.image || "",
+        };
+      }
+      return { ...item, product: value };
+    });
+    set("products", updated);
+  };
+
+  const handleUploadProductImage = async (index: number, file: File) => {
+    try {
+      setUploadingIndex(index);
+      const url = await uploadCampaignProductImage(file);
+      updateProduct(index, "image", url);
+      toast.success("Product image uploaded successfully!");
+    } catch (err) {
+      toast.error(extractErrorMessage(err, "Failed to upload product image"));
+    } finally {
+      setUploadingIndex(null);
+    }
+  };
 
   const canProceed =
     Number(form.goal) > 0 &&
@@ -209,65 +250,139 @@ export function StepFunding() {
             {form.products.map((p, i) => (
               <div
                 key={i}
-                className="grid grid-cols-[1fr_1fr_1fr_auto] gap-2 items-center"
+                className="p-3 bg-panel/40 border border-border rounded-xl space-y-2.5 transition-colors hover:border-border/80"
               >
-                <div className="relative">
-                  <select
-                    value={p.product}
-                    onChange={(e) =>
-                      updateProduct(i, "product", e.target.value)
-                    }
-                    className={inputCls + " appearance-none"}
-                    disabled={productsLoading}
-                  >
-                    <option value="">
-                      {productsLoading ? "Loading…" : "Select Product"}
-                    </option>
-                    {backendProducts.map((pr) => (
-                      <option key={pr._id} value={pr._id}>
-                        {pr.name} ({pr.unit} {pr.unitType})
-                      </option>
-                    ))}
-                    {p.product && !backendProducts.some((pr) => pr._id === p.product) && (
-                      <option value={p.product}>{p.product}</option>
+                <div className="grid grid-cols-1 sm:grid-cols-[auto_1.2fr_1fr_1fr_auto] gap-2.5 items-center">
+                  {/* Product Image Thumbnail / Upload Button */}
+                  <div className="relative group shrink-0 self-center">
+                    {uploadingIndex === i ? (
+                      <div className="w-12 h-12 rounded-lg border border-border bg-panel flex items-center justify-center text-blueaccent">
+                        <Loader2 size={16} className="animate-spin" />
+                      </div>
+                    ) : p.image ? (
+                      <div className="relative w-12 h-12 rounded-lg border border-border overflow-hidden bg-white group/img shadow-sm">
+                        <img
+                          src={getImageUrl(p.image)}
+                          alt={p.product || "Product"}
+                          className="w-full h-full object-cover"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => updateProduct(i, "image", "")}
+                          className="absolute inset-0 bg-black/60 text-white opacity-0 group-hover/img:opacity-100 flex items-center justify-center transition-opacity"
+                          title="Remove image"
+                        >
+                          <X size={14} />
+                        </button>
+                      </div>
+                    ) : (
+                      <label
+                        className="w-12 h-12 rounded-lg border-2 border-dashed border-border hover:border-blueaccent text-muted hover:text-blueaccent flex flex-col items-center justify-center cursor-pointer transition-colors bg-panel hover:bg-blueaccent/5 shadow-sm"
+                        title="Upload Product Image"
+                      >
+                        <Upload size={14} />
+                        <span className="text-[8px] font-semibold mt-0.5 uppercase tracking-wider">Image</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) handleUploadProductImage(i, file);
+                            e.target.value = "";
+                          }}
+                        />
+                      </label>
                     )}
-                  </select>
-                  {productsLoading && (
-                    <Loader2
-                      size={12}
-                      className="animate-spin absolute right-3 top-1/2 -translate-y-1/2 text-slate-400"
-                    />
-                  )}
-                </div>
-                <input
-                  type="text"
-                  value={p.requiredUnit}
-                  onChange={(e) =>
-                    updateProduct(i, "requiredUnit", e.target.value)
-                  }
-                  placeholder="Unit (e.g. Kits, 10)"
-                  className={inputCls}
-                />
-                <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted text-xs font-semibold">₹</span>
+                  </div>
+
+                  {/* Product Select / Name */}
+                  <div className="relative">
+                    <select
+                      value={p.product}
+                      onChange={(e) => handleProductSelect(i, e.target.value)}
+                      className={inputCls + " appearance-none text-xs"}
+                      disabled={productsLoading}
+                    >
+                      <option value="">
+                        {productsLoading ? "Loading…" : "Select or Type Product"}
+                      </option>
+                      {backendProducts.map((pr) => (
+                        <option key={pr._id} value={pr.name}>
+                          {pr.name} ({pr.unit} {pr.unitType})
+                        </option>
+                      ))}
+                      {p.product && !backendProducts.some((pr) => pr.name === p.product || pr._id === p.product) && (
+                        <option value={p.product}>{p.product}</option>
+                      )}
+                    </select>
+                    {productsLoading && (
+                      <Loader2
+                        size={12}
+                        className="animate-spin absolute right-3 top-1/2 -translate-y-1/2 text-slate-400"
+                      />
+                    )}
+                  </div>
+
+                  {/* Unit */}
                   <input
                     type="text"
-                    inputMode="numeric"
-                    value={p.totalPrice}
+                    value={p.requiredUnit}
                     onChange={(e) =>
-                      updateProduct(i, "totalPrice", e.target.value.replace(/[^0-9.]/g, ""))
+                      updateProduct(i, "requiredUnit", e.target.value)
                     }
-                    placeholder="Total Price"
-                    className={inputCls + " pl-7"}
+                    placeholder="Unit (e.g. Kits, 10)"
+                    className={inputCls + " text-xs"}
                   />
+
+                  {/* Total Price */}
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted text-xs font-semibold">₹</span>
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      value={p.totalPrice}
+                      onChange={(e) =>
+                        updateProduct(i, "totalPrice", e.target.value.replace(/[^0-9.]/g, ""))
+                      }
+                      placeholder="Total Price"
+                      className={inputCls + " pl-7 text-xs"}
+                    />
+                  </div>
+
+                  {/* Remove Row Button */}
+                  <button
+                    type="button"
+                    onClick={() => removeProduct(i)}
+                    className="p-2 rounded-lg text-red-400 hover:bg-red-50 hover:text-red-600 transition-all self-center"
+                    title="Remove product"
+                  >
+                    <Trash2 size={15} />
+                  </button>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => removeProduct(i)}
-                  className="p-2 rounded-lg text-red-400 hover:bg-red-50 transition-all"
-                >
-                  <Trash2 size={14} />
-                </button>
+
+                {/* Sub-bar for image change if image is present */}
+                {p.image && (
+                  <div className="flex items-center gap-2 pl-14 text-[11px] text-muted pt-0.5">
+                    <span className="text-emerald-600 font-medium flex items-center gap-1">
+                      ✓ Image attached
+                    </span>
+                    <span className="text-muted">•</span>
+                    <label className="text-blueaccent hover:underline cursor-pointer font-medium">
+                      Change Photo
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) handleUploadProductImage(i, file);
+                          e.target.value = "";
+                        }}
+                      />
+                    </label>
+                  </div>
+                )}
               </div>
             ))}
 

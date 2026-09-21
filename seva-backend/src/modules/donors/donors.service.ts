@@ -22,6 +22,9 @@ const createDonor = async (payload: Partial<IDonor>) => {
 
 const getAllDonors = async (query: {
   campaign?: string;
+  initiative?: string;
+  targetType?: string;
+  frequency?: string;
   status?: string;
   search?: string;
 }) => {
@@ -29,11 +32,23 @@ const getAllDonors = async (query: {
     isDeleted: false,
   };
 
-  if (query.campaign) {
+  if (query.campaign && query.campaign !== "all") {
     filter.campaign = query.campaign;
   }
 
-  if (query.status) {
+  if (query.targetType && query.targetType !== "all") {
+    filter.targetType = query.targetType;
+  }
+
+  if (query.initiative && query.initiative !== "all") {
+    filter.initiative = query.initiative;
+  }
+
+  if (query.frequency && query.frequency !== "all") {
+    filter.frequency = query.frequency;
+  }
+
+  if (query.status && query.status !== "all") {
     filter.status = query.status;
   }
 
@@ -42,6 +57,7 @@ const getAllDonors = async (query: {
       { name: { $regex: query.search, $options: "i" } },
       { email: { $regex: query.search, $options: "i" } },
       { phone: { $regex: query.search, $options: "i" } },
+      { initiative: { $regex: query.search, $options: "i" } },
     ];
   }
 

@@ -64,18 +64,18 @@ export default function GalleryClient({
     lightboxIndex !== null ? initialImages[lightboxIndex] : null;
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white text-slate-900">
       {/* ── Top Header (Compact height) ── */}
       <section className="relative pt-20 pb-8 sm:pt-24 sm:pb-10 bg-[#0f2347] text-white overflow-hidden">
         <div className="absolute inset-0 opacity-10 pointer-events-none bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:20px_20px]" />
 
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md border border-white/15 text-[#E8542A] text-[11px] font-bold uppercase tracking-widest mb-2">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md border border-white/15 text-[#E8542A] text-[11px] font-semibold uppercase tracking-widest mb-2">
             <Sparkles size={12} className="text-[#E8542A]" />
             <span>Moments That Inspire Us</span>
           </div>
 
-          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-white mb-2">
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-semibold tracking-tight text-white mb-2">
             Gallery
           </h1>
 
@@ -86,14 +86,14 @@ export default function GalleryClient({
       </section>
 
       {/* ── Main Gallery Section ── */}
-      <section className="py-10 sm:py-14 bg-[#f8f9fc]">
+      <section className="py-10 sm:py-14 bg-[#f8f9fc] text-slate-900">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Centered Sub-header */}
           <div className="text-center mb-8 pb-4 border-b border-gray-200/80">
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-[#0f2347] tracking-tight">
+            <h2 className="text-2xl sm:text-3xl font-semibold text-[#0f2347] tracking-tight">
               Gallery
             </h2>
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs text-slate-600 mt-1">
               Showing {initialImages.length} of {initialMeta.total} photos
             </p>
           </div>
@@ -107,7 +107,7 @@ export default function GalleryClient({
               <h3 className="text-xl font-bold text-[#0f2347] mb-2">
                 {backendMessage || "No images found"}
               </h3>
-              <p className="text-sm text-gray-500 leading-relaxed">
+              <p className="text-sm text-slate-600 leading-relaxed">
                 Photos from our ongoing activities will appear here shortly.
               </p>
             </div>
@@ -125,7 +125,7 @@ export default function GalleryClient({
                     {/* Next Image */}
                     <Image
                       src={resolvedUrl}
-                      alt={img.title || "Seva India field photo"}
+                      alt={img.alt || img.title || "Seva India field photo"}
                       fill
                       sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
                       className="object-cover transition-transform duration-700 ease-out group-hover:scale-110"
@@ -161,7 +161,7 @@ export default function GalleryClient({
           {/* ── Pagination ── */}
           {initialMeta.totalPage > 1 && (
             <div className="mt-12 flex flex-col sm:flex-row items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-gray-100 shadow-sm">
-              <p className="text-xs text-gray-500 font-medium">
+              <p className="text-xs text-slate-600 font-medium">
                 Showing Page <span className="font-bold text-[#0f2347]">{initialMeta.page}</span> of{" "}
                 <span className="font-bold text-[#0f2347]">{initialMeta.totalPage}</span> ({initialMeta.total} total photos)
               </p>
@@ -170,7 +170,7 @@ export default function GalleryClient({
                 <button
                   onClick={() => handlePageChange(initialMeta.page - 1)}
                   disabled={initialMeta.page <= 1}
-                  className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold rounded-xl bg-gray-50 hover:bg-gray-100 text-gray-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                  className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold rounded-xl bg-white border border-slate-200 hover:bg-slate-50 text-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                 >
                   <ChevronLeft size={16} />
                   Previous
@@ -190,7 +190,7 @@ export default function GalleryClient({
                         className={`w-9 h-9 rounded-xl text-xs font-bold transition-all ${
                           initialMeta.page === pageNum
                             ? "bg-[#0f2347] text-white shadow-md shadow-blue-950/20"
-                            : "bg-gray-50 hover:bg-gray-100 text-gray-700"
+                            : "bg-white border border-slate-200 hover:bg-slate-50 text-slate-800"
                         }`}
                       >
                         {pageNum}
@@ -203,7 +203,7 @@ export default function GalleryClient({
                       initialMeta.page < initialMeta.totalPage - 2)
                   ) {
                     return (
-                      <span key={pageNum} className="text-xs text-gray-400 px-1">
+                      <span key={pageNum} className="text-xs text-slate-400 px-1">
                         ...
                       </span>
                     );
@@ -214,7 +214,7 @@ export default function GalleryClient({
                 <button
                   onClick={() => handlePageChange(initialMeta.page + 1)}
                   disabled={initialMeta.page >= initialMeta.totalPage}
-                  className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold rounded-xl bg-gray-50 hover:bg-gray-100 text-gray-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                  className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold rounded-xl bg-white border border-slate-200 hover:bg-slate-50 text-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                 >
                   Next
                   <ChevronRight size={16} />
@@ -281,7 +281,7 @@ export default function GalleryClient({
             <div className="relative max-h-[78vh] w-auto overflow-hidden rounded-2xl shadow-2xl">
               <img
                 src={getImageUrl(currentLightboxImg.imageUrl)}
-                alt={currentLightboxImg.title || "Gallery photo"}
+                alt={currentLightboxImg.alt || currentLightboxImg.title || "Gallery photo"}
                 className="max-h-[78vh] max-w-[90vw] object-contain rounded-2xl"
               />
             </div>

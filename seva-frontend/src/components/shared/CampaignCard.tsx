@@ -16,6 +16,7 @@ export interface CampaignCardData {
   daysLeft: number;
   status: "active" | "completed" | "draft" | "paused";
   urgent?: boolean;
+  productsCount?: number;
 }
 
 const statusConfig = {
@@ -151,6 +152,12 @@ export function CampaignCard({
         {campaign.urgent && (
           <span className="absolute top-3 left-3 bg-[#E8542A] text-white text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full">
             Urgent
+          </span>
+        )}
+
+        {Boolean(campaign.productsCount && campaign.productsCount > 0) && (
+          <span className="absolute top-3 right-3 bg-white/95 backdrop-blur-sm text-[#0f2347] text-[10px] font-semibold uppercase tracking-wider px-2.5 py-1 rounded-full shadow-sm">
+            📦 {campaign.productsCount} Items
           </span>
         )}
 

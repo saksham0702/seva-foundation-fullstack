@@ -1,7 +1,12 @@
 import { Document, Schema, model, Types } from "mongoose";
 
 export interface IDonor extends Document {
-  campaign: Types.ObjectId;
+  campaign?: Types.ObjectId;
+  targetType?: "CAMPAIGN" | "INITIATIVE" | "GENERAL";
+  initiative?: string;
+  frequency?: "ONE_TIME" | "MONTHLY";
+  tribute?: string;
+  message?: string;
   name?: string;
   email?: string;
   phone?: string;
@@ -24,7 +29,34 @@ const DonorSchema = new Schema<IDonor>(
     campaign: {
       type: Schema.Types.ObjectId,
       ref: "Campaign",
-      required: true,
+      required: false,
+    },
+
+    targetType: {
+      type: String,
+      enum: ["CAMPAIGN", "INITIATIVE", "GENERAL"],
+      default: "CAMPAIGN",
+    },
+
+    initiative: {
+      type: String,
+      trim: true,
+    },
+
+    frequency: {
+      type: String,
+      enum: ["ONE_TIME", "MONTHLY"],
+      default: "ONE_TIME",
+    },
+
+    tribute: {
+      type: String,
+      default: "No Tribute",
+    },
+
+    message: {
+      type: String,
+      default: "",
     },
 
     name: {

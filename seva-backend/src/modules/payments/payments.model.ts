@@ -10,7 +10,12 @@ export interface IDonationItem {
 
 export interface IDonation extends Document {
   donor: Types.ObjectId;
-  campaign: Types.ObjectId;
+  campaign?: Types.ObjectId;
+  targetType?: "CAMPAIGN" | "INITIATIVE" | "GENERAL";
+  initiative?: string;
+  frequency?: "ONE_TIME" | "MONTHLY";
+  tribute?: string;
+  message?: string;
   amount: number;
   currency?: string;
   quantity: number;
@@ -43,7 +48,34 @@ const DonationSchema = new Schema<IDonation>(
     campaign: {
       type: Schema.Types.ObjectId,
       ref: "Campaign",
-      required: true,
+      required: false,
+    },
+
+    targetType: {
+      type: String,
+      enum: ["CAMPAIGN", "INITIATIVE", "GENERAL"],
+      default: "CAMPAIGN",
+    },
+
+    initiative: {
+      type: String,
+      trim: true,
+    },
+
+    frequency: {
+      type: String,
+      enum: ["ONE_TIME", "MONTHLY"],
+      default: "ONE_TIME",
+    },
+
+    tribute: {
+      type: String,
+      default: "No Tribute",
+    },
+
+    message: {
+      type: String,
+      default: "",
     },
 
     campaignProduct: {

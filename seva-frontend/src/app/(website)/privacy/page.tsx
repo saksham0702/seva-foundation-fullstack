@@ -39,7 +39,7 @@ export default function PrivacyPolicyPage() {
             <Shield size={14} />
             Data Protection &amp; Confidentiality
           </div>
-          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold font-serif tracking-tight text-white mb-4">
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-semibold font-serif tracking-tight text-white mb-4">
             {title}
           </h1>
           <p className="text-white/80 text-sm sm:text-base leading-relaxed max-w-2xl mx-auto">

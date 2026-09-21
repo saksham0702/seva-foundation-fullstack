@@ -37,13 +37,14 @@ const uploadGalleryImages = asyncHandler(
       });
     }
 
-    const { title, caption, category } = req.body;
+    const { title, caption, category, alt } = req.body;
     const userId = req.user?.userId;
 
     const items = imageUrls.map((imageUrl) => ({
       imageUrl,
       title: title || "",
       caption: caption || "",
+      alt: alt || title || caption || "",
       category: category || "general",
       createdBy: userId,
     }));
@@ -161,11 +162,42 @@ const deleteGalleryImage = asyncHandler(
   }
 );
 
+const updateGalleryItem = asyncHandler(
+  async (req: AuthRequest, res: Response) => {
+    const { id } = req.params as { id: string };
+    const { title, alt, caption, category } = req.body;
+    const userId = req.user?.userId;
+
+    const result = await GalleryService.updateGalleryItem(
+      id,
+      { title, alt, caption, category },
+      userId
+    );
+
+    if (!result) {
+      return sendResponse(res, {
+        statusCode: 404,
+        success: false,
+        message: "Gallery image not found",
+      });
+    }
+
+    sendResponse(res, {
+      statusCode: 200,
+      success: true,
+      message: "Gallery image details updated successfully",
+      data: result,
+    });
+  }
+);
+
 export const GalleryController = {
   uploadGalleryImages,
   getPublicGallery,
   getAllGalleryAdmin,
   getGalleryById,
   toggleGalleryStatus,
+  updateGalleryItem,
   deleteGalleryImage,
 };
+

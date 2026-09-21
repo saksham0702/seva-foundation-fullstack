@@ -8,11 +8,16 @@ export type DonorStatus =
 
 export interface Donor {
   _id: string;
-  campaign: string | {
+  campaign?: string | {
     _id: string;
     name: string;
     slug?: string;
   };
+  targetType?: "CAMPAIGN" | "INITIATIVE" | "GENERAL";
+  initiative?: string;
+  frequency?: "ONE_TIME" | "MONTHLY";
+  tribute?: string;
+  message?: string;
   name?: string;
   email?: string;
   phone?: string;
@@ -31,7 +36,12 @@ export interface Donor {
 }
 
 export interface CreateDonorPayload {
-  campaign: string;
+  campaign?: string;
+  targetType?: "CAMPAIGN" | "INITIATIVE" | "GENERAL";
+  initiative?: string;
+  frequency?: "ONE_TIME" | "MONTHLY";
+  tribute?: string;
+  message?: string;
   name?: string;
   email?: string;
   phone?: string;
@@ -45,6 +55,11 @@ export interface CreateDonorPayload {
 
 export interface UpdateDonorPayload {
   campaign?: string;
+  targetType?: "CAMPAIGN" | "INITIATIVE" | "GENERAL";
+  initiative?: string;
+  frequency?: "ONE_TIME" | "MONTHLY";
+  tribute?: string;
+  message?: string;
   name?: string;
   email?: string;
   phone?: string;
@@ -59,6 +74,9 @@ export interface UpdateDonorPayload {
 
 export interface GetDonorsParams {
   campaign?: string;
+  initiative?: string;
+  targetType?: string;
+  frequency?: string;
   status?: DonorStatus;
   search?: string;
 }

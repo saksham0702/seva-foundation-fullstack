@@ -158,7 +158,7 @@ export default function EventsListingPage() {
           <div className="inline-flex items-center gap-2 bg-cyan-500/20 border border-cyan-400/40 text-cyan-300 px-3.5 py-1 rounded-full text-xs font-bold uppercase tracking-widest mb-4">
             <Sparkles size={13} /> Foundation Programs & Camps
           </div>
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold leading-[1.1] mb-6">
+          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-semibold leading-[1.1] mb-6">
             <span className="text-white">Events & </span>
             <span className="text-cyan-400">Community Drives</span>
           </h1>

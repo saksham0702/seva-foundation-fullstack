@@ -115,3 +115,7 @@ export const uploadEditorImage = createFileUploader("editor");
 // ── Gallery uploader ──
 // Files stored in uploads/gallery/YYYY/MM/DD/images/ (bulk up to 60 images, max 3MB each)
 export const uploadGalleryImage = createFileUploader("gallery", 60, 3 * 1024 * 1024);
+
+// ── CMS uploader ──
+// Files stored in uploads/cms/YYYY/MM/DD/images/
+export const uploadCmsImage = createFileUploader("cms", 10, 3 * 1024 * 1024);

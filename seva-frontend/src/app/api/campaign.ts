@@ -123,3 +123,12 @@ export const getCampaignDonors = async (
   });
   return response.data?.data || response.data;
 };
+
+export const uploadCampaignProductImage = async (file: File): Promise<string> => {
+  const formData = new FormData();
+  formData.append("image", file);
+  const response = await axiosInstance.post("/campaigns/upload-product-image", formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+  return response.data?.data?.url || response.data?.url || "";
+};

@@ -56,8 +56,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className="h-full antialiased" suppressHydrationWarning>
-      <body className={`${poppins.variable} font-sans min-h-screen`}>
+    <html lang="en" className={`${poppins.variable} h-full antialiased`} suppressHydrationWarning>
+      <body className="font-sans min-h-screen">
         <QueryProvider>
           <ToastProvider>
             <AuthProvider>

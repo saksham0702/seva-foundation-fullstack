@@ -15,6 +15,7 @@ import {
   ChevronRight,
   FileImage,
   FolderOpen,
+  Pencil,
 } from "lucide-react";
 import {
   GalleryItem,
@@ -22,6 +23,7 @@ import {
   uploadGalleryImages,
   toggleGalleryStatus,
   deleteGalleryImage,
+  updateGalleryItem,
 } from "@/app/api/gallery";
 import { getImageUrl } from "@/lib/image";
 import { useToast } from "@/lib/toast";
@@ -45,14 +47,20 @@ export default function GalleryDashboardPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeSearch, setActiveSearch] = useState("");
 
-  // Bulk Upload state
+  // Bulk Upload state (only image name & alt tag as requested)
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [filePreviews, setFilePreviews] = useState<{ url: string; size: string; name: string }[]>([]);
   const [uploadTitle, setUploadTitle] = useState("");
-  const [uploadCaption, setUploadCaption] = useState("");
+  const [uploadAlt, setUploadAlt] = useState("");
   const [isUploading, setIsUploading] = useState(false);
   const [isDragOver, setIsDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Edit image modal state
+  const [editingItem, setEditingItem] = useState<GalleryItem | null>(null);
+  const [editTitle, setEditTitle] = useState("");
+  const [editAlt, setEditAlt] = useState("");
+  const [isSavingEdit, setIsSavingEdit] = useState(false);
 
   // Lightbox preview
   const [lightboxImage, setLightboxImage] = useState<GalleryItem | null>(null);
@@ -182,19 +190,52 @@ export default function GalleryDashboardPage() {
       selectedFiles.forEach((file) => {
         formData.append("images", file);
       });
-      if (uploadTitle) formData.append("title", uploadTitle);
-      if (uploadCaption) formData.append("caption", uploadCaption);
+      if (uploadTitle.trim()) formData.append("title", uploadTitle.trim());
+      if (uploadAlt.trim()) formData.append("alt", uploadAlt.trim());
 
       await uploadGalleryImages(formData);
       toast.success(`Successfully uploaded ${selectedFiles.length} image(s) to gallery!`);
       handleClearAllFiles();
       setUploadTitle("");
-      setUploadCaption("");
+      setUploadAlt("");
       fetchGallery();
     } catch (err: any) {
       toast.error(err?.response?.data?.message || "Failed to upload images.");
     } finally {
       setIsUploading(false);
+    }
+  };
+
+  // ── Edit Image Action ──
+  const handleStartEdit = (item: GalleryItem) => {
+    setEditingItem(item);
+    setEditTitle(item.title || "");
+    setEditAlt(item.alt || "");
+  };
+
+  const handleSaveEdit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingItem) return;
+
+    setIsSavingEdit(true);
+    try {
+      const updated = await updateGalleryItem(editingItem._id, {
+        title: editTitle.trim(),
+        alt: editAlt.trim(),
+      });
+      setImages((prev) =>
+        prev.map((img) =>
+          img._id === editingItem._id
+            ? { ...img, title: updated.title, alt: updated.alt }
+            : img
+        )
+      );
+      toast.success("Image details updated successfully!");
+      setEditingItem(null);
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || "Failed to update image details.");
+    } finally {
+      setIsSavingEdit(false);
     }
   };
 
@@ -232,7 +273,7 @@ export default function GalleryDashboardPage() {
 
   return (
     <PermissionGuard module="gallery">
-      <div className="min-h-screen bg-white">
+      <div className="min-h-screen bg-slate-50/50 text-slate-900 rounded-2xl p-2 sm:p-4">
         <div className="w-full px-6 py-8 max-w-7xl mx-auto space-y-8">
           {/* ── Header ── */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200/80 pb-6">
@@ -405,31 +446,31 @@ export default function GalleryDashboardPage() {
                   ))}
                 </div>
 
-                {/* Bulk Metadata Options */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+                {/* Bulk Metadata Options - Only Image Name and Alt Tag */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
                   <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">
-                      Title (Optional)
+                    <label className="block text-xs font-bold text-slate-800 mb-1">
+                      Image Name (Optional)
                     </label>
                     <input
                       type="text"
                       placeholder="e.g. Health camp in Tehri"
                       value={uploadTitle}
                       onChange={(e) => setUploadTitle(e.target.value)}
-                      className="w-full text-xs font-medium px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-slate-800"
+                      className="w-full text-xs font-medium px-3.5 py-2.5 bg-white text-slate-900 border border-slate-300 rounded-xl placeholder:text-slate-400 focus:outline-none focus:border-slate-800"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">
-                      Caption (Optional)
+                    <label className="block text-xs font-bold text-slate-800 mb-1">
+                      Image Alt Tag (SEO & Accessibility)
                     </label>
                     <input
                       type="text"
-                      placeholder="Short description"
-                      value={uploadCaption}
-                      onChange={(e) => setUploadCaption(e.target.value)}
-                      className="w-full text-xs font-medium px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-slate-800"
+                      placeholder="e.g. Medical team providing free checkups"
+                      value={uploadAlt}
+                      onChange={(e) => setUploadAlt(e.target.value)}
+                      className="w-full text-xs font-medium px-3.5 py-2.5 bg-white text-slate-900 border border-slate-300 rounded-xl placeholder:text-slate-400 focus:outline-none focus:border-slate-800"
                     />
                   </div>
                 </div>
@@ -471,10 +512,10 @@ export default function GalleryDashboardPage() {
               />
               <input
                 type="text"
-                placeholder="Search by title or caption..."
+                placeholder="Search by image name or alt..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-10 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-slate-800"
+                className="w-full pl-10 pr-10 py-2 text-xs bg-white text-slate-900 border border-slate-300 rounded-xl placeholder:text-slate-400 focus:outline-none focus:border-slate-800"
               />
               {searchQuery && (
                 <button
@@ -594,6 +635,13 @@ export default function GalleryDashboardPage() {
                           <Eye size={12} />
                         </button>
                         <button
+                          onClick={() => handleStartEdit(item)}
+                          title="Edit Image Details"
+                          className="p-1.5 bg-blue-600/80 hover:bg-blue-600 text-white rounded-lg backdrop-blur-sm transition-colors"
+                        >
+                          <Pencil size={12} />
+                        </button>
+                        <button
                           onClick={() => setDeletingItem(item)}
                           title="Delete"
                           className="p-1.5 bg-red-600/80 hover:bg-red-600 text-white rounded-lg backdrop-blur-sm transition-colors"
@@ -606,38 +654,51 @@ export default function GalleryDashboardPage() {
                     {/* Card Body */}
                     <div className="p-3 flex-1 flex flex-col justify-between">
                       <div>
-                        <p className="text-xs font-semibold text-slate-900 truncate">
-                          {item.title || "Untitled Photo"}
+                        <p className="text-xs font-bold text-slate-900 truncate">
+                          {item.title || "Untitled Image"}
                         </p>
-                        <p className="text-[10px] text-slate-400 mt-0.5">
+                        <p className="text-[10px] text-slate-500 mt-0.5">
                           {new Date(item.createdAt).toLocaleDateString("en-IN", {
                             day: "numeric",
                             month: "short",
                             year: "numeric",
                           })}
                         </p>
+                        <p className="text-[11px] text-slate-600 font-medium truncate mt-1" title={item.alt || ""}>
+                          <span className="font-semibold text-slate-800">Alt:</span> {item.alt || "None"}
+                        </p>
                       </div>
 
-                      {/* Status Switch */}
+                      {/* Card Footer: Quick Edit & Live Status Switch */}
                       <div className="mt-3 pt-2 border-t border-slate-100 flex items-center justify-between text-xs">
-                        <span className="text-[11px] font-medium text-slate-500">
-                          {isLive ? "Active" : "Hidden"}
-                        </span>
-
                         <button
                           type="button"
-                          disabled={togglingId === item._id}
-                          onClick={() => handleToggleStatus(item)}
-                          className={`relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                            isLive ? "bg-slate-900" : "bg-slate-300"
-                          }`}
+                          onClick={() => handleStartEdit(item)}
+                          className="inline-flex items-center gap-1 text-[11px] font-semibold text-blue-600 hover:text-blue-800 transition-colors"
                         >
-                          <span
-                            className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition duration-200 ease-in-out ${
-                              isLive ? "translate-x-4" : "translate-x-0"
-                            }`}
-                          />
+                          <Pencil size={11} />
+                          Edit
                         </button>
+
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-[10px] font-medium text-slate-500">
+                            {isLive ? "Active" : "Hidden"}
+                          </span>
+                          <button
+                            type="button"
+                            disabled={togglingId === item._id}
+                            onClick={() => handleToggleStatus(item)}
+                            className={`relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                              isLive ? "bg-slate-900" : "bg-slate-300"
+                            }`}
+                          >
+                            <span
+                              className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition duration-200 ease-in-out ${
+                                isLive ? "translate-x-4" : "translate-x-0"
+                              }`}
+                            />
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -742,6 +803,118 @@ export default function GalleryDashboardPage() {
                     </p>
                   )}
                 </div>
+              </div>
+            </div>
+          )}
+
+          {/* ── Edit Image Modal ── */}
+          {editingItem && (
+            <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+              <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-5 text-slate-900 animate-in fade-in">
+                <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
+                      <Pencil size={16} />
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-bold text-slate-900">
+                        Edit Image Details
+                      </h3>
+                      <p className="text-[11px] text-slate-500">
+                        Update image name and SEO alt tag.
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setEditingItem(null)}
+                    className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+                  >
+                    <X size={16} />
+                  </button>
+                </div>
+
+                {/* Image Preview */}
+                <div className="flex items-center gap-4 p-3 bg-slate-50 rounded-xl border border-slate-200">
+                  <div className="w-20 h-20 rounded-lg overflow-hidden bg-slate-200 flex-shrink-0">
+                    <img
+                      src={getImageUrl(editingItem.imageUrl)}
+                      alt={editingItem.title || "Preview"}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-bold text-slate-800 truncate">
+                      {editingItem.title || "Untitled Image"}
+                    </p>
+                    <p className="text-[11px] text-slate-500 mt-0.5">
+                      Created: {new Date(editingItem.createdAt).toLocaleDateString()}
+                    </p>
+                    <p className="text-[10px] text-slate-500 mt-0.5">
+                      Status:{" "}
+                      <span className={editingItem.isActive ? "text-emerald-600 font-semibold" : "text-slate-500 font-semibold"}>
+                        {editingItem.isActive ? "Live" : "Inactive"}
+                      </span>
+                    </p>
+                  </div>
+                </div>
+
+                {/* Edit Form */}
+                <form onSubmit={handleSaveEdit} className="space-y-4">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-800 mb-1.5">
+                      Image Name
+                    </label>
+                    <input
+                      type="text"
+                      value={editTitle}
+                      onChange={(e) => setEditTitle(e.target.value)}
+                      placeholder="e.g. Health camp in Tehri"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-white text-xs font-medium text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-slate-800 focus:ring-1 focus:ring-slate-800"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-800 mb-1.5">
+                      Alt Tag (SEO & Accessibility)
+                    </label>
+                    <input
+                      type="text"
+                      value={editAlt}
+                      onChange={(e) => setEditAlt(e.target.value)}
+                      placeholder="e.g. Medical team providing free checkups"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-white text-xs font-medium text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-slate-800 focus:ring-1 focus:ring-slate-800"
+                    />
+                    <p className="text-[10px] text-slate-500 mt-1">
+                      Read by screen readers and displayed if the image fails to load.
+                    </p>
+                  </div>
+
+                  <div className="flex items-center justify-end gap-2 pt-4 border-t border-slate-100">
+                    <button
+                      type="button"
+                      onClick={() => setEditingItem(null)}
+                      disabled={isSavingEdit}
+                      className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl transition-colors"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={isSavingEdit}
+                      className="inline-flex items-center gap-1.5 px-5 py-2 text-xs font-bold text-white bg-slate-900 hover:bg-slate-800 rounded-xl transition-all disabled:opacity-50 shadow-sm"
+                    >
+                      {isSavingEdit ? (
+                        <>
+                          <RefreshCw size={13} className="animate-spin" />
+                          <span>Saving...</span>
+                        </>
+                      ) : (
+                        <span>Save Changes</span>
+                      )}
+                    </button>
+                  </div>
+                </form>
               </div>
             </div>
           )}

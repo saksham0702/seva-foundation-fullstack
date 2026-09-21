@@ -6,6 +6,7 @@ export interface GalleryItem {
   imageUrl: string;
   title?: string;
   caption?: string;
+  alt?: string;
   category?: string;
   isActive: boolean;
   order: number;
@@ -110,7 +111,16 @@ export const toggleGalleryStatus = async (
   return response.data?.data || response.data;
 };
 
+export const updateGalleryItem = async (
+  id: string,
+  payload: { title?: string; alt?: string; caption?: string; category?: string }
+): Promise<GalleryItem> => {
+  const response = await axiosInstance.put(`${endpoint.gallery.upload}/${id}`, payload);
+  return response.data?.data || response.data;
+};
+
 export const deleteGalleryImage = async (id: string): Promise<boolean> => {
   await axiosInstance.delete(endpoint.gallery.delete(id));
   return true;
 };
+

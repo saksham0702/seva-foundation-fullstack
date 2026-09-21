@@ -15,10 +15,15 @@ function DonorsPageInner() {
     <div className="min-h-screen bg-white">
       <div className="w-full px-4 py-8">
         {/* Header */}
-        <div className="flex items-center justify-between mb-10">
-          <h1 className="text-2xl font-semibold text-black tracking-tight">
-            Donors
-          </h1>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+          <div>
+            <h1 className="text-2xl font-semibold text-black tracking-tight">
+              Donor Vault
+            </h1>
+            <p className="text-xs text-slate-500 mt-1">
+              Manage campaign donations, track leads, and view donor contributions.
+            </p>
+          </div>
           <div className="flex items-center gap-3">
             <button
               onClick={openCreateModal}
@@ -32,6 +37,19 @@ function DonorsPageInner() {
               Export
             </button>
           </div>
+        </div>
+
+        {/* View Switcher Tabs */}
+        <div className="flex items-center gap-2 border-b border-slate-200 mb-8">
+          <span className="px-4 py-2.5 border-b-2 border-black text-black text-sm font-bold tracking-tight cursor-default">
+            Campaign Donors
+          </span>
+          <a
+            href="/dashboard/donors/initiatives"
+            className="px-4 py-2.5 border-b-2 border-transparent text-slate-500 hover:text-black hover:border-slate-300 text-sm font-semibold tracking-tight transition-all"
+          >
+            Initiative Donations
+          </a>
         </div>
 
         {/* Stats */}
