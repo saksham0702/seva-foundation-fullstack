@@ -64,74 +64,68 @@ async function seed() {
 
     await CampaignModel.insertMany([
       {
-        name: "Kerala Flood Relief",
+        name: "Kerala Flood Relief — Wayanad & Thrissur",
         slug: "kerala-flood-relief",
-        images: ["/uploads/demo/campaign1.jpg"],
+        images: ["/uploads/campaigns/kerala-flood.jpg"],
         description:
-          "Support families affected by severe floods in Kerala.",
+          "Provide emergency food kits, drinking water, and essential medicines to displaced families in flood-affected regions.",
         content:
-          "<p>This campaign provides emergency food, medicine and shelter.</p>",
-        location: "Kerala",
+          "<p>Relentless monsoon floods have impacted thousands across Wayanad and Thrissur. Seva India Foundation is providing critical relief kits, safe drinking water, and hygiene support.</p>",
+        location: "Wayanad, Kerala",
         category: categories[0]._id,
+        status: "active",
+        goal: 5000000,
+        raisedAmount: 1258500,
+        donorCount: 1483,
+        urgent: true,
+        startDate: new Date("2026-08-01"),
+        endDate: new Date("2026-11-30"),
         createdBy: SYSTEM_USER,
         updatedBy: SYSTEM_USER,
       },
       {
-        name: "Sponsor Rural Education",
+        name: "Sponsor Rural Himalayan Education",
         slug: "sponsor-rural-education",
-        images: ["/uploads/demo/campaign2.jpg"],
+        images: ["/uploads/campaigns/rural-education.jpg"],
         description:
-          "Help children from rural villages continue their education.",
+          "Fund bridge schools, textbooks, and scholarships for 200 children across remote mountain hamlets in Uttarakhand.",
         content:
-          "<p>Your donation funds books, uniforms and school fees.</p>",
-        location: "Uttarakhand",
+          "<p>Geography should never be a barrier to dreams. We establish learning centers, train village teachers, and provide school supplies to first-generation learners.</p>",
+        location: "Tehri Garhwal, Uttarakhand",
         category: categories[1]._id,
+        status: "active",
+        goal: 1500000,
+        raisedAmount: 642000,
+        donorCount: 824,
+        urgent: false,
+        startDate: new Date("2026-07-15"),
+        endDate: new Date("2026-12-31"),
         createdBy: SYSTEM_USER,
         updatedBy: SYSTEM_USER,
       },
       {
-        name: "Cancer Treatment Support",
+        name: "Emergency Medical & Cancer Aid",
         slug: "cancer-treatment-support",
-        images: ["/uploads/demo/campaign3.jpg"],
+        images: ["/uploads/campaigns/cancer-aid.jpg"],
         description:
-          "Help underprivileged patients receive life-saving treatment.",
+          "Provide life-saving chemotherapy, post-op care, and subsidized medicines for underprivileged cancer patients.",
         content:
-          "<p>Funds will be used for medicines and hospital expenses.</p>",
-        location: "Delhi",
+          "<p>A medical diagnosis shouldn't push a family into generational poverty. Our medical aid fund directly offsets treatment and medication costs at partner hospitals.</p>",
+        location: "AIIMS, New Delhi",
         category: categories[2]._id,
-        createdBy: SYSTEM_USER,
-        updatedBy: SYSTEM_USER,
-      },
-      {
-        name: "Women Skill Development",
-        slug: "women-skill-development",
-        images: ["/uploads/demo/campaign4.jpg"],
-        description:
-          "Provide vocational training to women for financial independence.",
-        content:
-          "<p>Training includes tailoring, computer literacy and entrepreneurship.</p>",
-        location: "Jaipur",
-        category: categories[3]._id,
-        createdBy: SYSTEM_USER,
-        updatedBy: SYSTEM_USER,
-      },
-      {
-        name: "Street Animal Rescue",
-        slug: "street-animal-rescue",
-        images: ["/uploads/demo/campaign5.jpg"],
-        description:
-          "Provide food, shelter and medical care for rescued animals.",
-        content:
-          "<p>Support rescue operations and rehabilitation.</p>",
-        location: "Mumbai",
-        category: categories[4]._id,
+        status: "active",
+        goal: 2500000,
+        raisedAmount: 1890000,
+        donorCount: 1912,
+        urgent: true,
+        startDate: new Date("2026-06-01"),
+        endDate: new Date("2026-10-31"),
         createdBy: SYSTEM_USER,
         updatedBy: SYSTEM_USER,
       },
     ]);
 
-    console.log("5 campaigns inserted.");
-
+    console.log("3 active campaigns inserted.");
     console.log("Seeding completed.");
 
     process.exit(0);

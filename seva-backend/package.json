@@ -10,6 +10,8 @@
     "seed": "ts-node src/seeds/seedCampaign.ts",
     "seed:volunteer": "ts-node src/seeds/seedVolunteerCategories.ts",
     "seed:kerala": "ts-node src/seeds/seedKeralaFlood.ts",
+    "seed:cms": "ts-node src/seeds/seedCms.ts",
+    "seed:all": "ts-node src/seeds/seedCampaign.ts && ts-node src/seeds/seedVolunteerCategories.ts && ts-node src/seeds/seedCms.ts",
     "docker:build": "docker build -t seva-backend:latest .",
     "docker:start": "docker run --rm -p 5000:5000 --env-file .env --add-host=host.docker.internal:host-gateway --name seva-backend seva-backend:latest"
   },

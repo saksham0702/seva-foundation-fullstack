@@ -36,6 +36,7 @@ interface NavChild {
   label: string;
   href?: string;
   children?: NavChild[];
+  comingSoon?: boolean;
 }
 
 interface NavItem {
@@ -45,6 +46,7 @@ interface NavItem {
   children?: NavChild[];
   /** If set, user must have this permission (or be admin) to see this item */
   permission?: PermissionModule;
+  comingSoon?: boolean;
 }
 
 interface NavSection {
@@ -116,8 +118,8 @@ const NAV_CONFIG: NavSection[] = [
         icon: MessageSquare,
         permission: "marketing",
         children: [
-          { label: "Email Marketing", href: "/dashboard/marketing/email" },
-          { label: "WhatsApp Marketing", href: "/dashboard/marketing/whatsapp" },
+          { label: "Email Marketing", comingSoon: true },
+          { label: "WhatsApp Marketing", comingSoon: true },
         ],
       },
       {
@@ -125,17 +127,6 @@ const NAV_CONFIG: NavSection[] = [
         href: "/dashboard/users",
         icon: Users,
         permission: "users",
-      },
-      {
-        label: "Enterprise CRM",
-        icon: Users,
-        permission: "crm",
-        children: [
-          { label: "Dashboard", href: "/dashboard/crm" },
-          { label: "Lead Center", href: "/dashboard/crm/leads" },
-          { label: "Contacts", href: "/dashboard/crm/contacts" },
-          { label: "Organizations", href: "/dashboard/crm/organizations" },
-        ],
       },
     ],
   },
@@ -155,35 +146,23 @@ const NAV_CONFIG: NavSection[] = [
         icon: Heart,
         permission: "donations",
       },
-      {
-        label: "Tax & Compliance Center",
-        href: "/dashboard/tax",
-        icon: FileText,
-        permission: "donations",
-      },
     ],
   },
   {
-    section: "CERTIFICATES & CRM",
+    section: "CERTIFICATES",
     anyPermission: ["certificates"],
     items: [
       {
-        label: "Certificates & CRM",
+        label: "Certificates",
         icon: Award,
-        href: "/dashboard/certificates",
         permission: "certificates",
-      },
-    ],
-  },
-  {
-    section: "FINANCIAL AUDIT & COMPLIANCE",
-    anyPermission: ["donations"],
-    items: [
-      {
-        label: "Financial Audit",
-        href: "/dashboard/audit",
-        icon: ShieldCheck,
-        permission: "donations",
+        children: [
+          { label: "Dashboard", href: "/dashboard/certificates/dashboard" },
+          { label: "Manage Certificates", href: "/dashboard/certificates/manage" },
+          { label: "Generate Certificate", href: "/dashboard/certificates/generate" },
+          { label: "Verification Registry", href: "/dashboard/certificates/verification-registry" },
+          { label: "Digital Signatures", href: "/dashboard/certificates/digital-signatures" },
+        ],
       },
     ],
   },
@@ -249,6 +228,23 @@ function ChildItem({ item }: { item: NavChild }) {
             ))}
           </div>
         )}
+      </div>
+    );
+  }
+
+  if (item.comingSoon) {
+    return (
+      <div
+        className="flex items-center justify-between pl-3 pr-3 py-2 rounded-md text-xs font-medium text-white/35 cursor-not-allowed select-none"
+        title="Coming Soon"
+      >
+        <div className="flex items-center gap-2">
+          <span className="w-1.5 h-1.5 rounded-full bg-white/20" />
+          <span>{item.label}</span>
+        </div>
+        <span className="text-[9.5px] uppercase tracking-wider font-bold px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-400 border border-amber-500/25">
+          Soon
+        </span>
       </div>
     );
   }

@@ -6,12 +6,24 @@ import { DepartmentModel } from "../departments/departments.model";
 
 // ── Cookie config ─────────────────────────────────────────────────────────────
 const COOKIE_NAME = "access_token";
-const COOKIE_OPTIONS = {
-  httpOnly: true,            // not accessible via document.cookie
-  secure: process.env.NODE_ENV === "production", // HTTPS only in prod
-  sameSite: "lax" as const, // change to "none" if frontend & backend on different domains in prod
-  maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days in ms
-  path: "/",
+
+const getCookieOptions = () => {
+  const isProduction = process.env.NODE_ENV === "production";
+  // Allows override via env; default to 'none' in production for cross-origin setups or 'lax' for local
+  const sameSite = (process.env.COOKIE_SAME_SITE || (isProduction ? "none" : "lax")) as "lax" | "none" | "strict";
+  const secure =
+    process.env.COOKIE_SECURE !== undefined
+      ? process.env.COOKIE_SECURE === "true"
+      : sameSite === "none" || isProduction;
+
+  return {
+    httpOnly: true,
+    secure,
+    sameSite,
+    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days in ms
+    path: "/",
+    ...(process.env.COOKIE_DOMAIN ? { domain: process.env.COOKIE_DOMAIN } : {}),
+  };
 };
 
 // ── Login ─────────────────────────────────────────────────────────────────────
@@ -40,7 +52,7 @@ const login = async (email: string, password: string, res: Response) => {
   });
 
   // Set HTTP-only cookie
-  res.cookie(COOKIE_NAME, token, COOKIE_OPTIONS);
+  res.cookie(COOKIE_NAME, token, getCookieOptions());
 
   return {
     token,
@@ -57,7 +69,8 @@ const login = async (email: string, password: string, res: Response) => {
 
 // ── Logout ────────────────────────────────────────────────────────────────────
 const logout = (res: Response) => {
-  res.clearCookie(COOKIE_NAME, { path: "/" });
+  const { maxAge, ...clearOptions } = getCookieOptions();
+  res.clearCookie(COOKIE_NAME, clearOptions);
 };
 
 // ── Create user ───────────────────────────────────────────────────────────────

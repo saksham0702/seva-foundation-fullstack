@@ -28,6 +28,7 @@ import {
   ScrollText,
   BadgeCheck,
 } from "lucide-react";
+import { getImageUrl } from "@/lib/image";
 import { getCmsPageBySlug, CmsPage } from "@/app/api/cms";
 
 // =============================================================================
@@ -39,22 +40,24 @@ function HeroSection({ data }: { data?: CmsPage | null }) {
   const subtitle =
     data?.subtitle ||
     "“A promise made in the streets of Dehradun, now echoing across India: No soul shall be forgotten, no hunger shall go unanswered.”";
-  const bannerImage =
-    data?.bannerImage ||
-    "https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?w=1920&q=80";
+  const bannerImage = getImageUrl(data?.bannerImage);
 
   return (
     <section className="relative w-full h-[480px] lg:h-[520px] flex items-center justify-center overflow-hidden">
       {/* Background image + dark navy overlay */}
-      <div className="absolute inset-0">
-        <Image
-          src={bannerImage}
-          alt="Children smiling"
-          fill
-          className="object-cover"
-          priority
-        />
-        <div className="absolute inset-0 bg-[#0B1120]/80" />
+      <div className="absolute inset-0 bg-[#0B1120]">
+        {bannerImage ? (
+          <Image
+            src={bannerImage}
+            alt="About Seva India Foundation"
+            fill
+            className="object-cover"
+            priority
+          />
+        ) : (
+          <div className="absolute inset-0 bg-gradient-to-br from-[#0B1120] via-[#1a3a6b] to-[#E8542A]/20" />
+        )}
+        <div className="absolute inset-0 bg-[#0B1120]/75" />
       </div>
 
       {/* Centered content */}
@@ -140,16 +143,20 @@ function SacredPromiseSection({ data }: { data?: CmsPage | null }) {
             )}
           </div>
 
-          {/* RIGHT: Image with 2026 badge */}
+          {/* RIGHT: Image or visual card with 2026 badge */}
           <div className="relative">
-            <div className="relative rounded-3xl overflow-hidden shadow-xl">
-              <Image
-                src="https://images.unsplash.com/photo-1542810634-71277d95dcbb?w=1200&q=80"
-                alt="Happy children"
-                width={600}
-                height={500}
-                className="w-full h-[400px] lg:h-[520px] object-cover"
-              />
+            <div className="relative rounded-3xl overflow-hidden shadow-xl min-h-[380px] lg:h-[520px] bg-gradient-to-br from-[#0B1120] via-[#1a3a6b] to-[#0B1120] flex items-center justify-center p-8 border border-white/10">
+              <div className="text-center space-y-4 max-w-sm">
+                <div className="w-16 h-16 rounded-2xl bg-[#f5a623]/20 border border-[#f5a623]/40 flex items-center justify-center mx-auto shadow-lg">
+                  <Heart className="w-8 h-8 text-[#f5a623]" />
+                </div>
+                <h3 className="text-2xl font-bold text-white tracking-tight">
+                  Grassroots Impact
+                </h3>
+                <p className="text-sm text-white/70 leading-relaxed">
+                  Dedicated to eliminating poverty, nourishing underserved families, and uplifting communities across Uttarakhand.
+                </p>
+              </div>
             </div>
             {/* Orange badge overlapping bottom-left of image */}
             <div className="absolute -bottom-6 -left-4 lg:left-6 bg-[#f5a623] rounded-2xl px-6 py-5 shadow-lg">
@@ -650,16 +657,20 @@ function OurSphereSection() {
         </div>
 
         <div className="grid lg:grid-cols-2 gap-12 items-center">
-          {/* LEFT: Image */}
+          {/* LEFT: Visual Card */}
           <div className="relative">
-            <div className="relative rounded-[2.5rem] overflow-hidden shadow-2xl">
-              <Image
-                src="https://images.unsplash.com/photo-1531206715517-5c0ba140b2b8?w=1200&q=80"
-                alt="Indian flag"
-                width={500}
-                height={500}
-                className="w-full h-[400px] lg:h-[480px] object-cover"
-              />
+            <div className="relative rounded-[2.5rem] overflow-hidden shadow-2xl min-h-[360px] lg:h-[480px] bg-gradient-to-br from-[#0B1120] via-[#1a3a6b] to-[#0B1120] flex items-center justify-center p-8 border border-white/10">
+              <div className="text-center space-y-4 max-w-sm">
+                <div className="w-20 h-20 bg-[#f5a623]/20 border border-[#f5a623]/30 rounded-3xl flex items-center justify-center mx-auto shadow-inner">
+                  <MapPin className="w-10 h-10 text-[#f5a623]" />
+                </div>
+                <div>
+                  <h4 className="text-2xl font-bold text-white">Dehradun & Beyond</h4>
+                  <p className="text-sm text-white/60 mt-2 leading-relaxed">
+                    Reaching remote mountain villages and tribal pockets across Uttarakhand and North India.
+                  </p>
+                </div>
+              </div>
             </div>
             {/* Location pin overlay */}
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 bg-[#f5a623] rounded-full flex items-center justify-center shadow-xl">

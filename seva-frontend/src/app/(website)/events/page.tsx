@@ -144,14 +144,9 @@ export default function EventsListingPage() {
     <div className="min-h-screen bg-white">
       {/* ── Hero ── */}
       <section className="relative min-h-[48vh] flex items-center overflow-hidden">
-        <div className="absolute inset-0">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="https://images.unsplash.com/photo-1511578314322-379afb476865?w=1600&q=80"
-            alt="Events & Health Camps"
-            className="w-full h-full object-cover"
-          />
+        <div className="absolute inset-0 bg-gradient-to-br from-[#0A1A2F] via-[#0e2747] to-[#0A1A2F]">
           <div className="absolute inset-0 bg-gradient-to-b from-[#0A1A2F]/90 via-[#0A1A2F]/85 to-[#0A1A2F]/95" />
+          <div className="absolute top-0 left-1/4 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
         </div>
 
         <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-20 w-full text-center">

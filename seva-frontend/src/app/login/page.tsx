@@ -46,12 +46,8 @@ export default function AdminLoginPage() {
       {/* Left decorative panel — hidden on mobile */}
       <div className="hidden lg:flex lg:w-1/2 min-h-screen relative overflow-hidden bg-[#0f2347]">
         <div className="absolute inset-0">
-          <img
-            src="https://images.unsplash.com/photo-1559027615-cd4628902d4a?w=1200&q=80"
-            alt="Seva India volunteers"
-            className="w-full h-full object-cover opacity-30"
-          />
-          <div className="absolute inset-0 bg-gradient-to-br from-[#0f2347]/90 via-[#0f2347]/80 to-[#E8542A]/20" />
+          <div className="absolute inset-0 bg-gradient-to-br from-[#0f2347] via-[#1a3a6b] to-[#E8542A]/30" />
+          <div className="absolute -bottom-32 -left-32 w-96 h-96 bg-[#E8542A]/10 rounded-full blur-3xl" />
         </div>
 
         <div className="relative z-10 flex flex-col justify-center px-16 max-w-lg">

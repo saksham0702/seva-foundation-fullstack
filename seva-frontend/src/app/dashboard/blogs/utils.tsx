@@ -52,7 +52,7 @@ export const DUMMY_BLOGS: BlogListItem[] = [
     status: "published",
     category: "Humanitarian",
     publishedAt: "12 Jun 2025",
-    featuredImage: "https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?w=400&q=80",
+    featuredImage: "",
     excerpt: "This winter, our ground teams reached over 100 families across remote tribal belts. Here's how every rupee you donated translated into warm meals and hope.",
   },
   {
@@ -62,7 +62,7 @@ export const DUMMY_BLOGS: BlogListItem[] = [
     status: "published",
     category: "Education",
     publishedAt: "3 May 2025",
-    featuredImage: "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=400&q=80",
+    featuredImage: "",
     excerpt: "We broke ground on four new classrooms and enrolled 240 children who had never stepped inside a school. This is their story.",
   },
   {
@@ -72,7 +72,7 @@ export const DUMMY_BLOGS: BlogListItem[] = [
     status: "draft",
     category: "Healthcare",
     publishedAt: "—",
-    featuredImage: "https://images.unsplash.com/photo-1584820927498-cfe5211fd8bf?w=400&q=80",
+    featuredImage: "",
     excerpt: "Running free camps across six districts taught us what urban medicine misses entirely. Here are the five lessons that changed how we work.",
   },
 ];

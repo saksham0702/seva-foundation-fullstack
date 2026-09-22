@@ -22,10 +22,9 @@ import {
 } from "../CertificatesProvider";
 import PageHeader from "@/components/dashboard/certificates/PageHeader";
 import { generatePdf } from "@/app/api/certificate";
+import { getImageUrl } from "@/lib/image";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-
-const API_BASE = "http://localhost:5000";
 
 const STATUS_CONFIG: Record<
   "ACTIVE" | "REVOKED",
@@ -163,11 +162,7 @@ function CertificateDrawer({
             {/* Watermark / Seal background */}
             {cert.signatures?.seal?.imageUrl && (
               <img
-                src={
-                  cert.signatures.seal.imageUrl.startsWith("http")
-                    ? cert.signatures.seal.imageUrl
-                    : `${API_BASE}${cert.signatures.seal.imageUrl}`
-                }
+                src={getImageUrl(cert.signatures.seal.imageUrl)}
                 alt="Seal"
                 className="absolute inset-0 m-auto w-32 h-32 object-contain opacity-10 pointer-events-none"
               />
@@ -214,11 +209,7 @@ function CertificateDrawer({
                 <div className="h-10 flex items-center justify-center">
                   {cert.signatures?.secretary?.imageUrl ? (
                     <img
-                      src={
-                        cert.signatures.secretary.imageUrl.startsWith("http")
-                          ? cert.signatures.secretary.imageUrl
-                          : `${API_BASE}${cert.signatures.secretary.imageUrl}`
-                      }
+                      src={getImageUrl(cert.signatures.secretary.imageUrl)}
                       alt="Secretary Signature"
                       className="max-h-9 max-w-[100px] object-contain"
                     />
@@ -242,11 +233,7 @@ function CertificateDrawer({
                 <div className="h-10 flex items-center justify-center">
                   {cert.signatures?.president?.imageUrl ? (
                     <img
-                      src={
-                        cert.signatures.president.imageUrl.startsWith("http")
-                          ? cert.signatures.president.imageUrl
-                          : `${API_BASE}${cert.signatures.president.imageUrl}`
-                      }
+                      src={getImageUrl(cert.signatures.president.imageUrl)}
                       alt="President Signature"
                       className="max-h-9 max-w-[100px] object-contain"
                     />
@@ -333,7 +320,7 @@ function CertificateDrawer({
             </button>
             {pdfUrl && (
               <a
-                href={`${API_BASE}${pdfUrl}`}
+                href={getImageUrl(pdfUrl)}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center justify-center gap-2 bg-blueaccent/15 text-blueaccent text-sm font-semibold px-3 py-2.5 rounded-lg border border-blueaccent/30"
@@ -462,14 +449,14 @@ function CertificatesTable() {
 
   const handleDownloadPdf = async (cert: Certificate) => {
     if (cert.pdfUrl) {
-      window.open(`${API_BASE}${cert.pdfUrl}`, "_blank");
+      window.open(getImageUrl(cert.pdfUrl), "_blank");
       return;
     }
     setDownloadingId(cert._id);
     try {
       const updated = await generatePdf(cert._id);
       if (updated?.pdfUrl) {
-        window.open(`${API_BASE}${updated.pdfUrl}`, "_blank");
+        window.open(getImageUrl(updated.pdfUrl), "_blank");
         refetch();
       }
     } catch (err) {

@@ -18,8 +18,7 @@ const DONORS: Donor[] = [
   {
     id: "1",
     name: "Rahul Sharma",
-    avatar:
-      "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&q=80",
+    avatar: "",
     totalDonations: 125000,
     donationCount: 24,
     badge: "Champion",
@@ -30,8 +29,7 @@ const DONORS: Donor[] = [
   {
     id: "2",
     name: "Priya Patel",
-    avatar:
-      "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&q=80",
+    avatar: "",
     totalDonations: 89000,
     donationCount: 18,
     badge: "Guardian",
@@ -42,8 +40,7 @@ const DONORS: Donor[] = [
   {
     id: "3",
     name: "Amit Kumar",
-    avatar:
-      "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&q=80",
+    avatar: "",
     totalDonations: 67000,
     donationCount: 15,
     badge: "Guardian",
@@ -54,8 +51,7 @@ const DONORS: Donor[] = [
   {
     id: "4",
     name: "Sneha Reddy",
-    avatar:
-      "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200&q=80",
+    avatar: "",
     totalDonations: 45000,
     donationCount: 12,
     badge: "Supporter",
@@ -66,8 +62,7 @@ const DONORS: Donor[] = [
   {
     id: "5",
     name: "Vikram Singh",
-    avatar:
-      "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200&q=80",
+    avatar: "",
     totalDonations: 32000,
     donationCount: 9,
     badge: "Supporter",
@@ -78,8 +73,7 @@ const DONORS: Donor[] = [
   {
     id: "6",
     name: "Ananya Gupta",
-    avatar:
-      "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&q=80",
+    avatar: "",
     totalDonations: 18000,
     donationCount: 6,
     badge: "Contributor",
@@ -90,8 +84,7 @@ const DONORS: Donor[] = [
   {
     id: "7",
     name: "Rajesh Iyer",
-    avatar:
-      "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=200&q=80",
+    avatar: "",
     totalDonations: 15000,
     donationCount: 5,
     badge: "Contributor",
@@ -102,8 +95,7 @@ const DONORS: Donor[] = [
   {
     id: "8",
     name: "Meera Nair",
-    avatar:
-      "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=200&q=80",
+    avatar: "",
     totalDonations: 12000,
     donationCount: 4,
     badge: "Contributor",
@@ -150,14 +142,20 @@ function DonorCard({ donor }: { donor: Donor }) {
 
       {/* Avatar + Badge */}
       <div className="flex items-center gap-3 mb-3">
-        <div className="w-11 h-11 rounded-xl overflow-hidden flex-shrink-0 ring-2 ring-gray-100 ring-offset-1">
-          <Image
-            src={donor.avatar}
-            alt={donor.name}
-            width={200}
-            height={200}
-            className="w-full h-full object-cover"
-          />
+        <div className="w-11 h-11 rounded-xl overflow-hidden flex-shrink-0 ring-2 ring-gray-100 ring-offset-1 bg-[#0f2347] flex items-center justify-center text-white font-bold text-xs">
+          {donor.avatar ? (
+            <Image
+              src={donor.avatar}
+              alt={donor.name}
+              width={200}
+              height={200}
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <span className="text-[#E8542A]">
+              {donor.name.split(" ").map((n) => n[0]).join("")}
+            </span>
+          )}
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-sm font-bold text-[#0f2347] truncate">

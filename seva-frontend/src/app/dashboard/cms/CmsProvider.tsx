@@ -57,19 +57,19 @@ function CmsProviderContent({
   const isEditMode = searchParams.get("edit") === "true";
   const editingId = searchParams.get("id");
 
-  const [items, setItems] = useState<CmsItem[]>(() => CMS_SEED_MAP[contentType] || []);
+  const [items, setItems] = useState<CmsItem[]>([]);
   const [form, setForm] = useState<CmsForm>(initialCmsForm);
   const [tab, setTab] = useState<Tab>("meta");
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  // Load items from API / seed data
+  // Load items strictly from MongoDB API
   const refreshItems = async () => {
     setIsLoading(true);
     try {
       const fetched = await cmsAPI.getItems(contentType);
       setItems(fetched);
     } catch {
-      setItems(CMS_SEED_MAP[contentType] || []);
+      setItems([]);
     } finally {
       setIsLoading(false);
     }

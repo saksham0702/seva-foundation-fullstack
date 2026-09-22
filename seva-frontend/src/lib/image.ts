@@ -27,13 +27,18 @@ const DEFAULT_FALLBACK_IMAGE =
  */
 export function getImageUrl(
   path?: string | null,
-  fallback = DEFAULT_FALLBACK_IMAGE
+  fallback = ""
 ): string {
   if (!path || typeof path !== "string" || !path.trim()) {
     return fallback;
   }
 
   const cleanPath = path.trim();
+
+  // Filter out dummy Unsplash images per production requirements
+  if (cleanPath.includes("images.unsplash.com")) {
+    return fallback;
+  }
 
   if (
     cleanPath.startsWith("http://") ||

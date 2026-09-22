@@ -18,6 +18,7 @@ import {
   Sparkles,
   Mail,
   Phone,
+  User,
 } from "lucide-react";
 import {
   getPublicVolunteerCategories,
@@ -25,30 +26,11 @@ import {
   VolunteerCategory,
   Availability,
 } from "@/app/api/volunteer";
+import { getCmsPageBySlug, CmsPage } from "@/app/api/cms";
+import { getImageUrl } from "@/lib/image";
 
 /* ──────────────────────────────────────────────
-   IMAGES — warm, human, real moments
-────────────────────────────────────────────── */
-const IMAGES = {
-  hero: "https://images.unsplash.com/photo-1559027615-cd4628902d4a?w=1600&q=85",
-  volunteer1:
-    "https://images.unsplash.com/photo-1551836022-d5d88e9218df?w=400&q=80",
-  volunteer2:
-    "https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=400&q=80",
-  volunteer3:
-    "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=400&q=80",
-  volunteer4:
-    "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=400&q=80",
-  volunteer5:
-    "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&q=80",
-  volunteer6:
-    "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&q=80",
-  group:
-    "https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=800&q=80",
-};
-
-/* ──────────────────────────────────────────────
-   DATA
+   DATA DEFAULTS
 ────────────────────────────────────────────── */
 // No static VOLUNTEER_ROLES — all categories come from the API.
 
@@ -58,7 +40,7 @@ const ACTIVE_VOLUNTEERS = [
     role: "Education Coordinator",
     since: "2018",
     hours: "2,400+",
-    image: IMAGES.volunteer2,
+    image: "",
     quote:
       "I started as a weekend tutor. Six years later, I design the curriculum for 8 centres. Seva India grows you as you grow it.",
   },
@@ -67,7 +49,7 @@ const ACTIVE_VOLUNTEERS = [
     role: "Field Operations",
     since: "2019",
     hours: "3,100+",
-    image: IMAGES.volunteer3,
+    image: "",
     quote:
       "I know every village road in Tehri district. The best part? The chai and stories at every home we visit.",
   },
@@ -76,7 +58,7 @@ const ACTIVE_VOLUNTEERS = [
     role: "Community Kitchen",
     since: "2019",
     hours: "1,800+",
-    image: IMAGES.volunteer5,
+    image: "",
     quote:
       "Every Sunday at 6 AM, I am at the kitchen. It is the most honest work I do all week. No meetings. Just meals.",
   },
@@ -85,7 +67,7 @@ const ACTIVE_VOLUNTEERS = [
     role: "Health Camp Nurse",
     since: "2021",
     hours: "950+",
-    image: IMAGES.volunteer6,
+    image: "",
     quote:
       "I am a full-time nurse at Doon Hospital. Weekends, I am in villages with Seva India. Both jobs save lives.",
   },
@@ -94,7 +76,7 @@ const ACTIVE_VOLUNTEERS = [
     role: "Photography & Content",
     since: "2020",
     hours: "720+",
-    image: IMAGES.volunteer1,
+    image: "",
     quote:
       "I carry my camera to every camp. My photos have raised more money than any brochure ever could. Stories sell.",
   },
@@ -103,7 +85,7 @@ const ACTIVE_VOLUNTEERS = [
     role: "Parent Volunteer",
     since: "2022",
     hours: "480+",
-    image: IMAGES.volunteer4,
+    image: "",
     quote:
       "My daughter studies at the centre. Now I volunteer there too. It is our second home.",
   },
@@ -200,6 +182,7 @@ export default function GetInvolvedPage() {
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [categories, setCategories] = useState<VolunteerCategory[]>([]);
   const [categoriesLoading, setCategoriesLoading] = useState(true);
+  const [cmsPage, setCmsPage] = useState<CmsPage | null>(null);
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>("");
   const [selectedRole, setSelectedRole] = useState<string>("");
   const [countryCode, setCountryCode] = useState("+91");
@@ -240,10 +223,11 @@ export default function GetInvolvedPage() {
   };
 
   useEffect(() => {
+    let active = true;
     const fetchCats = async () => {
       try {
         const res = await getPublicVolunteerCategories();
-        if (res && res.length > 0) {
+        if (active && res && res.length > 0) {
           setCategories(res);
           setSelectedCategoryId(res[0]._id);
           setSelectedRole(res[0].title);
@@ -252,10 +236,25 @@ export default function GetInvolvedPage() {
       } catch (err) {
         console.error("Error fetching volunteer categories:", err);
       } finally {
-        setCategoriesLoading(false);
+        if (active) setCategoriesLoading(false);
       }
     };
+
+    const fetchCms = async () => {
+      try {
+        const page = await getCmsPageBySlug("get-involved");
+        if (active && page) setCmsPage(page);
+      } catch (err) {
+        console.error("Error fetching CMS for get-involved:", err);
+      }
+    };
+
     fetchCats();
+    fetchCms();
+
+    return () => {
+      active = false;
+    };
   }, []);
 
   // When a role card is clicked, update state and scroll/react to the form
@@ -310,17 +309,34 @@ export default function GetInvolvedPage() {
     }
   };
 
+  const heroTitle = cmsPage?.title || "Your time is the most valuable thing you can give";
+  const heroSubtitle =
+    cmsPage?.subtitle ||
+    "We do not need your money. We need your hands, your mind, and your heart. Whether you have 2 hours or 2 years — there is a place for you here.";
+  const heroBannerUrl = cmsPage?.bannerImage ? getImageUrl(cmsPage.bannerImage) : "";
+
+  const impactNumbers =
+    (cmsPage?.sections?.find((s) => s.key === "impact_numbers")?.items as typeof IMPACT_NUMBERS) ||
+    IMPACT_NUMBERS;
+
+  const faqs =
+    (cmsPage?.sections?.find((s) => s.key === "faqs")?.items as typeof FAQS) || FAQS;
+
   return (
     <div className="min-h-screen bg-white">
       {/* ── Hero ── */}
-      <section className="relative min-h-[75vh] flex items-center overflow-hidden">
-        <div className="absolute inset-0">
-          <img
-            src={IMAGES.hero}
-            alt="Volunteers working together in community"
-            className="w-full h-full object-cover"
-          />
-          <div className="absolute inset-0 bg-gradient-to-r from-[#0f2347]/90 via-[#0f2347]/75 to-[#0f2347]/50" />
+      <section className="relative min-h-[70vh] flex items-center overflow-hidden">
+        <div className="absolute inset-0 bg-[#0B1120]">
+          {heroBannerUrl ? (
+            <img
+              src={heroBannerUrl}
+              alt="Volunteers working together in community"
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <div className="w-full h-full bg-gradient-to-br from-[#0f2347] via-[#102a5c] to-[#0B1120]" />
+          )}
+          <div className="absolute inset-0 bg-gradient-to-r from-[#0f2347]/95 via-[#0f2347]/85 to-[#0f2347]/60" />
         </div>
 
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 w-full">
@@ -330,12 +346,10 @@ export default function GetInvolvedPage() {
               Join 200+ Volunteers Across India
             </div>
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-semibold text-white leading-[1.1] mb-6">
-              Your time is the most valuable thing you can give
+              {heroTitle}
             </h1>
             <p className="text-lg text-gray-300 leading-relaxed mb-8 max-w-lg">
-              We do not need your money. We need your hands, your mind, and your
-              heart. Whether you have 2 hours or 2 years — there is a place for
-              you here.
+              {heroSubtitle}
             </p>
             <div className="flex flex-wrap gap-4">
               <a
@@ -361,7 +375,7 @@ export default function GetInvolvedPage() {
       <section className="bg-[#0f2347] py-14 -mt-1">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12">
-            {IMPACT_NUMBERS.map((stat, i) => (
+            {impactNumbers.map((stat, i) => (
               <div key={i} className="text-center">
                 <div className="text-3xl sm:text-4xl font-bold text-white mb-1">
                   {stat.number}
@@ -375,6 +389,7 @@ export default function GetInvolvedPage() {
           </div>
         </div>
       </section>
+
 
       {/* ── Selection Part & Volunteer Form (Always Open) ── */}
       <section id="select-and-apply" className="py-16 sm:py-24 bg-white scroll-mt-8">
@@ -800,12 +815,27 @@ export default function GetInvolvedPage() {
               </div>
             </div>
             <div className="relative">
-              <div className="rounded-2xl overflow-hidden">
-                <img
-                  src={IMAGES.group}
-                  alt="Volunteers celebrating together"
-                  className="w-full h-[500px] object-cover"
-                />
+              <div className="rounded-2xl overflow-hidden bg-gradient-to-br from-[#0f2347] to-[#1a3a6b] p-8 sm:p-12 text-white min-h-[400px] flex flex-col justify-between border border-white/10 shadow-xl">
+                <div>
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#E8542A]/20 text-[#E8542A] text-xs font-bold uppercase tracking-wider mb-4">
+                    Community Movement
+                  </div>
+                  <h3 className="text-2xl sm:text-3xl font-bold leading-tight mb-4">
+                    Hands joined together in service of Uttarakhand.
+                  </h3>
+                  <p className="text-gray-300 text-sm leading-relaxed max-w-sm">
+                    From college classrooms to medical camps, our volunteers are the living, breathing heart of every initiative.
+                  </p>
+                </div>
+                <div className="flex items-center gap-4 pt-6 border-t border-white/10">
+                  <div className="w-11 h-11 rounded-xl bg-[#E8542A] flex items-center justify-center text-white font-bold text-sm">
+                    SIF
+                  </div>
+                  <div>
+                    <p className="font-bold text-sm">Seva India Collective</p>
+                    <p className="text-xs text-gray-400">Join our next ground initiative</p>
+                  </div>
+                </div>
               </div>
               <div className="absolute -bottom-6 -left-6 bg-white rounded-xl shadow-xl p-5 max-w-[260px] border border-gray-100">
                 <div className="flex items-center gap-3 mb-2">
@@ -835,39 +865,53 @@ export default function GetInvolvedPage() {
           />
 
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {ACTIVE_VOLUNTEERS.map((v, i) => (
-              <div
-                key={i}
-                className="group bg-[#f8f9fc] rounded-2xl overflow-hidden border border-gray-100 hover:border-[#E8542A]/20 hover:shadow-lg transition-all"
-              >
-                <div className="relative h-56 overflow-hidden">
-                  <img
-                    src={v.image}
-                    alt={v.name}
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                  />
-                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4">
-                    <p className="text-white font-bold text-lg">{v.name}</p>
-                    <p className="text-white/80 text-xs">{v.role}</p>
+            {ACTIVE_VOLUNTEERS.map((v, i) => {
+              const avatar = v.image ? getImageUrl(v.image) : "";
+              return (
+                <div
+                  key={i}
+                  className="group bg-[#f8f9fc] rounded-2xl overflow-hidden border border-gray-100 hover:border-[#E8542A]/20 hover:shadow-lg transition-all"
+                >
+                  <div className="relative h-44 bg-gradient-to-br from-[#0f2347] to-[#1a3a6b] flex items-center justify-center overflow-hidden">
+                    {avatar ? (
+                      <img
+                        src={avatar}
+                        alt={v.name}
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                      />
+                    ) : (
+                      <div className="flex flex-col items-center justify-center text-center p-4">
+                        <div className="w-14 h-14 rounded-full bg-white/10 border border-white/20 flex items-center justify-center text-white mb-2 font-bold text-lg">
+                          {v.name.split(" ").map((n) => n[0]).join("")}
+                        </div>
+                        <span className="text-[10px] text-amber-400 font-bold uppercase tracking-wider">
+                          Volunteer
+                        </span>
+                      </div>
+                    )}
+                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4">
+                      <p className="text-white font-bold text-base">{v.name}</p>
+                      <p className="text-white/80 text-xs">{v.role}</p>
+                    </div>
+                  </div>
+                  <div className="p-5">
+                    <div className="flex items-center gap-4 mb-3 text-xs text-gray-500">
+                      <span className="flex items-center gap-1">
+                        <Calendar size={12} />
+                        Since {v.since}
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <Clock size={12} />
+                        {v.hours} hours
+                      </span>
+                    </div>
+                    <p className="text-sm text-gray-600 leading-relaxed italic">
+                      &ldquo;{v.quote}&rdquo;
+                    </p>
                   </div>
                 </div>
-                <div className="p-5">
-                  <div className="flex items-center gap-4 mb-3 text-xs text-gray-500">
-                    <span className="flex items-center gap-1">
-                      <Calendar size={12} />
-                      Since {v.since}
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <Clock size={12} />
-                      {v.hours} hours
-                    </span>
-                  </div>
-                  <p className="text-sm text-gray-600 leading-relaxed italic">
-                    &ldquo;{v.quote}&rdquo;
-                  </p>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </section>
@@ -881,7 +925,7 @@ export default function GetInvolvedPage() {
           />
 
           <div className="space-y-3">
-            {FAQS.map((faq, i) => (
+            {faqs.map((faq, i) => (
               <div
                 key={i}
                 className="bg-white rounded-xl border border-gray-100 overflow-hidden"

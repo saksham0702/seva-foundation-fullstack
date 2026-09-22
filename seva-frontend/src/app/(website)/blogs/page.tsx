@@ -136,14 +136,9 @@ export default function BlogListingPage() {
     <div className="min-h-screen bg-white">
       {/* ── Hero ── */}
       <section className="relative min-h-[50vh] flex items-center overflow-hidden">
-        <div className="absolute inset-0">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="https://images.unsplash.com/photo-1509099836639-18ba1795216d?w=1600&q=85"
-            alt="Children smiling together"
-            className="w-full h-full object-cover"
-          />
+        <div className="absolute inset-0 bg-gradient-to-br from-[#0f2347] via-[#1a3a6b] to-[#0f2347]">
           <div className="absolute inset-0 bg-gradient-to-b from-[#0f2347]/90 via-[#0f2347]/85 to-[#0f2347]/95" />
+          <div className="absolute top-0 right-1/4 w-96 h-96 bg-[#E8542A]/10 rounded-full blur-3xl pointer-events-none" />
         </div>
 
         <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-20 w-full text-center">

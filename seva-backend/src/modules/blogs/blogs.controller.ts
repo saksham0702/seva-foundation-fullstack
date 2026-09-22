@@ -23,6 +23,14 @@ const createBlog = asyncHandler(async (req: Request, res: Response) => {
     }
   }
 
+  // Support title/name and metaDescription/description interoperability
+  if (!req.body.name && req.body.title) {
+    req.body.name = req.body.title;
+  }
+  if (!req.body.description && (req.body.metaDescription || req.body.excerpt)) {
+    req.body.description = req.body.metaDescription || req.body.excerpt;
+  }
+
   // Generate slug if missing
   if (!req.body.slug && req.body.name) {
     req.body.slug = req.body.name
@@ -95,6 +103,14 @@ const updateBlog = asyncHandler(async (req: Request, res: Response) => {
     } catch {
       req.body.faqs = [];
     }
+  }
+
+  // Support title/name and metaDescription/description interoperability
+  if (!req.body.name && req.body.title) {
+    req.body.name = req.body.title;
+  }
+  if (!req.body.description && (req.body.metaDescription || req.body.excerpt)) {
+    req.body.description = req.body.metaDescription || req.body.excerpt;
   }
 
   const result = await BlogService.updateBlog(id, req.body);

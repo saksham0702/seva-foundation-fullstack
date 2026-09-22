@@ -21,15 +21,8 @@ const items = [
   { icon: LayoutDashboard, label: "Dashboard", href: "/dashboard/certificates/dashboard" },
   { icon: FileText, label: "Manage Certificates", href: "/dashboard/certificates/manage" },
   { icon: FilePlus2, label: "Generate Certificate", href: "/dashboard/certificates/generate" },
-  { icon: LayoutTemplate, label: "Certificate Builder", href: "/dashboard/certificates/builder" },
-  { icon: Award, label: "Certificate Templates", href: "/dashboard/certificates/templates" },
   { icon: ScanSearch, label: "Verification Registry", href: "/dashboard/certificates/verification-registry" },
-  { icon: Layers, label: "Bulk Generator", href: "/dashboard/certificates/bulk-generator" },
-  { icon: History, label: "Certificate Requests", href: "/dashboard/certificates/requests" },
   { icon: PenLine, label: "Digital Signatures", href: "/dashboard/certificates/digital-signatures" },
-  { icon: Mail, label: "Email & WhatsApp", href: "/dashboard/certificates/email-whatsapp" },
-  { icon: PieChart, label: "Reports & Analytics", href: "/dashboard/certificates/reports-analytics" },
-  { icon: Settings, label: "Certificate Settings", href: "/dashboard/certificates/settings" },
 ];
 
 export default function ModuleSidebar() {

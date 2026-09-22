@@ -57,17 +57,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(true); // true on mount while we check session
 
-  // ── Rehydrate session from cookie on every page load ──────────────────────
+  // ── Rehydrate session from cookie/token on every page load ────────────────
   const refreshUser = useCallback(async () => {
     try {
       const res = await authAPI.getProfile();
       if (res?.success && res?.data) {
         setUser(res.data as AuthUser);
       } else {
+        if (typeof window !== "undefined") {
+          localStorage.removeItem("access_token");
+        }
         setUser(null);
       }
     } catch {
-      // 401 — cookie expired or not present
+      // 401 — session expired or not present
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("access_token");
+      }
       setUser(null);
     }
   }, []);
@@ -82,6 +88,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
       } catch {
         // Not logged in — that's fine
+        if (typeof window !== "undefined") {
+          localStorage.removeItem("access_token");
+        }
       } finally {
         if (mounted) setIsLoading(false);
       }
@@ -95,6 +104,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = async (email: string, password: string) => {
     const res = await authAPI.login({ email, password });
     if (res?.success && res?.data?.user) {
+      if (res.data.token && typeof window !== "undefined") {
+        localStorage.setItem("access_token", res.data.token);
+      }
       setUser(res.data.user as AuthUser);
     } else {
       throw new Error(res?.message || "Login failed");
@@ -108,6 +120,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch {
       // ignore network errors on logout
     } finally {
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("access_token");
+      }
       setUser(null);
       router.push("/login");
     }

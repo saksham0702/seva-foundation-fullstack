@@ -87,11 +87,14 @@ export const uploadCmsImageFile = async (file: File): Promise<string> => {
 
 const buildFormData = (contentType: CmsContentType, form: CmsForm): FormData => {
   const formData = new FormData();
+  formData.append("type", contentType);
+  formData.append("name", form.title);
   formData.append("title", form.title);
+  formData.append("description", form.metaDescription || form.title);
   if (form.slug) formData.append("slug", form.slug);
   formData.append("category", form.category || "General");
-  formData.append("content", form.content);
-  formData.append("status", form.status);
+  formData.append("content", form.content || "");
+  formData.append("status", form.status || "draft");
 
   if (form.metaTitle) formData.append("metaTitle", form.metaTitle);
   if (form.metaDescription) formData.append("metaDescription", form.metaDescription);
@@ -111,6 +114,9 @@ const buildFormData = (contentType: CmsContentType, form: CmsForm): FormData => 
     if (form.eventOrganizer) formData.append("eventOrganizer", form.eventOrganizer);
   } else if (contentType === "news") {
     if (form.newsSource) formData.append("newsSource", form.newsSource);
+    if (form.authorName) formData.append("authorName", form.authorName);
+    if (form.readTime) formData.append("readTime", form.readTime);
+  } else if (contentType === "blog") {
     if (form.authorName) formData.append("authorName", form.authorName);
     if (form.readTime) formData.append("readTime", form.readTime);
   }
@@ -140,7 +146,7 @@ const mapBackendToCmsItem = (backendItem: any, contentType: CmsContentType): Cms
   return {
     id: backendItem._id || backendItem.id,
     _id: backendItem._id || backendItem.id,
-    type: contentType,
+    type: backendItem.type || contentType,
     title: backendItem.title || backendItem.name || "",
     slug: backendItem.slug || "",
     status: backendItem.status === "active" ? "published" : backendItem.status || "draft",
@@ -167,7 +173,9 @@ const mapBackendToCmsItem = (backendItem: any, contentType: CmsContentType): Cms
 
 export const cmsAPI = {
   getItems: async (contentType: CmsContentType): Promise<CmsItem[]> => {
-    const res = await axiosInstance.get(endpoint.blogs.getAll);
+    const res = await axiosInstance.get(endpoint.blogs.getAll, {
+      params: { type: contentType },
+    });
     const list = res.data?.data || res.data || [];
     return list.map((item: any) => mapBackendToCmsItem(item, contentType));
   },

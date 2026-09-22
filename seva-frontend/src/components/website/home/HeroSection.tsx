@@ -19,11 +19,14 @@ import {
   Sparkles,
 } from "lucide-react";
 
-const CAMPAIGNS = [
+import { getCampaigns } from "@/app/api/campaign";
+import { getImageUrl } from "@/lib/image";
+
+const DEFAULT_HERO_CAMPAIGNS = [
   {
-    id: 1,
-    image:
-      "https://images.unsplash.com/photo-1532629345422-7515f3d16bb6?w=1400&q=85",
+    id: "1",
+    slug: "help-komal-fight-blood-cancer",
+    image: "",
     category: "Medical Aid",
     title: "Help Komal Fight Blood Cancer",
     raised: 342000,
@@ -34,9 +37,9 @@ const CAMPAIGNS = [
     location: "AIIMS, New Delhi",
   },
   {
-    id: 2,
-    image:
-      "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=1400&q=85",
+    id: "2",
+    slug: "books-uniforms-hill-children",
+    image: "",
     category: "Education",
     title: "Books & Uniforms for 200 Hill Children",
     raised: 178000,
@@ -47,9 +50,9 @@ const CAMPAIGNS = [
     location: "Tehri Garhwal, Uttarakhand",
   },
   {
-    id: 3,
-    image:
-      "https://images.unsplash.com/photo-1547683905-f686c993aae5?w=1400&q=85",
+    id: "3",
+    slug: "rebuild-homes-after-cloudburst",
+    image: "",
     category: "Disaster Relief",
     title: "Rebuild Homes After Cloudburst",
     raised: 890000,
@@ -58,19 +61,6 @@ const CAMPAIGNS = [
     daysLeft: 8,
     urgent: true,
     location: "Chamoli, Uttarakhand",
-  },
-  {
-    id: 4,
-    image:
-      "https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?w=1400&q=85",
-    category: "Social Welfare",
-    title: "Winter Shelter for 500 Homeless",
-    raised: 125000,
-    goal: 300000,
-    donors: 412,
-    daysLeft: 45,
-    urgent: false,
-    location: "Dehradun, Uttarakhand",
   },
 ];
 
@@ -98,13 +88,58 @@ const fmt = (n: number) =>
     : `₹${n.toLocaleString("en-IN")}`;
 
 export default function HeroSection() {
+  const [campaignsList, setCampaignsList] = useState<any[]>([]);
   const [current, setCurrent] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const [hoveredCard, setHoveredCard] = useState<number | null>(null);
 
-  const next = useCallback(() => {
-    setCurrent((p) => (p + 1) % CAMPAIGNS.length);
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      try {
+        const data = await getCampaigns();
+        if (active && Array.isArray(data) && data.length > 0) {
+          const activeOnly = data
+            .filter((c) => !c.isDeleted && c.status !== "completed" && (c.status === "active" || !c.status))
+            .sort((a, b) => {
+              const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+              const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+              return dateB - dateA;
+            })
+            .slice(0, 3)
+            .map((c) => ({
+              id: c._id,
+              slug: c.slug,
+              image: c.images?.[0] || "",
+              category: typeof c.category === "object" ? (c.category as any)?.name : "General",
+              title: c.name,
+              raised: c.raisedAmount || 0,
+              goal: c.goal || 100000,
+              donors: c.donorCount || 0,
+              daysLeft: c.endDate
+                ? Math.max(1, Math.ceil((new Date(c.endDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
+                : 30,
+              urgent: c.urgent || false,
+              location: c.location || "Uttarakhand, India",
+            }));
+          if (activeOnly.length > 0) {
+            setCampaignsList(activeOnly);
+          }
+        }
+      } catch (err) {
+        // Fallback to DEFAULT_HERO_CAMPAIGNS
+      }
+    })();
+    return () => {
+      active = false;
+    };
   }, []);
+
+  const featuredCampaigns = campaignsList.length > 0 ? campaignsList : DEFAULT_HERO_CAMPAIGNS;
+
+  const next = useCallback(() => {
+    setCurrent((p) => (p + 1) % featuredCampaigns.length);
+  }, [featuredCampaigns.length]);
 
   useEffect(() => {
     if (isPaused) return;
@@ -112,10 +147,10 @@ export default function HeroSection() {
     return () => clearInterval(timer);
   }, [isPaused, next]);
 
-  const campaign = CAMPAIGNS[current];
+  const campaign = featuredCampaigns[current] || featuredCampaigns[0];
   const pct = Math.min(
     100,
-    Math.round((campaign.raised / campaign.goal) * 100),
+    Math.round(((campaign.raised || 0) / (campaign.goal || 1)) * 100),
   );
 
   return (
@@ -224,40 +259,54 @@ export default function HeroSection() {
               onMouseLeave={() => setIsPaused(false)}
             >
               {/* Image */}
-              <div className="relative h-64 sm:h-80">
-                {CAMPAIGNS.map((c, i) => (
-                  <div
-                    key={c.id}
-                    className={`absolute inset-0 transition-opacity duration-700 ${
-                      i === current ? "opacity-100" : "opacity-0"
-                    }`}
-                  >
-                    <img
-                      src={c.image}
-                      alt={c.title}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                ))}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+              <div className="relative h-64 sm:h-80 bg-slate-900">
+                {featuredCampaigns.map((c, i) => {
+                  const resolvedImg = getImageUrl(c.image);
+                  return (
+                    <div
+                      key={c.id}
+                      className={`absolute inset-0 transition-opacity duration-700 ${
+                        i === current ? "opacity-100" : "opacity-0"
+                      }`}
+                    >
+                      {resolvedImg ? (
+                        <img
+                          src={resolvedImg}
+                          alt={c.title}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-gradient-to-br from-[#0a1628] via-[#1a3a6b] to-[#E8542A]/30 flex flex-col items-center justify-center p-6 text-center">
+                          <span className="text-white/40 text-xs uppercase tracking-widest font-semibold mb-2">
+                            {c.category}
+                          </span>
+                          <span className="text-white font-bold text-lg sm:text-xl max-w-md">
+                            {c.title}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
 
                 {/* Urgent badge */}
                 {campaign.urgent && (
-                  <span className="absolute top-4 left-4 bg-[#E8542A] text-white text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-full flex items-center gap-1.5">
+                  <span className="absolute top-4 left-4 bg-[#E8542A] text-white text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-full flex items-center gap-1.5 z-10">
                     <Clock size={10} />
                     Urgent — {campaign.daysLeft} days left
                   </span>
                 )}
 
                 {/* Category */}
-                <span className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm text-[#0f2347] text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-full">
+                <span className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm text-[#0f2347] text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-full z-10">
                   {campaign.category}
                 </span>
 
                 {/* Pause/Play */}
                 <button
                   onClick={() => setIsPaused(!isPaused)}
-                  className="absolute bottom-4 right-4 w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center text-white hover:bg-white/30 transition-colors"
+                  className="absolute bottom-4 right-4 w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center text-white hover:bg-white/30 transition-colors z-10"
                 >
                   {isPaused ? (
                     <Play size={16} fill="white" />
@@ -280,7 +329,7 @@ export default function HeroSection() {
                     </div>
                   </div>
                   <Link
-                    href={`/campaigns/${campaign.id}`}
+                    href={`/campaigns/${campaign.slug || campaign.id}`}
                     className="flex-shrink-0 w-12 h-12 rounded-xl bg-[#0f2347] hover:bg-[#1a3a6b] flex items-center justify-center text-white transition-colors"
                   >
                     <ArrowUpRight size={20} />
@@ -299,7 +348,7 @@ export default function HeroSection() {
                   </div>
                   <p className="text-xs text-gray-400 mb-3">
                     raised of {fmt(campaign.goal)} goal ·{" "}
-                    {campaign.donors.toLocaleString("en-IN")} donors
+                    {(campaign.donors || 0).toLocaleString("en-IN")} donors
                   </p>
                   <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden">
                     <div
@@ -311,7 +360,7 @@ export default function HeroSection() {
 
                 {/* Donate CTA */}
                 <Link
-                  href={`/donate?campaign=${campaign.id}`}
+                  href={`/donate?campaign=${campaign.slug || campaign.id}`}
                   className="block w-full text-center bg-[#E8542A] hover:bg-[#c9431d] text-white font-bold py-3.5 rounded-xl text-sm transition-colors shadow-lg shadow-orange-100"
                 >
                   Donate to This Campaign
@@ -320,42 +369,57 @@ export default function HeroSection() {
             </div>
 
             {/* Thumbnail strip */}
-            <div className="flex gap-3 mt-4 justify-center">
-              {CAMPAIGNS.map((c, i) => (
-                <button
-                  key={c.id}
-                  onClick={() => setCurrent(i)}
-                  onMouseEnter={() => setHoveredCard(i)}
-                  onMouseLeave={() => setHoveredCard(null)}
-                  className={`relative w-20 h-14 rounded-xl overflow-hidden transition-all duration-300 ${
-                    i === current
-                      ? "ring-2 ring-[#E8542A] ring-offset-2 ring-offset-[#0a1628] scale-105"
-                      : "opacity-50 hover:opacity-80"
-                  }`}
-                >
-                  <img
-                    src={c.image}
-                    alt=""
-                    className="w-full h-full object-cover"
-                  />
-                  {hoveredCard === i && i !== current && (
-                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-                      <span className="text-[9px] font-bold text-white uppercase tracking-wider">
-                        {c.category}
-                      </span>
-                    </div>
-                  )}
-                </button>
-              ))}
-            </div>
+            {featuredCampaigns.length > 1 && (
+              <div className="flex gap-3 mt-4 justify-center">
+                {featuredCampaigns.map((c, i) => {
+                  const resolvedThumb = getImageUrl(c.image);
+                  return (
+                    <button
+                      key={c.id}
+                      onClick={() => setCurrent(i)}
+                      onMouseEnter={() => setHoveredCard(i)}
+                      onMouseLeave={() => setHoveredCard(null)}
+                      className={`relative w-20 h-14 rounded-xl overflow-hidden transition-all duration-300 ${
+                        i === current
+                          ? "ring-2 ring-[#E8542A] ring-offset-2 ring-offset-[#0a1628] scale-105"
+                          : "opacity-50 hover:opacity-80"
+                      }`}
+                    >
+                      {resolvedThumb ? (
+                        <img
+                          src={resolvedThumb}
+                          alt=""
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-[#1a3a6b] flex items-center justify-center p-1 text-center">
+                          <span className="text-[9px] font-bold text-white uppercase tracking-wider line-clamp-2">
+                            {c.category}
+                          </span>
+                        </div>
+                      )}
+                      {hoveredCard === i && i !== current && (
+                        <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                          <span className="text-[9px] font-bold text-white uppercase tracking-wider">
+                            {c.category}
+                          </span>
+                        </div>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
 
             {/* Slide counter */}
-            <div className="text-center mt-3">
-              <span className="text-white/30 text-xs font-semibold tabular-nums">
-                {String(current + 1).padStart(2, "0")} /{" "}
-                {String(CAMPAIGNS.length).padStart(2, "0")}
-              </span>
-            </div>
+            {featuredCampaigns.length > 1 && (
+              <div className="text-center mt-3">
+                <span className="text-white/30 text-xs font-semibold tabular-nums">
+                  {String(current + 1).padStart(2, "0")} /{" "}
+                  {String(featuredCampaigns.length).padStart(2, "0")}
+                </span>
+              </div>
+            )}
           </div>
         </div>
       </div>

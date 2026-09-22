@@ -1,6 +1,10 @@
-import { CmsPageModel, ICmsPage } from "./cms.model";
+import dotenv from "dotenv";
+import { connectDB } from "../database/db";
+import { CmsPageModel } from "../modules/cms/cms.model";
 
-const DEFAULT_PAGES: Partial<ICmsPage>[] = [
+dotenv.config();
+
+const DEFAULT_PAGES = [
   {
     pageSlug: "about",
     pageName: "About Us",
@@ -339,85 +343,34 @@ const DEFAULT_PAGES: Partial<ICmsPage>[] = [
   },
 ];
 
-const seedDefaultsIfEmpty = async () => {
-  const count = await CmsPageModel.countDocuments({ isDeleted: false });
-  if (count === 0) {
+async function seedCms() {
+  try {
+    await connectDB();
+    console.log("Connected to MongoDB for CMS seeding");
+
+    let count = 0;
     for (const page of DEFAULT_PAGES) {
-      await CmsPageModel.create({
-        ...page,
-        isPublished: true,
-        isDeleted: false,
-      });
+      await CmsPageModel.findOneAndUpdate(
+        { pageSlug: page.pageSlug },
+        {
+          $set: {
+            ...page,
+            isPublished: true,
+            isDeleted: false,
+          },
+        },
+        { upsert: true, new: true, setDefaultsOnInsert: true }
+      );
+      console.log(`✓ Seeded CMS page: ${page.pageSlug} (${page.pageName})`);
+      count++;
     }
+
+    console.log(`\nSuccessfully seeded ${count} CMS pages into MongoDB.`);
+    process.exit(0);
+  } catch (err) {
+    console.error("Failed to seed CMS pages:", err);
+    process.exit(1);
   }
-};
+}
 
-const getAllPages = async () => {
-  await seedDefaultsIfEmpty();
-  return CmsPageModel.find({ isDeleted: false })
-    .populate("updatedBy", "name email")
-    .sort({ createdAt: 1 });
-};
-
-const getPageBySlug = async (slug: string) => {
-  const cleanSlug = slug.toLowerCase().trim();
-  const page = await CmsPageModel.findOne({ pageSlug: cleanSlug, isDeleted: false });
-  return page;
-};
-
-const savePage = async (slug: string, payload: Partial<ICmsPage>, userId?: string) => {
-  const cleanSlug = slug.toLowerCase().trim();
-
-  const updateData: Record<string, any> = {
-    ...payload,
-    pageSlug: cleanSlug,
-    pageName: payload.pageName || cleanSlug.replace(/-/g, " ").replace(/\b\w/g, (l) => l.toUpperCase()),
-  };
-
-  if (userId) {
-    updateData.updatedBy = userId;
-  }
-
-  const result = await CmsPageModel.findOneAndUpdate(
-    { pageSlug: cleanSlug, isDeleted: false },
-    { $set: updateData },
-    { new: true, upsert: true, setDefaultsOnInsert: true }
-  );
-
-  return result;
-};
-
-const deleteSection = async (slug: string, sectionKey: string, userId?: string) => {
-  const cleanSlug = slug.toLowerCase().trim();
-  const page = await CmsPageModel.findOne({ pageSlug: cleanSlug, isDeleted: false });
-  if (!page) {
-    return null;
-  }
-
-  page.sections = (page.sections || []).filter(
-    (sec: any) => sec.key?.toLowerCase() !== sectionKey.toLowerCase()
-  );
-
-  if (userId) {
-    page.updatedBy = userId as any;
-  }
-
-  await page.save();
-  return page;
-};
-
-const deletePage = async (slug: string) => {
-  return CmsPageModel.findOneAndUpdate(
-    { pageSlug: slug.toLowerCase().trim() },
-    { $set: { isDeleted: true } },
-    { new: true }
-  );
-};
-
-export const CmsService = {
-  getAllPages,
-  getPageBySlug,
-  savePage,
-  deleteSection,
-  deletePage,
-};
+seedCms();

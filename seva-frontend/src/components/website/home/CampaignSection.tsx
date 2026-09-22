@@ -8,7 +8,7 @@ import { getCampaigns, type Campaign } from "@/app/api/campaign";
 import { getDonations, type Donation } from "@/app/api/donation";
 import { toCampaignCardData } from "@/lib/campaign-stats";
 
-const FEATURED_COUNT = 6;
+const FEATURED_COUNT = 3;
 
 export default function CampaignsSection() {
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
@@ -32,7 +32,22 @@ export default function CampaignsSection() {
             campaignsResult.status === "fulfilled" &&
             Array.isArray(campaignsResult.value)
           ) {
-            setCampaigns(campaignsResult.value.slice(0, FEATURED_COUNT));
+            // Filter: only active campaigns that are not completed and not deleted, sorted by newest
+            const activeCampaigns = campaignsResult.value
+              .filter(
+                (c) =>
+                  !c.isDeleted &&
+                  c.status !== "completed" &&
+                  (c.status === "active" || !c.status)
+              )
+              .sort((a, b) => {
+                const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+                const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+                return dateB - dateA;
+              })
+              .slice(0, FEATURED_COUNT);
+
+            setCampaigns(activeCampaigns);
           } else if (campaignsResult.status === "rejected") {
             setError("Couldn't load campaigns right now.");
           }
