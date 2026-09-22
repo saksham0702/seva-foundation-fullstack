@@ -28,6 +28,7 @@ import {
 import { getImageUrl } from "@/lib/image";
 import { useToast } from "@/lib/toast";
 import { PermissionGuard } from "@/components/dashboard/PermissionGuard";
+import { Portal } from "@/components/shared/Portal";
 
 const MAX_IMAGE_SIZE_BYTES = 3 * 1024 * 1024; // 3MB maximum per image
 
@@ -772,43 +773,46 @@ export default function GalleryDashboardPage() {
 
         {/* ── Lightbox Preview ── */}
         {lightboxImage && (
-          <div
-            className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4 backdrop-blur-sm"
-            onClick={() => setLightboxImage(null)}
-          >
-            <button
-              onClick={() => setLightboxImage(null)}
-              className="absolute top-5 right-5 p-2 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors"
-            >
-              <X size={20} />
-            </button>
-
+          <Portal>
             <div
-              className="max-w-4xl w-full max-h-[90vh] flex flex-col items-center"
-              onClick={(e) => e.stopPropagation()}
+              className="fixed inset-0 z-[99999] bg-black/90 flex items-center justify-center p-4 backdrop-blur-sm"
+              onClick={() => setLightboxImage(null)}
             >
-              <img
-                src={getImageUrl(lightboxImage.imageUrl)}
-                alt={lightboxImage.title || "Preview"}
-                className="max-h-[75vh] w-auto object-contain rounded-xl shadow-2xl border border-white/10"
-              />
-              <div className="mt-4 text-center text-white">
-                <h3 className="text-base font-semibold">
-                  {lightboxImage.title || "Photo Preview"}
-                </h3>
-                {lightboxImage.caption && (
-                  <p className="text-xs text-muted mt-1 max-w-xl">
-                    {lightboxImage.caption}
-                  </p>
-                )}
+              <button
+                onClick={() => setLightboxImage(null)}
+                className="absolute top-5 right-5 p-2 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors cursor-pointer"
+              >
+                <X size={20} />
+              </button>
+
+              <div
+                className="max-w-4xl w-full max-h-[90vh] flex flex-col items-center"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <img
+                  src={getImageUrl(lightboxImage.imageUrl)}
+                  alt={lightboxImage.title || "Preview"}
+                  className="max-h-[75vh] w-auto object-contain rounded-xl shadow-2xl border border-white/10"
+                />
+                <div className="mt-4 text-center text-white">
+                  <h3 className="text-base font-semibold">
+                    {lightboxImage.title || "Photo Preview"}
+                  </h3>
+                  {lightboxImage.caption && (
+                    <p className="text-xs text-muted mt-1 max-w-xl">
+                      {lightboxImage.caption}
+                    </p>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
+          </Portal>
         )}
 
         {/* ── Edit Image Modal ── */}
         {editingItem && (
-          <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
+          <Portal>
+            <div className="fixed inset-0 z-[99999] bg-black/75 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
             <div className="bg-panel rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-5 text-white border border-border animate-in fade-in">
               <div className="flex items-center justify-between pb-3 border-b border-border">
                 <div className="flex items-center gap-2">
@@ -916,42 +920,45 @@ export default function GalleryDashboardPage() {
               </form>
             </div>
           </div>
+        </Portal>
         )}
 
         {/* ── Delete Confirmation Modal ── */}
         {deletingItem && (
-          <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
-            <div className="bg-panel rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4 text-white border border-border">
-              <div className="w-10 h-10 rounded-xl bg-red-500/10 text-red-400 border border-red-500/20 flex items-center justify-center">
-                <Trash2 size={20} />
-              </div>
-              <div>
-                <h3 className="text-base font-semibold text-white">
-                  Delete Photo from Gallery?
-                </h3>
-                <p className="text-xs text-muted mt-1 leading-relaxed">
-                  This photo will be soft-deleted and immediately hidden from the public website gallery.
-                </p>
-              </div>
+          <Portal>
+            <div className="fixed inset-0 z-[99999] bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
+              <div className="bg-panel rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4 text-white border border-border my-auto">
+                <div className="w-10 h-10 rounded-xl bg-red-500/10 text-red-400 border border-red-500/20 flex items-center justify-center">
+                  <Trash2 size={20} />
+                </div>
+                <div>
+                  <h3 className="text-base font-semibold text-white">
+                    Delete Photo from Gallery?
+                  </h3>
+                  <p className="text-xs text-muted mt-1 leading-relaxed">
+                    This photo will be soft-deleted and immediately hidden from the public website gallery.
+                  </p>
+                </div>
 
-              <div className="flex items-center justify-end gap-2 pt-4 border-t border-border">
-                <button
-                  onClick={() => setDeletingItem(null)}
-                  disabled={isDeleting}
-                  className="px-4 py-2 text-xs font-semibold text-muted hover:text-white rounded-xl transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleDeleteConfirm}
-                  disabled={isDeleting}
-                  className="px-4 py-2 text-xs font-semibold text-white bg-red-600 hover:bg-red-700 rounded-xl transition-colors disabled:opacity-50"
-                >
-                  {isDeleting ? "Deleting..." : "Delete Photo"}
-                </button>
+                <div className="flex items-center justify-end gap-2 pt-4 border-t border-border">
+                  <button
+                    onClick={() => setDeletingItem(null)}
+                    disabled={isDeleting}
+                    className="px-4 py-2 text-xs font-semibold text-muted hover:text-white rounded-xl transition-colors cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleDeleteConfirm}
+                    disabled={isDeleting}
+                    className="px-4 py-2 text-xs font-semibold text-white bg-red-600 hover:bg-red-700 rounded-xl transition-colors disabled:opacity-50 cursor-pointer"
+                  >
+                    {isDeleting ? "Deleting..." : "Delete Photo"}
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
+          </Portal>
         )}
       </div>
     </PermissionGuard>

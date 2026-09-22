@@ -17,7 +17,7 @@ export default function DashboardLayout({
           <main className="flex-1 overflow-auto py-6 px-6 pb-8 bg-navy relative">
             {/* Subtle top glow effect */}
             <div className="absolute top-0 left-0 right-0 h-64 bg-gradient-to-b from-gold/[0.03] to-transparent pointer-events-none" />
-            <div className="relative z-10">
+            <div className="relative">
               {children}
             </div>
           </main>

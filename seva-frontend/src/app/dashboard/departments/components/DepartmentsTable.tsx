@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Users } from "lucide-react";
+import { Portal } from "@/components/shared/Portal";
 import { useDepartments, Department } from "../DepartmentsProvider";
 
 // ─── Drawer ───────────────────────────────────────────────────────────────────
@@ -61,9 +62,9 @@ function DeptFormDrawer() {
   }
 
   return (
-    <>
-      <div className="fixed inset-0 bg-black/20 z-40" onClick={closeDrawer} />
-      <div className="fixed right-0 top-0 bottom-0 w-full max-w-md bg-white z-50 shadow-2xl flex flex-col">
+    <Portal>
+      <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[99998]" onClick={closeDrawer} />
+      <div className="fixed right-0 top-0 bottom-0 w-full max-w-md bg-white z-[99999] shadow-2xl flex flex-col">
         <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100 shrink-0">
           <div>
             <p className="text-base font-bold text-black">
@@ -138,7 +139,7 @@ function DeptFormDrawer() {
           </div>
         </div>
       </div>
-    </>
+    </Portal>
   );
 }
 

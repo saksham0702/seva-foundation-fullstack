@@ -10,6 +10,21 @@ interface CampaignFilters {
 const createCampaign = async (
   payload: Partial<ICampaign>
 ): Promise<ICampaign> => {
+  if (payload.name) {
+    const trimmedName = payload.name.trim();
+    const existingName = await CampaignModel.findOne({
+      name: { $regex: `^${trimmedName.replace(/[-/\\^$*+?.()|[\]{}]/g, "\\$&")}$`, $options: "i" },
+      isDeleted: false,
+    });
+    if (existingName) {
+      const error: any = new Error(
+        `A campaign with the name "${trimmedName}" already exists. Please choose a different title.`
+      );
+      error.statusCode = 409;
+      throw error;
+    }
+  }
+
   if (payload.slug) {
     // Release any old deleted campaigns holding this slug
     await CampaignModel.updateMany(
@@ -94,6 +109,22 @@ const updateCampaign = async (
   id: string,
   payload: Partial<ICampaign>
 ): Promise<ICampaign | null> => {
+  if (payload.name) {
+    const trimmedName = payload.name.trim();
+    const existingName = await CampaignModel.findOne({
+      name: { $regex: `^${trimmedName.replace(/[-/\\^$*+?.()|[\]{}]/g, "\\$&")}$`, $options: "i" },
+      isDeleted: false,
+      _id: { $ne: id },
+    });
+    if (existingName) {
+      const error: any = new Error(
+        `A campaign with the name "${trimmedName}" already exists. Please choose a different title.`
+      );
+      error.statusCode = 409;
+      throw error;
+    }
+  }
+
   if (payload.slug) {
     // Release any old deleted campaigns holding this slug
     await CampaignModel.updateMany(

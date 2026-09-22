@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { GalleryItem, GalleryMeta } from "@/app/api/gallery";
 import { getImageUrl } from "@/lib/image";
+import { Portal } from "@/components/shared/Portal";
 
 interface GalleryClientProps {
   initialImages: GalleryItem[];
@@ -227,10 +228,11 @@ export default function GalleryClient({
 
       {/* ── Interactive Lightbox Modal ── */}
       {currentLightboxImg && (
-        <div
-          className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-md flex items-center justify-center p-4"
-          onClick={() => setLightboxIndex(null)}
-        >
+        <Portal>
+          <div
+            className="fixed inset-0 z-[99999] bg-black/95 backdrop-blur-md flex items-center justify-center p-4"
+            onClick={() => setLightboxIndex(null)}
+          >
           {/* Close button */}
           <button
             onClick={() => setLightboxIndex(null)}
@@ -305,6 +307,7 @@ export default function GalleryClient({
             </div>
           </div>
         </div>
+      </Portal>
       )}
     </div>
   );

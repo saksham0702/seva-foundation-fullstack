@@ -174,19 +174,19 @@ export function StepContent() {
           type="button"
           onClick={handleDraft}
           disabled={isSubmitting}
-          className="border border-border text-text-primary text-sm font-bold px-6 py-3 rounded-xl hover:bg-panel transition-all ml-auto disabled:opacity-50 flex items-center gap-2"
+          className="border border-border hover:border-slate-400 text-text-primary text-sm font-bold px-6 py-3 rounded-xl hover:bg-panel transition-all ml-auto disabled:opacity-50 flex items-center gap-2 cursor-pointer"
         >
           {isSubmitting ? <Loader2 size={14} className="animate-spin" /> : null}
-          Save Draft
+          {isEditing ? "Save as Draft" : "Save Draft"}
         </button>
         <button
           type="button"
           onClick={handlePublish}
           disabled={!canPublish}
-          className="bg-blueaccent hover:bg-blue-dark disabled:bg-panel disabled:text-faint text-white text-sm font-bold px-8 py-3 rounded-xl transition-all shadow-lg shadow-blueaccent/20 flex items-center gap-2"
+          className="bg-emerald-600 hover:bg-emerald-700 disabled:bg-panel disabled:text-faint text-white text-sm font-bold px-8 py-3 rounded-xl transition-all shadow-lg shadow-emerald-600/20 flex items-center gap-2 cursor-pointer"
         >
           {isSubmitting ? <Loader2 size={14} className="animate-spin" /> : null}
-          {isEditing ? "Update Campaign" : "Publish Campaign"}
+          {isEditing ? "Publish Campaign" : "Publish Campaign"}
         </button>
       </div>
     </div>

@@ -2,7 +2,9 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Plus, PenLine, Trash2, Loader2, CheckCircle2, X } from "lucide-react";
+import { Portal } from "@/components/shared/Portal";
 import PageHeader from "@/components/dashboard/certificates/PageHeader";
+import { getImageUrl } from "@/lib/image";
 import {
   getActiveSignatures,
   getAllSignatures,
@@ -60,9 +62,9 @@ function UploadModal({
     "w-full bg-bg border border-border rounded-lg px-3 py-2 text-sm text-text-primary placeholder:text-faint focus:outline-none focus:border-blueaccent transition-colors";
 
   return (
-    <>
-      <div className="fixed inset-0 bg-black/60 z-40" onClick={onClose} />
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <Portal>
+      <div className="fixed inset-0 bg-black/75 z-[99998] backdrop-blur-sm" onClick={onClose} />
+      <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4">
         <div className="panel p-6 w-full max-w-md relative">
           <button
             onClick={onClose}
@@ -166,7 +168,7 @@ function UploadModal({
           </form>
         </div>
       </div>
-    </>
+    </Portal>
   );
 }
 
@@ -181,12 +183,10 @@ const TYPE_LABELS: Record<SignatureType, string> = {
 function SignatureCard({
   sig,
   isActive,
-  apiBaseUrl,
   onDelete,
 }: {
   sig: Signature;
   isActive: boolean;
-  apiBaseUrl: string;
   onDelete: (id: string) => Promise<void>;
 }) {
   const [deleting, setDeleting] = useState(false);
@@ -204,7 +204,7 @@ function SignatureCard({
       <div className="w-full h-20 rounded-lg bg-bg border border-border flex items-center justify-center mb-4 overflow-hidden">
         {sig.imageUrl ? (
           <img
-            src={`${apiBaseUrl}${sig.imageUrl}`}
+            src={getImageUrl(sig.imageUrl)}
             alt={sig.label}
             className="max-h-full max-w-full object-contain p-1"
           />
@@ -253,9 +253,6 @@ function SignatureCard({
 }
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
-
-const API_BASE ="http://localhost:5000"
-
 
 export default function DigitalSignaturesPage() {
   const [allSigs, setAllSigs] = useState<Signature[]>([]);
@@ -338,7 +335,7 @@ export default function DigitalSignaturesPage() {
                 <div className="w-8 h-8 rounded-md bg-panel border border-border flex items-center justify-center overflow-hidden shrink-0">
                   {sig?.imageUrl ? (
                     <img
-                      src={`${API_BASE}${sig.imageUrl}`}
+                      src={getImageUrl(sig.imageUrl)}
                       alt=""
                       className="max-h-full object-contain"
                     />
@@ -385,7 +382,6 @@ export default function DigitalSignaturesPage() {
               key={sig._id}
               sig={sig}
               isActive={activeIds.has(sig._id)}
-              apiBaseUrl={API_BASE}
               onDelete={handleDelete}
             />
           ))}

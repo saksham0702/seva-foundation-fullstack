@@ -13,6 +13,7 @@ import {
 import { authAPI } from "@/app/api/auth";
 import { getDepartments, Department } from "@/app/api/department";
 import { Shield, Sparkles } from "lucide-react";
+import { Portal } from "@/components/shared/Portal";
 
 type FormState = {
   name: string;
@@ -218,9 +219,9 @@ function UserFormDrawerContent({
   const selectedCount = form.permissions.length;
 
   return (
-    <>
-      <div className="fixed inset-0 bg-black/40 backdrop-blur-xs z-40" onClick={closeDrawer} />
-      <div className="fixed right-0 top-0 bottom-0 w-full max-w-lg bg-white dark:bg-panel z-50 shadow-2xl flex flex-col border-l border-gray-100 dark:border-border">
+    <Portal>
+      <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[99998]" onClick={closeDrawer} />
+      <div className="fixed right-0 top-0 bottom-0 w-full max-w-lg bg-white dark:bg-panel z-[99999] shadow-2xl flex flex-col border-l border-gray-100 dark:border-border">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100 dark:border-border shrink-0">
           <div>
@@ -440,7 +441,7 @@ function UserFormDrawerContent({
           </div>
         </div>
       </div>
-    </>
+    </Portal>
   );
 }
 

@@ -15,6 +15,9 @@ import { VolunteerCategoryRoutes } from "../modules/volunteer/volunteercategorie
 import { VolunteerApplicationRoutes } from "../modules/volunteer/volunteerapplications.routes";
 import { GalleryRoutes } from "../modules/gallery/gallery.routes";
 import { LeadRoutes } from "../modules/leads/leads.routes";
+import { MailConfigRoutes } from "../modules/mail/mailconfig.routes";
+import { MailTemplateRoutes } from "../modules/mail/mailtemplates.routes";
+import { MailLogRoutes } from "../modules/mail/maillogs.routes";
 
 const router = express.Router();
 
@@ -94,6 +97,18 @@ const moduleRoutes = [
   {
     path: "/leads",
     route: LeadRoutes,
+  },
+  {
+    path: "/mail-config",
+    route: MailConfigRoutes,
+  },
+  {
+    path: "/mail-templates",
+    route: MailTemplateRoutes,
+  },
+  {
+    path: "/mail-logs",
+    route: MailLogRoutes,
   },
 ];
 

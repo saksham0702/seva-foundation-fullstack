@@ -1,4 +1,5 @@
 import { DonorModel, IDonor } from "./donors.model";
+import { MailerService } from "../mail/mailer.service";
 
 const createDonor = async (payload: Partial<IDonor>) => {
   const donor = await DonorModel.create({
@@ -77,16 +78,30 @@ const updateDonor = async (
   id: string,
   payload: Partial<IDonor>
 ) => {
-  return await DonorModel.findByIdAndUpdate(
+  const donor = await DonorModel.findByIdAndUpdate(
     id,
-    {
-      $set: payload,
-    },
-    {
-      new: true,
-      runValidators: true,
-    }
+    { $set: payload },
+    { new: true, runValidators: true }
   ).populate("campaign");
+
+  // Send receipt when status is explicitly set to PAID
+  if (payload.status === "PAID" && donor && donor.email) {
+    const campaignName = (donor.campaign as any)?.name || "Seva Foundation";
+    MailerService.sendTemplatedMail({
+      to: donor.email,
+      templateKey: "CAMPAIGN_DONATION_RECEIPT",
+      variables: {
+        name: donor.name || "Donor",
+        amount: "—", // amount is tracked in the payments module, not on donor doc
+        campaignName,
+        donatedOn: new Date().toLocaleDateString("en-IN"),
+      },
+      relatedToModel: "Donor",
+      relatedToId: String(donor._id),
+    });
+  }
+
+  return donor;
 };
 
 const deleteDonor = async (id: string) => {

@@ -146,20 +146,29 @@ function SacredPromiseSection({ data }: { data?: CmsPage | null }) {
           {/* RIGHT: Image or visual card with 2026 badge */}
           <div className="relative">
             <div className="relative rounded-3xl overflow-hidden shadow-xl min-h-[380px] lg:h-[520px] bg-gradient-to-br from-[#0B1120] via-[#1a3a6b] to-[#0B1120] flex items-center justify-center p-8 border border-white/10">
-              <div className="text-center space-y-4 max-w-sm">
-                <div className="w-16 h-16 rounded-2xl bg-[#f5a623]/20 border border-[#f5a623]/40 flex items-center justify-center mx-auto shadow-lg">
-                  <Heart className="w-8 h-8 text-[#f5a623]" />
+              {storySection?.image ? (
+                <Image
+                  src={getImageUrl(storySection.image)}
+                  alt={storySection.name || storySection.title || "The Sacred Promise"}
+                  fill
+                  className="object-cover"
+                />
+              ) : (
+                <div className="text-center space-y-4 max-w-sm">
+                  <div className="w-16 h-16 rounded-2xl bg-[#f5a623]/20 border border-[#f5a623]/40 flex items-center justify-center mx-auto shadow-lg">
+                    <Heart className="w-8 h-8 text-[#f5a623]" />
+                  </div>
+                  <h3 className="text-2xl font-bold text-white tracking-tight">
+                    Grassroots Impact
+                  </h3>
+                  <p className="text-sm text-white/70 leading-relaxed">
+                    Dedicated to eliminating poverty, nourishing underserved families, and uplifting communities across Uttarakhand.
+                  </p>
                 </div>
-                <h3 className="text-2xl font-bold text-white tracking-tight">
-                  Grassroots Impact
-                </h3>
-                <p className="text-sm text-white/70 leading-relaxed">
-                  Dedicated to eliminating poverty, nourishing underserved families, and uplifting communities across Uttarakhand.
-                </p>
-              </div>
+              )}
             </div>
             {/* Orange badge overlapping bottom-left of image */}
-            <div className="absolute -bottom-6 -left-4 lg:left-6 bg-[#f5a623] rounded-2xl px-6 py-5 shadow-lg">
+            <div className="absolute -bottom-6 -left-4 lg:left-6 bg-[#f5a623] rounded-2xl px-6 py-5 shadow-lg z-10">
               <div className="text-[#0B1120] text-4xl font-bold">2026</div>
               <div className="text-[#0B1120] text-[10px] font-bold uppercase tracking-wider">
                 Born of Student Empathy

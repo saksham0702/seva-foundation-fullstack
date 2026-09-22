@@ -5,7 +5,7 @@ import crypto from "crypto";
 
 const ALLOWED_IMAGE_EXT = /jpeg|jpg|png|gif|webp|svg/;
 const ALLOWED_IMAGE_MIME = /jpeg|jpg|png|gif|webp|svg/;
-const MAX_IMAGE_SIZE = 2 * 1024 * 1024; // 2MB
+const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB
 
 /**
  * timestamp-random.ext instead of just timestamp.ext.
@@ -119,3 +119,6 @@ export const uploadGalleryImage = createFileUploader("gallery", 60, 3 * 1024 * 1
 // ── CMS uploader ──
 // Files stored in uploads/cms/YYYY/MM/DD/images/
 export const uploadCmsImage = createFileUploader("cms", 10, 3 * 1024 * 1024);
+
+// ── Mail Template image uploader ──
+export const uploadMailTemplateImage = createFileUploader("mail-templates", 10, 2 * 1024 * 1024);

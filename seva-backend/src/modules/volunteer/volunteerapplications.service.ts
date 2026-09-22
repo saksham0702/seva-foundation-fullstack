@@ -3,6 +3,7 @@ import {
   VolunteerApplicationModel,
   ApplicationStatus,
 } from "./volunteerapplications.model";
+import { MailerService } from "../mail/mailer.service";
 
 /**
  * Public submission — called from the "Get Involved" page form.
@@ -11,6 +12,22 @@ const createVolunteerApplication = async (
   payload: Partial<IVolunteerApplication>
 ): Promise<IVolunteerApplication> => {
   const result = await VolunteerApplicationModel.create(payload);
+
+  // Fire-and-forget confirmation email
+  if (result.email) {
+    MailerService.sendTemplatedMail({
+      to: result.email,
+      templateKey: "VOLUNTEER_APPLICATION_RECEIVED",
+      variables: {
+        name: result.name || "Volunteer",
+        availability: result.availability || "Not specified",
+        category: String((result.category as any)?.title || "General"),
+      },
+      relatedToModel: "VolunteerApplication",
+      relatedToId: String(result._id),
+    });
+  }
+
   return result;
 };
 

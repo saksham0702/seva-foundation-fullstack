@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { X, Loader2 } from "lucide-react";
+import { Portal } from "@/components/shared/Portal";
 import { useDonors } from "../DonorsProvider";
 import { getCampaignOptions, CampaignOption } from "@/app/api/campaign";
 
@@ -71,16 +72,16 @@ export function CreateDonorModal() {
   }
 
   return (
-    <>
+    <Portal>
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-black/30 z-40 backdrop-blur-sm"
+        className="fixed inset-0 bg-black/60 z-[99998] backdrop-blur-sm"
         onClick={closeCreateModal}
       />
 
       {/* Modal */}
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
-        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md pointer-events-auto">
+      <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 pointer-events-none">
+        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md pointer-events-auto my-auto">
           {/* Header */}
           <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100">
             <h2 className="text-base font-bold text-black tracking-tight">
@@ -203,6 +204,6 @@ export function CreateDonorModal() {
           </form>
         </div>
       </div>
-    </>
+    </Portal>
   );
 }

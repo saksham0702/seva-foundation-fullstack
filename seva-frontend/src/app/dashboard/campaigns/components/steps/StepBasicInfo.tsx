@@ -1,21 +1,39 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, useState, useMemo } from "react";
 import Link from "next/link";
-import { ChevronRight, Loader2, X } from "lucide-react";
+import { ChevronRight, Loader2, X, AlertCircle } from "lucide-react";
 import { Field, inputCls } from "@/components/dashboard/field/Field";
 import { useCampaign } from "../../provider";
 import { useQuery } from "@tanstack/react-query";
 import { getCategories, Category } from "@/app/api/category";
+import { getCampaignOptions } from "@/app/api/campaign";
 import { getImageUrl } from "@/lib/image";
 
 export function StepBasicInfo() {
-  const { form, set, setStep, isEditing } = useCampaign();
+  const { form, set, setStep, isEditing, editId } = useCampaign();
   const fileRef = useRef<HTMLInputElement>(null);
+  const [imageError, setImageError] = useState<string | null>(null);
+
   const { data: categories = [], isLoading: categoriesLoading } = useQuery<Category[]>({
     queryKey: ["categories"],
     queryFn: getCategories,
   });
+
+  const { data: existingCampaigns = [] } = useQuery({
+    queryKey: ["campaign-options"],
+    queryFn: getCampaignOptions,
+  });
+
+  const isDuplicateTitle = useMemo(() => {
+    if (!form.title.trim()) return false;
+    return existingCampaigns.some(
+      (c: any) =>
+        c.name &&
+        c.name.trim().toLowerCase() === form.title.trim().toLowerCase() &&
+        (!editId || c._id !== editId)
+    );
+  }, [form.title, existingCampaigns, editId]);
 
   // Auto-generate slug from title (only for new campaigns or when slug is not set)
   const handleTitleChange = (val: string) => {
@@ -31,7 +49,11 @@ export function StepBasicInfo() {
     }
   };
 
-  const canProceed = form.title.trim() && form.category;
+  const canProceed =
+    Boolean(form.title.trim()) &&
+    Boolean(form.category) &&
+    !isDuplicateTitle &&
+    !imageError;
 
   // Compute preview URL
   const imagePreview: string | null =
@@ -44,11 +66,18 @@ export function StepBasicInfo() {
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      setImageError("Selected image exceeds 5MB size limit. Please choose a smaller image (max 5MB).");
+      if (fileRef.current) fileRef.current.value = "";
+      return;
+    }
+    setImageError(null);
     set("image", file);
   };
 
   const handleRemoveImage = () => {
     set("image", null);
+    setImageError(null);
     if (fileRef.current) fileRef.current.value = "";
   };
 
@@ -62,8 +91,13 @@ export function StepBasicInfo() {
             value={form.title}
             onChange={(e) => handleTitleChange(e.target.value)}
             placeholder="e.g. Health Camp for Tribal Regions"
-            className={inputCls}
+            className={`${inputCls} ${isDuplicateTitle ? "border-red-500 focus:border-red-500" : ""}`}
           />
+          {isDuplicateTitle && (
+            <p className="text-[11px] text-red-500 font-semibold mt-1.5 flex items-center gap-1">
+              <AlertCircle size={12} /> A campaign with this name already exists. Please choose a different title.
+            </p>
+          )}
         </Field>
         <Field label="Slug" hint="Auto-generated from title, editable">
           <input
@@ -152,9 +186,18 @@ export function StepBasicInfo() {
       </Field>
 
       {/* Campaign Image */}
-      <Field label="Campaign Image">
+      <Field
+        label="Campaign Cover Image"
+        hint="Max file size: 5MB. Recommended dimensions: 1200 × 630 px (16:9 ratio)."
+      >
+        {imageError && (
+          <div className="mb-3 flex items-center gap-1.5 text-xs text-red-500 font-semibold bg-red-500/10 border border-red-500/20 rounded-xl p-3">
+            <AlertCircle size={14} className="shrink-0" />
+            {imageError}
+          </div>
+        )}
         {imagePreview ? (
-          <div className="relative w-full h-40 rounded-2xl overflow-hidden border border-slate-200 group shadow-sm">
+          <div className="relative w-full h-44 rounded-2xl overflow-hidden border border-slate-200 group shadow-sm">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={imagePreview}
@@ -173,11 +216,16 @@ export function StepBasicInfo() {
             </button>
           </div>
         ) : (
-          <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-border rounded-2xl cursor-pointer hover:bg-panel hover:border-blueaccent/40 transition-all group">
+          <label className="flex flex-col items-center justify-center w-full h-36 border-2 border-dashed border-border rounded-2xl cursor-pointer hover:bg-panel hover:border-blueaccent/40 transition-all group">
             <div className="w-10 h-10 rounded-full bg-bg flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
               <span className="text-xl">🖼️</span>
             </div>
-            <span className="text-[10px] text-muted font-semibold uppercase tracking-widest">Click to upload</span>
+            <span className="text-[11px] text-muted font-semibold uppercase tracking-wider">
+              Click to upload cover photo
+            </span>
+            <span className="text-[10px] text-faint mt-0.5">
+              1200 × 630 px · Max 5MB
+            </span>
             <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
           </label>
         )}

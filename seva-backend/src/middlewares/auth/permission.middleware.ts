@@ -34,6 +34,12 @@ export const permissionMiddleware =
       ) {
         return true;
       }
+      if (
+        (reqPerm === "mail-templates" || reqPerm === "mail-logs" || reqPerm === "mail-config") &&
+        (userPermissions.includes("marketing") || userPermissions.includes("crm"))
+      ) {
+        return true;
+      }
       return false;
     };
     const hasAll = requiredPermissions.every(hasPermission);

@@ -115,21 +115,31 @@ const Footer = () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
 
   const [subscribing, setSubscribing] = useState(false);
-  const [subscribeMessage, setSubscribeMessage] = useState<string | null>(null);
+  const [subscribeStatus, setSubscribeStatus] = useState<{
+    type: "success" | "error";
+    message: string;
+  } | null>(null);
 
   const handleSubscribe = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !email.includes("@")) return;
     setSubscribing(true);
-    setSubscribeMessage(null);
+    setSubscribeStatus(null);
     try {
       const res = await subscribeNewsletter(email.trim());
-      setSubscribeMessage(res.message || "Thank you for subscribing!");
+      setSubscribeStatus({
+        type: "success",
+        message: res.message || "Thank you for subscribing to Seva Foundation!",
+      });
       setEmail("");
     } catch (err: any) {
-      setSubscribeMessage(
-        err?.response?.data?.message || "Subscription successful! Thank you."
-      );
+      setSubscribeStatus({
+        type: "error",
+        message:
+          err?.response?.data?.message ||
+          err?.message ||
+          "Failed to subscribe. Please try again.",
+      });
     } finally {
       setSubscribing(false);
     }
@@ -173,9 +183,15 @@ const Footer = () => {
                 {subscribing ? "Subscribing..." : "Subscribe"}
               </button>
             </form>
-            {subscribeMessage && (
-              <p className="text-xs text-amber-400 mt-2 font-medium text-center md:text-left">
-                {subscribeMessage}
+            {subscribeStatus && (
+              <p
+                className={`text-xs mt-2 font-medium text-center md:text-left ${
+                  subscribeStatus.type === "success"
+                    ? "text-[#F5A623]"
+                    : "text-rose-400"
+                }`}
+              >
+                {subscribeStatus.message}
               </p>
             )}
           </div>

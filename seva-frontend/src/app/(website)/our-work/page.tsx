@@ -16,6 +16,7 @@ import {
 import InitiativeCard, { InitiativeData } from "@/components/website/our-work/InitiativeCard";
 import InitiativeDonationSection from "@/components/website/donations/InitiativeDonationSection";
 import { getCmsPageBySlug, CmsPage } from "@/app/api/cms";
+import { DEFAULT_INITIATIVES } from "@/components/website/our-work/initiativeDefaults";
 
 export default function OurWorkPage() {
   const [cmsPage, setCmsPage] = useState<CmsPage | null>(null);
@@ -46,7 +47,7 @@ export default function OurWorkPage() {
     if (cmsPage?.sections && cmsPage.sections.length > 0) {
       return cmsPage.sections as InitiativeData[];
     }
-    return [];
+    return DEFAULT_INITIATIVES;
   }, [cmsPage]);
 
   const filteredInitiatives = useMemo(() => {

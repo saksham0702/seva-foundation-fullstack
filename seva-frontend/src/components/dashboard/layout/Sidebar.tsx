@@ -118,7 +118,8 @@ const NAV_CONFIG: NavSection[] = [
         icon: MessageSquare,
         permission: "marketing",
         children: [
-          { label: "Email Marketing", comingSoon: true },
+          { label: "Email / Mail Logs", href: "/dashboard/marketing/email" },
+          { label: "Mail Templates", href: "/dashboard/marketing/email/templates" },
           { label: "WhatsApp Marketing", comingSoon: true },
         ],
       },

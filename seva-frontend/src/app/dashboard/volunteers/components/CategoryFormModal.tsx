@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { X, Layers, Check, AlertCircle, Loader2 } from "lucide-react";
+import { Portal } from "@/components/shared/Portal";
 import {
   createVolunteerCategory,
   updateVolunteerCategory,
@@ -105,7 +106,8 @@ export const CategoryFormModal: React.FC<CategoryFormModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 sm:p-6 bg-black/75 backdrop-blur-sm overflow-y-auto">
+    <Portal>
+      <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 sm:p-6 bg-black/75 backdrop-blur-md overflow-y-auto">
       <div className="bg-white rounded-3xl max-w-3xl w-full p-5 sm:p-6 shadow-2xl border border-slate-100 animate-in fade-in zoom-in-95 duration-200 my-auto">
         {/* Header */}
         <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
@@ -282,6 +284,7 @@ export const CategoryFormModal: React.FC<CategoryFormModalProps> = ({
           </div>
         </form>
       </div>
-    </div>
+      </div>
+    </Portal>
   );
 };

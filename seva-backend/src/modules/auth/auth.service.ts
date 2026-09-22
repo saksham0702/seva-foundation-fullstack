@@ -3,6 +3,7 @@ import { Response } from "express";
 import { UserModel } from "./auth.model";
 import { generateToken } from "./auth.utils";
 import { DepartmentModel } from "../departments/departments.model";
+import { MailerService } from "../mail/mailer.service";
 
 // ── Cookie config ─────────────────────────────────────────────────────────────
 const COOKIE_NAME = "access_token";
@@ -113,6 +114,20 @@ const createUser = async (payload: any, adminId?: string) => {
     email,
     permissions,
     ...(adminId ? { createdBy: adminId } : {}),
+  });
+
+  // Fire-and-forget: send login credentials email
+  MailerService.sendTemplatedMail({
+    to: email,
+    templateKey: "USER_CREDENTIALS",
+    variables: {
+      name: payload.name,
+      email,
+      password: payload.password, // raw password, before bcrypt kicks in via pre-save hook
+      loginUrl: process.env.CLIENT_LOGIN_URL || "http://localhost:3000/login",
+    },
+    relatedToModel: "User",
+    relatedToId: String(created._id),
   });
 
   return UserModel.findById(created._id)

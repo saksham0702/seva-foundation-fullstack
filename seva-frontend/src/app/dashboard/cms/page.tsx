@@ -28,7 +28,116 @@ import {
   Check,
 } from "lucide-react";
 import { getCmsPages, getCmsPageBySlug, saveCmsPage, deleteCmsSection, uploadCmsImageFile, CmsPage, CmsSection } from "@/app/api/cms";
+import { getImageUrl } from "@/lib/image";
 import { PermissionGuard } from "@/components/dashboard/PermissionGuard";
+
+function CmsImageField({
+  label,
+  value,
+  onChange,
+  recommendedDimensions = "1200 × 630 px · Max 5MB",
+  placeholder = "Upload image or enter custom URL...",
+}: {
+  label: string;
+  value: string;
+  onChange: (url: string) => void;
+  recommendedDimensions?: string;
+  placeholder?: string;
+}) {
+  const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      setError("File exceeds 5MB size limit.");
+      return;
+    }
+
+    try {
+      setUploading(true);
+      setError(null);
+      const url = await uploadCmsImageFile(file);
+      if (url) {
+        onChange(url);
+      }
+    } catch (err: any) {
+      setError(err?.response?.data?.message || "Failed to upload image to server");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center justify-between">
+        <label className="block text-xs font-semibold text-gray-600 dark:text-muted">
+          {label}
+        </label>
+        <span className="text-[10px] text-gray-400 font-medium">
+          {recommendedDimensions}
+        </span>
+      </div>
+
+      <div className="flex gap-2">
+        <input
+          type="text"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder={placeholder}
+          className="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 dark:border-border bg-gray-50 dark:bg-bg text-sm text-[#0f2347] dark:text-text-primary focus:outline-none focus:ring-2 focus:ring-[#1a3a6b]/20"
+        />
+        <label className="cursor-pointer inline-flex items-center gap-1.5 px-4 py-2.5 bg-white dark:bg-panel border border-gray-200 dark:border-border hover:bg-gray-50 text-xs font-bold rounded-xl text-[#0f2347] dark:text-text-primary shrink-0 transition-colors shadow-sm">
+          {uploading ? (
+            <Loader2 size={14} className="animate-spin text-[#E8542A]" />
+          ) : (
+            <Upload size={14} className="text-[#E8542A]" />
+          )}
+          <span>{uploading ? "Uploading..." : "Upload Image"}</span>
+          <input
+            type="file"
+            accept="image/*"
+            className="hidden"
+            disabled={uploading}
+            onChange={handleFileChange}
+          />
+        </label>
+      </div>
+
+      {error && (
+        <p className="text-xs text-red-500 font-medium flex items-center gap-1">
+          <AlertCircle size={12} /> {error}
+        </p>
+      )}
+
+      {value && (
+        <div className="flex items-center gap-3 p-2 bg-gray-50 dark:bg-bg/50 rounded-xl border border-gray-100 dark:border-border mt-2">
+          <img
+            src={getImageUrl(value)}
+            alt="Preview"
+            className="w-16 h-12 rounded-lg object-cover border border-gray-200 shadow-sm"
+          />
+          <div className="flex-1 min-w-0">
+            <p className="text-xs font-medium text-gray-700 dark:text-gray-300 truncate">
+              {value}
+            </p>
+            <p className="text-[10px] text-emerald-600 font-semibold">Image Ready &amp; Saved</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => onChange("")}
+            className="p-1.5 text-gray-400 hover:text-red-500 rounded-lg hover:bg-white transition-colors"
+            title="Remove Image"
+          >
+            <Trash2 size={14} />
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
 
 const CMS_PAGES_META = [
   {
@@ -102,7 +211,6 @@ export default function CmsDashboardPage() {
   // Local form state
   const [formData, setFormData] = useState<Partial<CmsPage>>({});
   const [activeInitiativeIndex, setActiveInitiativeIndex] = useState(0);
-  const [isUploadingImage, setIsUploadingImage] = useState(false);
 
   // Sync loaded pageData into formData
   React.useEffect(() => {
@@ -110,30 +218,6 @@ export default function CmsDashboardPage() {
       setFormData(pageData);
     }
   }, [pageData]);
-
-  const handleInitiativeImageUpload = async (file: File, secIndex: number) => {
-    try {
-      setIsUploadingImage(true);
-      const url = await uploadCmsImageFile(file);
-      if (url) {
-        const updatedSections = [...(formData.sections || [])];
-        if (updatedSections[secIndex]) {
-          updatedSections[secIndex] = {
-            ...updatedSections[secIndex],
-            image: url,
-          };
-          setFormData({ ...formData, sections: updatedSections });
-          setSuccessMessage("Image uploaded successfully!");
-          setTimeout(() => setSuccessMessage(null), 3000);
-        }
-      }
-    } catch (err: any) {
-      setErrorMessage(err?.response?.data?.message || "Failed to upload image");
-      setTimeout(() => setErrorMessage(null), 4000);
-    } finally {
-      setIsUploadingImage(false);
-    }
-  };
 
   // Deleting initiative state
   const [isDeletingInitiative, setIsDeletingInitiative] = useState(false);
@@ -343,18 +427,15 @@ export default function CmsDashboardPage() {
                           />
                         </div>
 
-                        <div>
-                          <label className="block text-xs font-semibold text-gray-600 dark:text-muted mb-1.5">
-                            Banner Image URL
-                          </label>
-                          <input
-                            type="text"
+                        <div className="sm:col-span-2">
+                          <CmsImageField
+                            label="Hero Banner Background Image"
                             value={formData.bannerImage || ""}
-                            onChange={(e) =>
-                              setFormData({ ...formData, bannerImage: e.target.value })
+                            onChange={(url) =>
+                              setFormData({ ...formData, bannerImage: url })
                             }
-                            placeholder="https://images.unsplash.com/..."
-                            className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-border bg-gray-50 dark:bg-bg text-sm text-[#0f2347] dark:text-text-primary focus:outline-none focus:ring-2 focus:ring-[#1a3a6b]/20"
+                            recommendedDimensions="1920 × 600 px · Max 5MB"
+                            placeholder="Upload banner image or enter custom URL..."
                           />
                         </div>
                       </div>
@@ -386,7 +467,7 @@ export default function CmsDashboardPage() {
                     </h3>
 
                     {/* Sacred Promise Story */}
-                    <div className="p-4 rounded-xl bg-gray-50 dark:bg-bg border border-gray-100 dark:border-border space-y-3">
+                    <div className="p-4 rounded-xl bg-gray-50 dark:bg-bg border border-gray-100 dark:border-border space-y-4">
                       <h4 className="text-xs font-bold text-[#0f2347] dark:text-text-primary uppercase tracking-wider">
                         Section: The Sacred Promise Story
                       </h4>
@@ -423,6 +504,37 @@ export default function CmsDashboardPage() {
                           className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-border bg-white dark:bg-panel text-sm text-[#0f2347] dark:text-text-primary focus:outline-none"
                         />
                       </div>
+
+                      {/* Sacred Promise Photo Uploader */}
+                      <CmsImageField
+                        label="Sacred Promise Story Feature Photo"
+                        value={
+                          formData.sections?.find((s) => s.key === "sacred_promise")
+                            ?.image || ""
+                        }
+                        onChange={(url) => {
+                          const updatedSections = [...(formData.sections || [])];
+                          const idx = updatedSections.findIndex(
+                            (s) => s.key === "sacred_promise"
+                          );
+                          if (idx >= 0) {
+                            updatedSections[idx] = {
+                              ...updatedSections[idx],
+                              image: url,
+                            };
+                          } else {
+                            updatedSections.push({
+                              key: "sacred_promise",
+                              name: "The Sacred Promise",
+                              description: "",
+                              image: url,
+                            });
+                          }
+                          setFormData({ ...formData, sections: updatedSections });
+                        }}
+                        recommendedDimensions="800 × 600 px · Max 5MB"
+                        placeholder="Upload story image or paste URL..."
+                      />
                     </div>
 
                     {/* Vision & Mission */}
@@ -719,69 +831,32 @@ export default function CmsDashboardPage() {
                           <div className="p-4 rounded-xl bg-orange-50/40 dark:bg-bg border border-orange-100 dark:border-border space-y-4">
                             <h4 className="text-xs font-bold text-slate-900 dark:text-text-primary uppercase flex items-center gap-1.5">
                               <ImageIcon size={14} className="text-[#E8542A]" />
-                              Initiative Photo & SEO Alt Tag
+                              Initiative Photo &amp; SEO Alt Tag
                             </h4>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-start">
+                              <CmsImageField
+                                label="Initiative Cover Photo"
+                                value={sec.image || ""}
+                                onChange={(url) => updateCurrentSec({ image: url })}
+                                recommendedDimensions="800 × 600 px · Max 5MB"
+                                placeholder="Upload image or enter custom URL..."
+                              />
                               <div>
-                                <label className="block text-[11px] font-semibold text-slate-700 dark:text-muted mb-1">
-                                  Image URL
-                                </label>
-                                <div className="flex gap-2">
-                                  <input
-                                    type="text"
-                                    value={sec.image || ""}
-                                    onChange={(e) => updateCurrentSec({ image: e.target.value })}
-                                    placeholder="https://images.unsplash.com/... or /uploads/cms/..."
-                                    className="flex-1 px-3 py-2 rounded-xl border border-slate-300 dark:border-border bg-white dark:bg-panel text-xs text-slate-900 dark:text-text-primary placeholder:text-slate-400 focus:outline-none focus:border-slate-800"
-                                  />
-                                  <label className="cursor-pointer inline-flex items-center gap-1 px-3 py-2 bg-white dark:bg-panel border border-slate-300 dark:border-border hover:bg-slate-50 text-xs font-semibold rounded-xl text-slate-900 dark:text-text-primary">
-                                    <Upload size={13} />
-                                    <span>Upload</span>
-                                    <input
-                                      type="file"
-                                      accept="image/*"
-                                      className="hidden"
-                                      onChange={async (e) => {
-                                        const file = e.target.files?.[0];
-                                        if (file) {
-                                          await handleInitiativeImageUpload(file, activeInitiativeIndex);
-                                        }
-                                      }}
-                                    />
-                                  </label>
-                                </div>
-                                {isUploadingImage && (
-                                  <p className="text-[11px] text-[#E8542A] mt-1 flex items-center gap-1">
-                                    <Loader2 size={12} className="animate-spin" /> Uploading image to server...
-                                  </p>
-                                )}
-                              </div>
-                              <div>
-                                <label className="block text-[11px] font-semibold text-slate-700 dark:text-muted mb-1">
-                                  Image Alt Tag (SEO & Missing Image Fallback)
+                                <label className="block text-xs font-semibold text-slate-700 dark:text-muted mb-2">
+                                  Image Alt Tag (SEO &amp; Accessibility)
                                 </label>
                                 <input
                                   type="text"
                                   value={sec.extra?.alt || ""}
                                   onChange={(e) => updateExtra({ alt: e.target.value })}
                                   placeholder="e.g. Children smiling in rural bridge school"
-                                  className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-border bg-white dark:bg-panel text-xs text-slate-900 dark:text-text-primary placeholder:text-slate-400 focus:outline-none focus:border-slate-800 font-medium"
+                                  className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-border bg-white dark:bg-panel text-xs text-slate-900 dark:text-text-primary placeholder:text-slate-400 focus:outline-none focus:border-slate-800 font-medium"
                                 />
                                 <p className="text-[10px] text-slate-500 mt-1">
                                   Displayed to search engines and shown as text fallback if the image is missing.
                                 </p>
                               </div>
                             </div>
-                            {sec.image && (
-                              <div className="flex items-center gap-3 pt-2">
-                                <img
-                                  src={sec.image}
-                                  alt={sec.extra?.alt || sec.title}
-                                  className="w-16 h-16 rounded-xl object-cover border border-slate-300"
-                                />
-                                <span className="text-xs text-slate-700 font-medium">Preview: {sec.extra?.alt || "No alt provided"}</span>
-                              </div>
-                            )}
                           </div>
 
                           {/* Key Feature Pills */}

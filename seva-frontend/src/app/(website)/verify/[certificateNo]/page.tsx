@@ -15,10 +15,8 @@ import {
   Share2,
 } from "lucide-react";
 import { verifyCertificate, Certificate } from "@/app/api/certificate";
-
-const API_BASE = process.env.NEXT_PUBLIC_API_URL
-  ? process.env.NEXT_PUBLIC_API_URL.replace(/\/api\/?$/, "")
-  : "http://localhost:5000";
+import { getImageUrl } from "@/lib/image";
+import ShareModal from "@/components/shared/ShareModal";
 
 const TYPE_LABELS: Record<string, string> = {
   APPRECIATION: "Certificate of Appreciation",
@@ -37,6 +35,7 @@ export default function CertificateVerificationPage() {
   const [cert, setCert] = useState<Certificate | null>(null);
   const [valid, setValid] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const [shareOpen, setShareOpen] = useState(false);
 
   useEffect(() => {
     if (!certificateNo) return;
@@ -56,11 +55,7 @@ export default function CertificateVerificationPage() {
       .finally(() => setLoading(false));
   }, [certificateNo]);
 
-  const pdfDownloadUrl = cert?.pdfUrl
-    ? cert.pdfUrl.startsWith("http")
-      ? cert.pdfUrl
-      : `${API_BASE}${cert.pdfUrl}`
-    : null;
+  const pdfDownloadUrl = cert?.pdfUrl ? getImageUrl(cert.pdfUrl) : null;
 
   return (
     <div className="min-h-screen bg-slate-100 py-12 px-4 sm:px-6 lg:px-8">
@@ -124,11 +119,7 @@ export default function CertificateVerificationPage() {
               {/* Watermark Seal */}
               {cert.signatures?.seal?.imageUrl && (
                 <img
-                  src={
-                    cert.signatures.seal.imageUrl.startsWith("http")
-                      ? cert.signatures.seal.imageUrl
-                      : `${API_BASE}${cert.signatures.seal.imageUrl}`
-                  }
+                  src={getImageUrl(cert.signatures.seal.imageUrl)}
                   alt="Watermark Seal"
                   className="absolute inset-0 m-auto w-64 h-64 object-contain opacity-5 pointer-events-none"
                 />
@@ -209,11 +200,7 @@ export default function CertificateVerificationPage() {
                   <div className="h-16 flex items-end justify-center mb-1">
                     {cert.signatures?.secretary?.imageUrl ? (
                       <img
-                        src={
-                          cert.signatures.secretary.imageUrl.startsWith("http")
-                            ? cert.signatures.secretary.imageUrl
-                            : `${API_BASE}${cert.signatures.secretary.imageUrl}`
-                        }
+                        src={getImageUrl(cert.signatures.secretary.imageUrl)}
                         alt="Secretary Signature"
                         className="max-h-14 max-w-[150px] object-contain"
                       />
@@ -237,11 +224,7 @@ export default function CertificateVerificationPage() {
                   <div className="h-16 flex items-end justify-center mb-1">
                     {cert.signatures?.president?.imageUrl ? (
                       <img
-                        src={
-                          cert.signatures.president.imageUrl.startsWith("http")
-                            ? cert.signatures.president.imageUrl
-                            : `${API_BASE}${cert.signatures.president.imageUrl}`
-                        }
+                        src={getImageUrl(cert.signatures.president.imageUrl)}
                         alt="President Signature"
                         className="max-h-14 max-w-[150px] object-contain"
                       />
@@ -287,17 +270,7 @@ export default function CertificateVerificationPage() {
                   </a>
                 )}
                 <button
-                  onClick={() => {
-                    if (navigator.share) {
-                      navigator.share({
-                        title: `${cert.recipientName} - Certificate`,
-                        url: window.location.href,
-                      });
-                    } else {
-                      navigator.clipboard.writeText(window.location.href);
-                      alert("Certificate verification link copied to clipboard!");
-                    }
-                  }}
+                  onClick={() => setShareOpen(true)}
                   className="inline-flex items-center gap-1.5 border border-gray-200 hover:border-gray-300 text-gray-700 text-xs font-semibold px-4 py-2.5 rounded-xl transition-all"
                 >
                   <Share2 size={14} />
@@ -305,6 +278,13 @@ export default function CertificateVerificationPage() {
                 </button>
               </div>
             </div>
+
+            <ShareModal
+              isOpen={shareOpen}
+              onClose={() => setShareOpen(false)}
+              title={`${cert.recipientName} - Certificate of Authenticity`}
+              description={`Official verified Certificate (${cert.certificateNo}) awarded to ${cert.recipientName} for ${cert.programName} by Seva India Foundation.`}
+            />
           </>
         )}
       </div>

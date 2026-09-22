@@ -1,5 +1,6 @@
 import React from "react";
 import { Trash2, Loader2 } from "lucide-react";
+import { Portal } from "@/components/shared/Portal";
 
 interface DeleteConfirmModalProps {
   target: {
@@ -21,7 +22,8 @@ export const DeleteConfirmModal: React.FC<DeleteConfirmModalProps> = ({
   if (!target) return null;
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm overflow-y-auto">
+    <Portal>
+      <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-black/75 backdrop-blur-md overflow-y-auto">
       <div className="bg-white rounded-3xl max-w-sm w-full p-5 sm:p-6 shadow-2xl border border-slate-100 animate-in fade-in zoom-in-95 duration-200 my-auto">
         <div className="w-10 h-10 rounded-full bg-rose-50 text-rose-600 flex items-center justify-center mx-auto mb-3">
           <Trash2 size={20} />
@@ -57,6 +59,7 @@ export const DeleteConfirmModal: React.FC<DeleteConfirmModalProps> = ({
           </button>
         </div>
       </div>
-    </div>
+      </div>
+    </Portal>
   );
 };

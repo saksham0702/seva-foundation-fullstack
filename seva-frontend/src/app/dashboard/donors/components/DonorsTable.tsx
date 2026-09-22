@@ -1,6 +1,7 @@
 "use client";
 
 import { ArrowUpDown, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
+import { Portal } from "@/components/shared/Portal";
 import {
   useDonors,
   STATUS_CONFIG,
@@ -69,9 +70,9 @@ function DonorDrawer({
         "—";
 
   return (
-    <>
-      <div className="fixed inset-0 bg-black/20 z-40" onClick={onClose} />
-      <div className="fixed right-0 top-0 bottom-0 w-full max-w-md bg-white z-50 shadow-2xl flex flex-col">
+    <Portal>
+      <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[99998]" onClick={onClose} />
+      <div className="fixed right-0 top-0 bottom-0 w-full max-w-md bg-white z-[99999] shadow-2xl flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100">
           <div className="flex items-center gap-3">
@@ -171,7 +172,7 @@ function DonorDrawer({
           )}
         </div>
       </div>
-    </>
+    </Portal>
   );
 }
 

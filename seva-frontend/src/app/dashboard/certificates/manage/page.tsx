@@ -23,6 +23,7 @@ import {
 import PageHeader from "@/components/dashboard/certificates/PageHeader";
 import { generatePdf } from "@/app/api/certificate";
 import { getImageUrl } from "@/lib/image";
+import { Portal } from "@/components/shared/Portal";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -85,9 +86,9 @@ function CertificateDrawer({
   };
 
   return (
-    <>
-      <div className="fixed inset-0 bg-black/40 z-40" onClick={onClose} />
-      <div className="fixed right-0 top-0 bottom-0 w-full max-w-md bg-[#0e1528] border-l border-border z-50 flex flex-col shadow-2xl">
+    <Portal>
+      <div className="fixed inset-0 bg-black/75 backdrop-blur-sm z-[99998]" onClick={onClose} />
+      <div className="fixed right-0 top-0 bottom-0 w-full max-w-md bg-[#0e1528] border-l border-border z-[99999] flex flex-col shadow-2xl">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-5 border-b border-border">
           <div>
@@ -371,7 +372,7 @@ function CertificateDrawer({
           </button>
         </div>
       </div>
-    </>
+    </Portal>
   );
 }
 

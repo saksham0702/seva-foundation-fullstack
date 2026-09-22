@@ -15,7 +15,7 @@ interface PaymentStepProps {
   donor: Donor;
   campaignId: string;
   amount: number;
-  onResult: (donation: Donation) => void;
+  onResult: (donation: Donation, certificate?: any) => void;
 }
 
 declare global {
@@ -90,7 +90,7 @@ export default function PaymentStep({
           targetType: "CAMPAIGN",
           donationType: "MONEY",
         });
-        onResult(verified.donation);
+        onResult(verified.donation, verified.certificate);
         return;
       }
 
@@ -128,7 +128,7 @@ export default function PaymentStep({
               amount,
               donationType: "MONEY",
             });
-            onResult(verified.donation);
+            onResult(verified.donation, verified.certificate);
           } catch (err: any) {
             setError(err.message || "Payment verification failed. Please contact support.");
           } finally {
@@ -199,7 +199,7 @@ export default function PaymentStep({
           amount,
           donationType: "MONEY",
         });
-        onResult(verified.donation);
+        onResult(verified.donation, verified.certificate);
       } else {
         await recordPaymentFailed({
           donorId: donor._id,

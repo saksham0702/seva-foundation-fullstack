@@ -22,6 +22,7 @@ import {
 import { getCampaignBySlug, getCampaignDonors, type Campaign, type PublicDonor } from "@/app/api/campaign";
 import { getProducts, type Product as APIProduct } from "@/app/api/product";
 import { getImageUrl, resolveRichTextHtml } from "@/lib/image";
+import ShareModal from "@/components/shared/ShareModal";
 
 const fmt = (n: number) =>
   n >= 100000
@@ -190,6 +191,7 @@ export default function CampaignDetailPage() {
   const [donateAmount, setDonateAmount] = useState<number | "">(1000);
   const [activeImg, setActiveImg] = useState(0);
   const [liked, setLiked] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [activeTab, setActiveTab] = useState<"money" | "products">("money");
   const [selectedProductQuantities, setSelectedProductQuantities] = useState<Record<number, number>>({});
@@ -361,7 +363,33 @@ export default function CampaignDetailPage() {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
           {/* ────────── LEFT ────────── */}
-          <div className="lg:col-span-2 space-y-8">
+          <div className="lg:col-span-2 space-y-6">
+            {/* Top Heading */}
+            <div>
+              <div className="flex items-center gap-2 mb-2.5">
+                {categoryName && (
+                  <span className="bg-[#E8542A]/10 text-[#E8542A] text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full">
+                    {categoryName}
+                  </span>
+                )}
+                {isCompleted && (
+                  <span className="flex items-center gap-1 bg-emerald-100 text-emerald-700 text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full">
+                    <CheckCircle size={12} /> Completed
+                  </span>
+                )}
+              </div>
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-[#0f2347] leading-tight mb-3">
+                {c.name}
+              </h1>
+              <div className="flex flex-wrap items-center gap-4 text-xs sm:text-sm text-gray-500">
+                <span className="flex items-center gap-1.5">
+                  <Users size={14} className="text-gray-400" />
+                  {currentDonors.toLocaleString()} donor{currentDonors === 1 ? "" : "s"}
+                </span>
+                {c.location && <span className="text-gray-400">📍 {c.location}</span>}
+              </div>
+            </div>
+
             <div className="rounded-2xl overflow-hidden bg-gray-100">
               <div className="relative h-72 sm:h-96">
                 <img
@@ -372,18 +400,6 @@ export default function CampaignDetailPage() {
                     (e.target as HTMLImageElement).src = getImageUrl(null);
                   }}
                 />
-                {categoryName && (
-                  <span className="absolute top-4 right-4 bg-black/40 backdrop-blur-sm text-white text-[10px] font-semibold uppercase tracking-widest px-3 py-1.5 rounded-full">
-                    {categoryName}
-                  </span>
-                )}
-                {/* Completed badge */}
-                {isCompleted && (
-                  <div className="absolute top-4 left-4 flex items-center gap-1.5 bg-emerald-500 text-white text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-full shadow-md">
-                    <CheckCircle size={12} />
-                    Completed
-                  </div>
-                )}
               </div>
               {images.length > 1 && (
                 <div className="flex gap-2 p-3 bg-white overflow-x-auto">
@@ -411,19 +427,6 @@ export default function CampaignDetailPage() {
               )}
             </div>
 
-            <div>
-              <h1 className="text-2xl sm:text-3xl font-semibold text-[#0f2347] leading-snug mb-4">
-                {c.name}
-              </h1>
-              <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500">
-                <span className="flex items-center gap-1.5">
-                  <Users size={14} className="text-gray-400" />
-                  {currentDonors.toLocaleString()} donor{currentDonors === 1 ? "" : "s"}
-                </span>
-                {c.location && <span className="text-gray-400">📍 {c.location}</span>}
-              </div>
-            </div>
-
             {/* Campaign Rich Text Content */}
             <div className="bg-white rounded-2xl border border-gray-100 p-6 sm:p-8 shadow-sm">
               <h2 className="text-lg font-bold text-[#0f2347] mb-5 pb-4 border-b border-gray-100">
@@ -431,7 +434,7 @@ export default function CampaignDetailPage() {
               </h2>
               {isHtml ? (
                 <div
-                  className="prose prose-slate max-w-none text-gray-600 text-[15px] leading-relaxed [&_img]:rounded-2xl [&_img]:max-w-full [&_img]:my-4 [&_h2]:text-[#0f2347] [&_h2]:font-bold [&_h3]:text-[#0f2347] [&_h3]:font-semibold [&_a]:text-[#1a3a6b] [&_a]:underline"
+                  className="prose prose-slate max-w-none text-gray-600 text-[15px] leading-relaxed [&_img]:rounded-2xl [&_img]:max-w-full [&_img]:my-4 [&_h2]:text-[#0f2347] [&_h2]:font-bold [&_h3]:text-[#0f2347] [&_h3]:font-semibold [&_a]:text-blue-600 [&_a]:underline hover:[&_a]:text-blue-700"
                   dangerouslySetInnerHTML={{
                     __html: resolveRichTextHtml(c.description),
                   }}
@@ -783,13 +786,7 @@ export default function CampaignDetailPage() {
                   {liked ? "Saved" : "Save"}
                 </button>
                 <button
-                  onClick={() => {
-                    if (navigator.share) {
-                      navigator.share({ title: c.name, url: window.location.href });
-                    } else {
-                      navigator.clipboard.writeText(window.location.href);
-                    }
-                  }}
+                  onClick={() => setShareOpen(true)}
                   className="flex items-center gap-2 flex-1 justify-center py-2.5 text-xs font-bold rounded-xl border border-gray-200 bg-white text-gray-500 hover:border-[#1a3a6b] hover:text-[#1a3a6b] transition-all"
                 >
                   <Share2 size={14} />
@@ -803,6 +800,13 @@ export default function CampaignDetailPage() {
           </div>
         </div>
       </div>
+
+      <ShareModal
+        isOpen={shareOpen}
+        onClose={() => setShareOpen(false)}
+        title={c.name}
+        description={`Support the "${c.name}" campaign by Seva India Foundation. Your help transforms lives!`}
+      />
     </div>
   );
 }

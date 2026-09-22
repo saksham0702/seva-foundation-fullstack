@@ -165,4 +165,23 @@ export const endpoint = {
     subscribe: "/leads/subscribe",
     capture: "/leads/capture",
   },
+
+  mail: {
+    // configs
+    getConfigs: "/mail-config",
+    createConfig: "/mail-config",
+    updateConfig: (id: string) => `/mail-config/${id}`,
+    activateConfig: (id: string) => `/mail-config/${id}/activate`,
+    testConfig: (id: string) => `/mail-config/${id}/test`,
+    deleteConfig: (id: string) => `/mail-config/${id}`,
+    // templates
+    getTemplates: "/mail-templates",
+    createTemplate: "/mail-templates",
+    updateTemplate: (id: string) => `/mail-templates/${id}`,
+    deleteTemplate: (id: string) => `/mail-templates/${id}`,
+    // logs
+    getLogs: "/mail-logs",
+    getLogById: (id: string) => `/mail-logs/${id}`,
+    resendLog: (id: string) => `/mail-logs/${id}/resend`,
+  },
 };

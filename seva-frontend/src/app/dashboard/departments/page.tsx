@@ -24,6 +24,7 @@ import {
   PERMISSION_OPTIONS,
 } from "@/app/api/department";
 import { PermissionGuard } from "@/components/dashboard/PermissionGuard";
+import { Portal } from "@/components/shared/Portal";
 
 export default function DepartmentsDashboardPage() {
   const queryClient = useQueryClient();
@@ -243,7 +244,8 @@ export default function DepartmentsDashboardPage() {
 
         {/* Create / Edit Department Modal */}
         {modalOpen && (
-          <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm overflow-y-auto">
+          <Portal>
+            <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-black/75 backdrop-blur-md overflow-y-auto">
             <div className="bg-white dark:bg-panel rounded-3xl border border-gray-100 dark:border-border shadow-2xl max-w-2xl w-full p-6 sm:p-8 max-h-[90vh] overflow-y-auto my-auto animate-in fade-in zoom-in-95 duration-200">
               <div className="flex items-center justify-between pb-4 border-b border-gray-100 dark:border-border mb-6">
                 <div className="flex items-center gap-3">
@@ -390,7 +392,8 @@ export default function DepartmentsDashboardPage() {
                 </div>
               </form>
             </div>
-          </div>
+            </div>
+          </Portal>
         )}
       </div>
     </PermissionGuard>

@@ -1,7 +1,7 @@
 "use client";
 
-import { useRef } from "react";
-import { X } from "lucide-react";
+import { useRef, useState } from "react";
+import { X, AlertCircle } from "lucide-react";
 import { Field, inputCls } from "@/components/dashboard/field/Field";
 import { useCms } from "../CmsProvider";
 import { CMS_CATEGORIES } from "../cms-data";
@@ -10,6 +10,7 @@ import { getImageUrl } from "@/lib/image";
 export function CmsStepMeta() {
   const { form, set, contentType } = useCms();
   const fileRef = useRef<HTMLInputElement>(null);
+  const [imageError, setImageError] = useState<string | null>(null);
 
   function handleTitleChange(val: string) {
     set("title", val);
@@ -32,11 +33,18 @@ export function CmsStepMeta() {
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      setImageError("Image file exceeds 5MB size limit. Please select a smaller photo (max 5MB).");
+      if (fileRef.current) fileRef.current.value = "";
+      return;
+    }
+    setImageError(null);
     set("featuredImage", file);
   };
 
   const handleRemoveImage = () => {
     set("featuredImage", null);
+    setImageError(null);
     if (fileRef.current) fileRef.current.value = "";
   };
 
@@ -198,7 +206,16 @@ export function CmsStepMeta() {
       </Field>
 
       {/* Featured Cover Image */}
-      <Field label="Featured Cover Image" hint="Upload a photo or enter image URL.">
+      <Field
+        label="Featured Cover Image"
+        hint="Recommended dimensions: 1200 × 630 px (16:9 ratio). Max file size: 5MB."
+      >
+        {imageError && (
+          <div className="mb-3 flex items-center gap-1.5 text-xs text-red-500 font-semibold bg-red-500/10 border border-red-500/20 rounded-xl p-3">
+            <AlertCircle size={14} className="shrink-0" />
+            {imageError}
+          </div>
+        )}
         {imagePreview ? (
           <div className="relative w-full h-48 rounded-xl overflow-hidden border border-border group shadow-sm bg-panel">
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -225,6 +242,9 @@ export function CmsStepMeta() {
             </div>
             <span className="text-[11px] text-muted font-semibold uppercase tracking-wider">
               Click to upload cover photo
+            </span>
+            <span className="text-[10px] text-gold/80 mt-0.5">
+              1200 × 630 px · Max 5MB
             </span>
             <input
               ref={fileRef}

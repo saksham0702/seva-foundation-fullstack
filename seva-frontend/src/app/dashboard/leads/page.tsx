@@ -19,6 +19,7 @@ import {
   Download,
   Filter,
 } from "lucide-react";
+import { Portal } from "@/components/shared/Portal";
 import {
   getLeads,
   getLeadStats,
@@ -529,12 +530,12 @@ export default function LeadsDashboardPage() {
 
         {/* Lead Details & Notes Drawer */}
         {selectedLead && (
-          <>
+          <Portal>
             <div
-              className="fixed inset-0 bg-black/40 z-40 backdrop-blur-xs transition-opacity"
+              className="fixed inset-0 bg-black/60 z-[99998] backdrop-blur-sm transition-opacity"
               onClick={() => setSelectedLead(null)}
             />
-            <div className="fixed right-0 top-0 bottom-0 w-full max-w-md bg-white border-l border-gray-200 z-50 flex flex-col shadow-2xl">
+            <div className="fixed right-0 top-0 bottom-0 w-full max-w-md bg-white border-l border-gray-200 z-[99999] flex flex-col shadow-2xl">
               <div className="p-5 border-b border-gray-100 flex items-center justify-between">
                 <div>
                   <h3 className="font-bold text-gray-900 text-base">{selectedLead.name}</h3>
@@ -542,7 +543,7 @@ export default function LeadsDashboardPage() {
                 </div>
                 <button
                   onClick={() => setSelectedLead(null)}
-                  className="p-1.5 text-gray-400 hover:text-gray-900 rounded-lg"
+                  className="p-1.5 text-gray-400 hover:text-gray-900 rounded-lg cursor-pointer"
                 >
                   <X size={18} />
                 </button>
@@ -553,81 +554,85 @@ export default function LeadsDashboardPage() {
                 <div className="bg-slate-50 border border-slate-100 rounded-xl p-4 space-y-2 text-xs">
                   <div className="flex justify-between">
                     <span className="text-gray-400">Source</span>
-                    <span className="font-semibold text-gray-900">{selectedLead.source}</span>
+                    <span className="font-semibold text-gray-800 uppercase">{selectedLead.source}</span>
                   </div>
-                  {selectedLead.phone && (
-                    <div className="flex justify-between">
-                      <span className="text-gray-400">Phone</span>
-                      <a href={`tel:${selectedLead.phone}`} className="font-mono text-blue-600 hover:underline">
-                        {selectedLead.phone}
-                      </a>
-                    </div>
-                  )}
-                  {selectedLead.amount ? (
-                    <div className="flex justify-between">
-                      <span className="text-gray-400">Intended Amount</span>
-                      <span className="font-bold text-gray-900">
-                        ₹{selectedLead.amount.toLocaleString("en-IN")}
-                      </span>
-                    </div>
-                  ) : null}
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Status</span>
+                    <span className="font-semibold text-gray-800 uppercase">{selectedLead.status}</span>
+                  </div>
                   {selectedLead.campaign?.name && (
                     <div className="flex justify-between">
                       <span className="text-gray-400">Campaign</span>
-                      <span className="font-semibold text-gray-800 text-right">
-                        {selectedLead.campaign.name}
+                      <span className="font-semibold text-gray-800">{selectedLead.campaign.name}</span>
+                    </div>
+                  )}
+                  {selectedLead.amount && (
+                    <div className="flex justify-between">
+                      <span className="text-gray-400">Intended Value</span>
+                      <span className="font-bold text-emerald-600">
+                        ₹{selectedLead.amount.toLocaleString("en-IN")}
                       </span>
                     </div>
                   )}
                   <div className="flex justify-between">
-                    <span className="text-gray-400">Created At</span>
+                    <span className="text-gray-400">First Captured</span>
                     <span className="text-gray-600">
-                      {new Date(selectedLead.createdAt).toLocaleString("en-IN")}
+                      {new Date(selectedLead.createdAt).toLocaleDateString()}
                     </span>
                   </div>
                 </div>
 
-                {/* Status Switcher */}
+                {/* Status Toggle Actions */}
                 <div>
-                  <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">
-                    Lead Status
+                  <label className="block text-xs font-bold uppercase text-gray-500 mb-2">
+                    Update Pipeline Status
                   </label>
-                  <div className="grid grid-cols-3 gap-1.5">
-                    {(["NEW", "CONTACTED", "IN_PROGRESS", "CONVERTED", "LOST"] as LeadStatus[]).map(
-                      (st) => (
+                  <div className="grid grid-cols-2 gap-2">
+                    {(
+                      [
+                        "NEW",
+                        "CONTACTED",
+                        "IN_PROGRESS",
+                        "CONVERTED",
+                        "LOST",
+                      ] as LeadStatus[]
+                    ).map((st) => {
+                      const cfg = STATUS_CONFIG[st];
+                      const isCurrent = selectedLead.status === st;
+                      return (
                         <button
                           key={st}
-                          type="button"
                           onClick={() => handleStatusChange(selectedLead._id, st)}
-                          className={`py-1.5 px-2 rounded-lg text-xs font-bold border transition-all ${
-                            selectedLead.status === st
-                              ? "bg-black text-white border-black"
-                              : "bg-white text-gray-600 border-gray-200 hover:border-gray-400"
+                          className={`py-2 px-3 rounded-xl border text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                            isCurrent
+                              ? `${cfg.bg} ${cfg.text} ${cfg.border} ring-2 ring-black/10`
+                              : "bg-white text-gray-600 border-gray-200 hover:bg-slate-50"
                           }`}
                         >
-                          {STATUS_CONFIG[st].label}
+                          {isCurrent && <CheckCircle2 size={12} />}
+                          <span>{cfg.label}</span>
                         </button>
-                      )
-                    )}
+                      );
+                    })}
                   </div>
                 </div>
 
-                {/* Notes & Follow-up History */}
+                {/* Follow up Notes */}
                 <div>
-                  <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">
-                    Notes & Interaction Log
+                  <label className="block text-xs font-bold uppercase text-gray-500 mb-2">
+                    Admin Follow-up Notes
                   </label>
                   <textarea
+                    rows={5}
                     value={drawerNotes}
                     onChange={(e) => setDrawerNotes(e.target.value)}
-                    rows={6}
-                    placeholder="Log calls, messages, reason for donation failure, follow-up outcome..."
-                    className="w-full bg-slate-50 border border-gray-200 rounded-xl p-3 text-xs text-gray-900 focus:bg-white focus:outline-none focus:border-black transition-all resize-none"
+                    placeholder="Log conversations, call notes, or follow up reminders here..."
+                    className="w-full border border-gray-200 rounded-xl p-3 text-xs focus:outline-none focus:border-black font-sans leading-relaxed"
                   />
                   <button
                     onClick={handleSaveNotes}
                     disabled={savingNotes}
-                    className="mt-2 w-full py-2 bg-black hover:bg-slate-800 text-white text-xs font-semibold rounded-xl transition-colors flex items-center justify-center gap-1.5"
+                    className="mt-2 w-full py-2 bg-black hover:bg-slate-800 text-white text-xs font-semibold rounded-xl transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
                   >
                     {savingNotes && <Loader2 size={13} className="animate-spin" />}
                     <span>Save Notes</span>
@@ -635,18 +640,18 @@ export default function LeadsDashboardPage() {
                 </div>
               </div>
             </div>
-          </>
+          </Portal>
         )}
 
         {/* Add Lead Modal */}
         {showAddModal && (
-          <>
+          <Portal>
             <div
-              className="fixed inset-0 bg-black/50 z-40 backdrop-blur-xs"
+              className="fixed inset-0 bg-black/75 z-[99998] backdrop-blur-sm"
               onClick={() => setShowAddModal(false)}
             />
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-              <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-gray-100 relative">
+            <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 overflow-y-auto">
+              <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-gray-100 relative my-auto">
                 <button
                   onClick={() => setShowAddModal(false)}
                   className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
@@ -745,7 +750,7 @@ export default function LeadsDashboardPage() {
                 </form>
               </div>
             </div>
-          </>
+          </Portal>
         )}
       </div>
     </div>

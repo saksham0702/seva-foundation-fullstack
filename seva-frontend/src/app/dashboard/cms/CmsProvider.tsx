@@ -22,7 +22,7 @@ interface CmsContextType {
   editingId: string | null;
   items: CmsItem[];
   isLoading: boolean;
-  saveItem: () => Promise<void>;
+  saveItem: (forcedStatus?: "draft" | "published" | "scheduled") => Promise<void>;
   deleteItem: (id: string) => Promise<void>;
   toggleStatus: (id: string, currentStatus: string) => Promise<void>;
   refreshItems: () => Promise<void>;
@@ -111,14 +111,18 @@ function CmsProviderContent({
     setForm((prev) => ({ ...prev, [key]: value }));
   }
 
-  const saveItem = async () => {
+  const saveItem = async (forcedStatus?: "draft" | "published" | "scheduled") => {
     try {
+      const payload = {
+        ...form,
+        ...(forcedStatus ? { status: forcedStatus } : {}),
+      };
       if (isEditMode && editingId) {
-        const updated = await cmsAPI.updateItem(contentType, editingId, form);
+        const updated = await cmsAPI.updateItem(contentType, editingId, payload);
         setItems((prev) => prev.map((item) => (item.id === editingId ? updated : item)));
         toast.success(`${contentType.toUpperCase()} updated successfully!`);
       } else {
-        const created = await cmsAPI.createItem(contentType, form);
+        const created = await cmsAPI.createItem(contentType, payload);
         setItems((prev) => [created, ...prev]);
         toast.success(`${contentType.toUpperCase()} created successfully!`);
       }

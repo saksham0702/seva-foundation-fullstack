@@ -2,12 +2,44 @@
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import { Shield, Lock, FileText, ChevronRight, ArrowLeft } from "lucide-react";
+import { Shield, Lock, FileText, ChevronRight, ArrowLeft, Loader2, CheckCircle2, Mail } from "lucide-react";
 import { getCmsPageBySlug, CmsPage } from "@/app/api/cms";
+import { subscribeNewsletter } from "@/app/api/leads";
 
 export default function PrivacyPolicyPage() {
   const [pageData, setPageData] = useState<CmsPage | null>(null);
   const [loading, setLoading] = useState(true);
+  const [email, setEmail] = useState("");
+  const [subscribing, setSubscribing] = useState(false);
+  const [subscribeStatus, setSubscribeStatus] = useState<{
+    type: "success" | "error";
+    message: string;
+  } | null>(null);
+
+  const handleSubscribe = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email || !email.includes("@")) return;
+    setSubscribing(true);
+    setSubscribeStatus(null);
+    try {
+      const res = await subscribeNewsletter(email.trim(), "Privacy Page Subscriber");
+      setSubscribeStatus({
+        type: "success",
+        message: res.message || "Thank you for subscribing to Seva Foundation transparency updates!",
+      });
+      setEmail("");
+    } catch (err: any) {
+      setSubscribeStatus({
+        type: "error",
+        message:
+          err?.response?.data?.message ||
+          err?.message ||
+          "Failed to subscribe. Please try again.",
+      });
+    } finally {
+      setSubscribing(false);
+    }
+  };
 
   useEffect(() => {
     const load = async () => {
@@ -122,6 +154,57 @@ export default function PrivacyPolicyPage() {
               </section>
             </div>
           )}
+
+          {/* Subscription Banner */}
+          <div className="bg-[#0A1A2F] text-white rounded-2xl p-6 sm:p-8 flex flex-col md:flex-row items-center justify-between gap-6 border border-white/10 shadow-lg">
+            <div className="space-y-1.5 text-center md:text-left max-w-md">
+              <span className="inline-flex items-center gap-1.5 text-[#F5A623] text-xs font-bold uppercase tracking-wider">
+                <Mail size={14} />
+                Stay Informed &amp; Protected
+              </span>
+              <h3 className="text-xl font-semibold font-serif text-white">
+                Subscribe to Transparency Disclosures
+              </h3>
+              <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+                Receive annual audited financial reports, 80G tax receipt updates, and program transparency digests directly to your email.
+              </p>
+            </div>
+
+            <div className="w-full md:w-auto">
+              <form onSubmit={handleSubscribe} className="flex flex-col sm:flex-row gap-2.5 w-full sm:w-80">
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="Enter your email"
+                  required
+                  className="px-4 py-2.5 bg-white/10 border border-white/20 rounded-xl text-xs sm:text-sm text-white placeholder:text-slate-400 focus:outline-none focus:bg-white/15 focus:border-[#F5A623] transition-all w-full"
+                />
+                <button
+                  type="submit"
+                  disabled={subscribing}
+                  className="px-5 py-2.5 bg-[#F5A623] hover:bg-[#d98f16] text-[#0A1A2F] text-xs font-bold uppercase tracking-wider rounded-xl transition-all shadow-md disabled:opacity-50 shrink-0"
+                >
+                  {subscribing ? (
+                    <Loader2 size={14} className="animate-spin" />
+                  ) : (
+                    "Subscribe"
+                  )}
+                </button>
+              </form>
+              {subscribeStatus && (
+                <p
+                  className={`text-xs mt-2 font-medium text-center md:text-left ${
+                    subscribeStatus.type === "success"
+                      ? "text-[#F5A623]"
+                      : "text-rose-400"
+                  }`}
+                >
+                  {subscribeStatus.message}
+                </p>
+              )}
+            </div>
+          </div>
 
           <div className="pt-6 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4">
             <Link

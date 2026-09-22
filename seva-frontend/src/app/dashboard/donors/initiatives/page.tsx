@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import { PermissionGuard } from "@/components/dashboard/PermissionGuard";
 import { getDonations, Donation } from "@/app/api/donation";
+import { Portal } from "@/components/shared/Portal";
 
 // ─── Color & Avatar Helpers ────────────────────────────────────────────────
 function Avatar({ name }: { name: string }) {
@@ -532,12 +533,12 @@ function InitiativeDonationsInner() {
 
         {/* ── Details Drawer ── */}
         {activeDonation && (
-          <>
+          <Portal>
             <div
-              className="fixed inset-0 bg-black/30 z-40 backdrop-blur-sm"
+              className="fixed inset-0 bg-black/75 z-[99998] backdrop-blur-sm"
               onClick={() => setActiveDonation(null)}
             />
-            <div className="fixed right-0 top-0 bottom-0 w-full max-w-md bg-white z-50 shadow-2xl flex flex-col animate-in slide-in-from-right duration-200">
+            <div className="fixed right-0 top-0 bottom-0 w-full max-w-md bg-white z-[99999] shadow-2xl flex flex-col animate-in slide-in-from-right duration-200">
               {/* Drawer Header */}
               <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100">
                 <div className="flex items-center gap-3">
@@ -696,7 +697,7 @@ function InitiativeDonationsInner() {
                 )}
               </div>
             </div>
-          </>
+          </Portal>
         )}
       </div>
     </div>

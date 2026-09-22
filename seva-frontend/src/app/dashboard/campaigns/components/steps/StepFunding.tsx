@@ -159,21 +159,24 @@ export function StepFunding() {
 
       {/* Dates */}
       <div className="grid grid-cols-2 gap-4">
-        <Field label="Start Date" required>
+        <Field label="Start Date" required hint="No past dates permitted">
           <input
             type="date"
+            min={new Date().toISOString().split("T")[0]}
             value={form.startDate ? form.startDate.split("T")[0] : ""}
+            onClick={(e) => (e.target as any).showPicker?.()}
             onChange={(e) => set("startDate", e.target.value)}
-            className={inputCls}
+            className={inputCls + " cursor-pointer"}
           />
         </Field>
-        <Field label="End Date" required>
+        <Field label="End Date" required hint="Must be on or after start date">
           <input
             type="date"
-            min={form.startDate ? form.startDate.split("T")[0] : undefined}
+            min={form.startDate ? form.startDate.split("T")[0] : new Date().toISOString().split("T")[0]}
             value={form.endDate ? form.endDate.split("T")[0] : ""}
+            onClick={(e) => (e.target as any).showPicker?.()}
             onChange={(e) => set("endDate", e.target.value)}
-            className={inputCls}
+            className={inputCls + " cursor-pointer"}
           />
         </Field>
       </div>
@@ -298,24 +301,21 @@ export function StepFunding() {
 
                   {/* Product Select / Name */}
                   <div className="relative">
-                    <select
+                    <input
+                      type="text"
+                      list={`products-datalist-${i}`}
                       value={p.product}
                       onChange={(e) => handleProductSelect(i, e.target.value)}
-                      className={inputCls + " appearance-none text-xs"}
-                      disabled={productsLoading}
-                    >
-                      <option value="">
-                        {productsLoading ? "Loading…" : "Select or Type Product"}
-                      </option>
+                      placeholder={productsLoading ? "Loading products..." : "Select or enter product name"}
+                      className={inputCls + " text-xs"}
+                    />
+                    <datalist id={`products-datalist-${i}`}>
                       {backendProducts.map((pr) => (
                         <option key={pr._id} value={pr.name}>
-                          {pr.name} ({pr.unit} {pr.unitType})
+                          {pr.name} ({pr.unit} {pr.unitType} - ₹{pr.price})
                         </option>
                       ))}
-                      {p.product && !backendProducts.some((pr) => pr.name === p.product || pr._id === p.product) && (
-                        <option value={p.product}>{p.product}</option>
-                      )}
-                    </select>
+                    </datalist>
                     {productsLoading && (
                       <Loader2
                         size={12}

@@ -66,19 +66,32 @@ export function CmsSidebar() {
         </div>
 
         <div className="mt-4 pt-4 border-t border-border space-y-2">
-          <button
-            type="button"
-            onClick={saveItem}
-            className="w-full bg-gold hover:bg-gold-light text-navy font-bold text-sm py-2.5 rounded-lg transition-all shadow-md hover:shadow-gold/20"
-          >
-            {isEditMode
-              ? `Update ${typeLabel}`
-              : form.status === "published"
-              ? `Publish ${typeLabel}`
-              : form.status === "scheduled"
-              ? `Schedule ${typeLabel}`
-              : `Save ${typeLabel} Draft`}
-          </button>
+          {form.status === "scheduled" ? (
+            <button
+              type="button"
+              onClick={() => saveItem("scheduled")}
+              className="w-full bg-blueaccent hover:bg-blue-dark text-white font-bold text-sm py-2.5 rounded-lg transition-all shadow-md cursor-pointer"
+            >
+              Schedule {typeLabel}
+            </button>
+          ) : (
+            <>
+              <button
+                type="button"
+                onClick={() => saveItem("published")}
+                className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm py-2.5 rounded-lg transition-all shadow-md shadow-emerald-600/20 flex items-center justify-center gap-1.5 cursor-pointer"
+              >
+                {isEditMode ? `Publish / Update Live` : `Publish ${typeLabel} Now`}
+              </button>
+              <button
+                type="button"
+                onClick={() => saveItem("draft")}
+                className="w-full bg-panel hover:bg-white/5 border border-border text-white text-xs font-semibold py-2.5 rounded-lg transition-all cursor-pointer"
+              >
+                Save as Draft
+              </button>
+            </>
+          )}
         </div>
       </div>
 

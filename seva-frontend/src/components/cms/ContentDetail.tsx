@@ -13,7 +13,8 @@ import {
 import { CmsItem } from "@/types/cms";
 import { getImageUrl, resolveRichTextHtml } from "@/lib/image";
 import { richProseClass } from "@/lib/prose";
-import React, { ReactNode } from "react";
+import React, { ReactNode, useState } from "react";
+import ShareModal from "@/components/shared/ShareModal";
 
 interface MetaItem {
   icon: LucideIcon;
@@ -83,6 +84,8 @@ export function ContentDetail({
   shareText,
   related,
 }: ContentDetailProps) {
+  const [shareOpen, setShareOpen] = useState(false);
+
   const cssVars = {
     ["--accent" as string]: accentColor,
     ["--heading" as string]: headingColor,
@@ -239,14 +242,7 @@ export function ContentDetail({
 
             <button
               type="button"
-              onClick={() => {
-                if (navigator.share) {
-                  navigator.share({ title: item.title, url: window.location.href });
-                } else {
-                  navigator.clipboard.writeText(window.location.href);
-                  alert(shareText);
-                }
-              }}
+              onClick={() => setShareOpen(true)}
               className="inline-flex items-center gap-2 px-5 py-2.5 bg-white border border-gray-200 text-xs font-bold uppercase tracking-wider rounded-xl transition-all shadow-sm hover:shadow"
               style={{ color: headingColor }}
             >
@@ -256,6 +252,13 @@ export function ContentDetail({
           </div>
         </div>
       </section>
+
+      <ShareModal
+        isOpen={shareOpen}
+        onClose={() => setShareOpen(false)}
+        title={item.title}
+        description={item.excerpt || item.title}
+      />
 
       {/* ── Related ── */}
       {related && related.items.length > 0 && (

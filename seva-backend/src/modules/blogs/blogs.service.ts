@@ -1,6 +1,24 @@
 import { IBlog, BlogModel } from "./blogs.model";
 
 const createBlog = async (payload: Partial<IBlog>): Promise<IBlog> => {
+  if (payload.slug) {
+    // Release any old deleted blogs holding this slug
+    await BlogModel.updateMany(
+      { slug: payload.slug, isDeleted: true },
+      { $set: { slug: `${payload.slug}-deleted-${Date.now()}` } }
+    );
+    const existing = await BlogModel.findOne({
+      slug: payload.slug,
+      isDeleted: false,
+    });
+    if (existing) {
+      const error: any = new Error(
+        `A blog with the slug "${payload.slug}" already exists. Please choose a different title or slug.`
+      );
+      error.statusCode = 409;
+      throw error;
+    }
+  }
   const result = await BlogModel.create(payload);
   return result;
 };
@@ -39,17 +57,36 @@ const updateBlog = async (
   id: string,
   payload: Partial<IBlog>
 ): Promise<IBlog | null> => {
+  if (payload.slug) {
+    // Release any old deleted blogs holding this slug
+    await BlogModel.updateMany(
+      { slug: payload.slug, isDeleted: true, _id: { $ne: id } },
+      { $set: { slug: `${payload.slug}-deleted-${Date.now()}` } }
+    );
+    const existing = await BlogModel.findOne({
+      slug: payload.slug,
+      isDeleted: false,
+      _id: { $ne: id },
+    });
+    if (existing) {
+      const error: any = new Error(
+        `A blog with the slug "${payload.slug}" already exists. Please choose a different title or slug.`
+      );
+      error.statusCode = 409;
+      throw error;
+    }
+  }
   const result = await BlogModel.findByIdAndUpdate(id, payload, { new: true });
   return result;
 };
 
 const deleteBlog = async (id: string): Promise<IBlog | null> => {
-  const result = await BlogModel.findByIdAndUpdate(
-    id,
-    { isDeleted: true },
-    { new: true }
-  );
-  return result;
+  const blog = await BlogModel.findById(id);
+  if (!blog) return null;
+  blog.isDeleted = true;
+  blog.slug = `${blog.slug}-deleted-${Date.now()}`;
+  await blog.save();
+  return blog;
 };
 
 const toggleBlogStatus = async (id: string, newStatus: "draft" | "published"): Promise<IBlog | null> => {
