@@ -74,6 +74,9 @@ function renderPreviewHtml(html: string): string {
   }
   // Replace any leftover {{variable}} with placeholder
   rendered = rendered.replace(/\{\{\s*([\w.]+)\s*\}\}/g, "[$1]");
+  // Remove logo images for now to prevent broken image displays
+  rendered = rendered.replace(/<img[^>]*alt=["']Seva Foundation["'][^>]*\/?>/gi, "");
+  rendered = rendered.replace(/<img[^>]*src=["'][^"']*logo[^"']*["'][^>]*\/?>/gi, "");
   return rendered;
 }
 

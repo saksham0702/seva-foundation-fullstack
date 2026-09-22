@@ -1,5 +1,6 @@
 import { DonorModel, IDonor } from "./donors.model";
 import { MailerService } from "../mail/mailer.service";
+import { DonationModel } from "../payments/payments.model";
 
 const createDonor = async (payload: Partial<IDonor>) => {
   const donor = await DonorModel.create({
@@ -86,18 +87,34 @@ const updateDonor = async (
 
   // Send receipt when status is explicitly set to PAID
   if (payload.status === "PAID" && donor && donor.email) {
-    const campaignName = (donor.campaign as any)?.name || "Seva Foundation";
+    const campaignName = (donor.campaign as any)?.title || (donor.campaign as any)?.name || "Seva Foundation Initiative";
+    let amountStr = "—";
+    try {
+      const latestDonation = await DonationModel.findOne({ donor: donor._id, paymentStatus: "SUCCESS" }).sort({ createdAt: -1 });
+      if (latestDonation?.amount) {
+        amountStr = String(latestDonation.amount);
+      }
+    } catch (e) {
+      console.error("Error finding latest donation for donor receipt:", e);
+    }
+
     MailerService.sendTemplatedMail({
       to: donor.email,
       templateKey: "CAMPAIGN_DONATION_RECEIPT",
       variables: {
-        name: donor.name || "Donor",
-        amount: "—", // amount is tracked in the payments module, not on donor doc
+        name: donor.name || "Generous Supporter",
+        amount: amountStr,
         campaignName,
-        donatedOn: new Date().toLocaleDateString("en-IN"),
+        donatedOn: new Date().toLocaleDateString("en-IN", {
+          day: "numeric",
+          month: "short",
+          year: "numeric",
+        }),
       },
       relatedToModel: "Donor",
       relatedToId: String(donor._id),
+    }).catch((mailErr) => {
+      console.error("Failed to send donation receipt email from updateDonor:", mailErr);
     });
   }
 

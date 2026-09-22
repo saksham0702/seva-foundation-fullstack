@@ -5,6 +5,7 @@ import { RazorpayService } from "./razorpay.service";
 import { CampaignService } from "../campaigns/campaigns.service";
 import { CertificateService } from "../certificates/certificates.service";
 import { LeadService } from "../leads/leads.service";
+import { MailerService } from "../mail/mailer.service";
 
 export interface InitiatePaymentInput {
   campaignId?: string;
@@ -291,6 +292,41 @@ const verifyPayment = async (input: VerifyPaymentInput) => {
     console.error("Failed to mark lead converted:", err);
   }
 
+  // 6. Send Thank You / Donation Receipt email
+  try {
+    const donor = await DonorModel.findById(donorId);
+    if (donor?.email) {
+      let resolvedCampaignName = "Seva Foundation Initiative";
+      if (campaignId) {
+        const camp = await CampaignModel.findById(campaignId);
+        if (camp?.name) resolvedCampaignName = camp.name;
+      } else if (initiative) {
+        resolvedCampaignName = initiative;
+      }
+
+      MailerService.sendTemplatedMail({
+        to: donor.email,
+        templateKey: "CAMPAIGN_DONATION_RECEIPT",
+        variables: {
+          name: donor.name || "Generous Supporter",
+          amount: String(amount),
+          campaignName: resolvedCampaignName,
+          donatedOn: new Date().toLocaleDateString("en-IN", {
+            day: "numeric",
+            month: "short",
+            year: "numeric",
+          }),
+        },
+        relatedToModel: "Donor",
+        relatedToId: String(donor._id),
+      }).catch((mailErr) => {
+        console.error("Failed to send donation receipt email:", mailErr);
+      });
+    }
+  } catch (err) {
+    console.error("Error triggering donation receipt email in verifyPayment:", err);
+  }
+
   const populatedDonation = await DonationModel.findById(donation._id)
     .populate("donor")
     .populate("campaign")
@@ -387,6 +423,38 @@ const createDonation = async (payload: Partial<IDonation>) => {
         `Certificate generation failed for donor ${donor._id}:`,
         err
       );
+    }
+
+    // Send Thank You / Donation Receipt email
+    if (donor.email) {
+      try {
+        let resolvedCampaignName = "Seva Foundation Initiative";
+        if (payload.campaign) {
+          const camp = await CampaignModel.findById(payload.campaign);
+          if (camp?.name) resolvedCampaignName = camp.name;
+        }
+
+        MailerService.sendTemplatedMail({
+          to: donor.email,
+          templateKey: "CAMPAIGN_DONATION_RECEIPT",
+          variables: {
+            name: donor.name || "Generous Supporter",
+            amount: String(donation.amount || 0),
+            campaignName: resolvedCampaignName,
+            donatedOn: new Date().toLocaleDateString("en-IN", {
+              day: "numeric",
+              month: "short",
+              year: "numeric",
+            }),
+          },
+          relatedToModel: "Donor",
+          relatedToId: String(donor._id),
+        }).catch((mailErr) => {
+          console.error("Failed to send donation receipt email:", mailErr);
+        });
+      } catch (err) {
+        console.error("Error triggering donation email in createDonation:", err);
+      }
     }
   } else if (donation.paymentStatus === "FAILED") {
     await DonorModel.findByIdAndUpdate(donor._id, {

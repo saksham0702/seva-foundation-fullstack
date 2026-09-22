@@ -91,15 +91,14 @@ export function buildProfessionalEmailTemplate({
           <tr>
             <td style="height: 5px; background: linear-gradient(90deg, #E8542A 0%, #ff7849 100%); line-height: 5px; font-size: 1px;">&nbsp;</td>
           </tr>
-          <!-- Header with Navy Background & Official Logo -->
+          <!-- Header with Navy Background -->
           <tr>
             <td style="background-color: #0f2347; padding: 32px 40px 28px; text-align: center;">
               <table width="100%" border="0" cellpadding="0" cellspacing="0">
                 <tr>
                   <td align="center">
-                    <img src="{{logoUrl}}" alt="Seva Foundation" width="70" height="70" style="display: block; margin: 0 auto 12px; border: 0; outline: none; border-radius: 8px; object-fit: contain;" />
-                    <h1 style="margin: 0; color: #ffffff; font-size: 22px; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase;">SEVA FOUNDATION</h1>
-                    <p style="margin: 6px 0 0; color: #E8542A; font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase;">Serving Humanity • Empowering Lives</p>
+                    <h1 style="margin: 0; color: #ffffff; font-size: 24px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase;">SEVA FOUNDATION</h1>
+                    <p style="margin: 6px 0 0; color: #E8542A; font-size: 11px; font-weight: 700; letter-spacing: 2.5px; text-transform: uppercase;">Serving Humanity • Empowering Lives</p>
                   </td>
                 </tr>
               </table>
@@ -153,7 +152,7 @@ export async function seedMailTemplates() {
         ctaUrl: "{{loginUrl}}",
         noticeText: "Important: For security reasons, please change your password immediately upon your first login.",
       }),
-      availableVariables: ["name", "email", "password", "loginUrl", "logoUrl"],
+      availableVariables: ["name", "email", "password", "loginUrl"],
     },
     {
       key: "VOLUNTEER_APPLICATION_RECEIVED",
@@ -170,7 +169,7 @@ export async function seedMailTemplates() {
         ],
         noticeText: "Our volunteer coordination team is reviewing your profile and will connect with you within 48 hours regarding the next steps.",
       }),
-      availableVariables: ["name", "availability", "category", "logoUrl"],
+      availableVariables: ["name", "availability", "category"],
     },
     {
       key: "CAMPAIGN_DONATION_RECEIPT",
@@ -188,7 +187,7 @@ export async function seedMailTemplates() {
         ],
         noticeText: "Your official 80G tax exemption receipt will be issued to your email shortly. We deeply appreciate your trust and generosity.",
       }),
-      availableVariables: ["name", "amount", "campaignName", "donatedOn", "logoUrl"],
+      availableVariables: ["name", "amount", "campaignName", "donatedOn"],
     },
     {
       key: "CERTIFICATE_GENERATED",
@@ -207,7 +206,7 @@ export async function seedMailTemplates() {
         ctaUrl: "{{verifyUrl}}",
         noticeText: "You can securely view, share, or verify the authenticity of your digital certificate at any time using the link above.",
       }),
-      availableVariables: ["name", "certificateNo", "programName", "verifyUrl", "logoUrl"],
+      availableVariables: ["name", "certificateNo", "programName", "verifyUrl"],
     },
     {
       key: "VOLUNTEER_APPLICATION_STATUS_UPDATE",
@@ -223,7 +222,7 @@ export async function seedMailTemplates() {
         ],
         noticeText: "If you have any questions or need further clarification, our team is always here to assist you. Simply reply to this email.",
       }),
-      availableVariables: ["name", "status", "logoUrl"],
+      availableVariables: ["name", "status"],
     },
     {
       key: "DONOR_PAYMENT_CONFIRMED",
@@ -241,7 +240,7 @@ export async function seedMailTemplates() {
         ],
         noticeText: "Your support directly fuels our on-the-ground operations. An official 80G certificate has been logged in your donor profile.",
       }),
-      availableVariables: ["name", "amount", "campaignName", "donatedOn", "logoUrl"],
+      availableVariables: ["name", "amount", "campaignName", "donatedOn"],
     },
   ];
 
@@ -260,6 +259,17 @@ export async function seedMailTemplates() {
       },
       { upsert: true, new: true }
     );
+  }
+
+  // Also clean up any lingering img tags in existing DB templates
+  const allExisting = await MailTemplateModel.find({});
+  for (const doc of allExisting) {
+    if (doc.htmlContent && (doc.htmlContent.includes("logoUrl") || doc.htmlContent.includes("alt=\"Seva Foundation\""))) {
+      const cleaned = doc.htmlContent
+        .replace(/<img[^>]*alt=["']Seva Foundation["'][^>]*\/?>/gi, "")
+        .replace(/<img[^>]*src=["']\{\{logoUrl\}\}["'][^>]*\/?>/gi, "");
+      await MailTemplateModel.findByIdAndUpdate(doc._id, { htmlContent: cleaned });
+    }
   }
 
   console.log(`[seed] ${templates.length} mail templates ensured with unified professional layout.`);

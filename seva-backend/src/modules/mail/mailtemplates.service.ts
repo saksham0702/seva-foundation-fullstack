@@ -90,14 +90,20 @@ const renderTemplate = (
   const siteUrl = process.env.FRONTEND_URL || "http://187.126.112.144:3000";
   const mergedVariables: Record<string, string | number> = {
     siteUrl,
-    logoUrl: `${siteUrl}/assets/seva-logo.png`,
+    logoUrl: "",
     loginUrl: process.env.CLIENT_LOGIN_URL || `${siteUrl}/login`,
     currentYear: new Date().getFullYear(),
     ...variables,
   };
+  let html = renderString(template.htmlContent, mergedVariables);
+  // Hide / remove logo image tag for now to avoid broken image boxes in email clients
+  html = html.replace(/<img[^>]*alt=["']Seva Foundation["'][^>]*\/?>/gi, "");
+  html = html.replace(/<img[^>]*src=["']\{\{logoUrl\}\}["'][^>]*\/?>/gi, "");
+  html = html.replace(/<img[^>]*src=["'][^"']*seva-logo[^"']*["'][^>]*\/?>/gi, "");
+
   return {
     subject: renderString(template.subject, mergedVariables),
-    html: renderString(template.htmlContent, mergedVariables),
+    html,
   };
 };
 

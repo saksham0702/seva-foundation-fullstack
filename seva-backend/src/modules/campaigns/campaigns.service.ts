@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import { ICampaign, CampaignModel } from "./campaigns.model";
 import { DonationModel } from "../payments/payments.model";
 
@@ -18,9 +19,9 @@ const createCampaign = async (
     });
     if (existingName) {
       const error: any = new Error(
-        `A campaign with the name "${trimmedName}" already exists. Please choose a different title.`
+        `A campaign with the name "${trimmedName}" already exists. Please choose a different name.`
       );
-      error.statusCode = 409;
+      error.statusCode = 400;
       throw error;
     }
   }
@@ -41,7 +42,7 @@ const createCampaign = async (
       const error: any = new Error(
         `A campaign with the slug "${payload.slug}" already exists. Please choose a different title or slug.`
       );
-      error.statusCode = 409;
+      error.statusCode = 400;
       throw error;
     }
   }
@@ -64,22 +65,17 @@ const createCampaign = async (
 };
 
 const getAllCampaigns = async (
-  filters?: CampaignFilters
+  filters: CampaignFilters
 ): Promise<ICampaign[]> => {
-  const query: Record<string, unknown> = { isDeleted: false };
+  const query: Record<string, any> = { isDeleted: false };
 
-  if (filters?.status && filters.status !== "all") {
-    query.status = filters.status;
-  }
-
-  if (filters?.category && filters.category !== "all") {
-    query.category = filters.category;
-  }
-
-  if (filters?.search) {
+  if (filters.status) query.status = filters.status;
+  if (filters.category) query.category = filters.category;
+  if (filters.search) {
     query.$or = [
       { name: { $regex: filters.search, $options: "i" } },
       { description: { $regex: filters.search, $options: "i" } },
+      { location: { $regex: filters.search, $options: "i" } },
     ];
   }
 
@@ -98,8 +94,14 @@ const getCampaignById = async (id: string): Promise<ICampaign | null> => {
 };
 
 const getCampaignBySlug = async (slug: string): Promise<ICampaign | null> => {
+  const cleanSlug = slug.trim();
+  const isId = mongoose.Types.ObjectId.isValid(cleanSlug);
   const result = await CampaignModel.findOne({
-    slug,
+    $or: [
+      { slug: cleanSlug },
+      { slug: cleanSlug.toLowerCase() },
+      ...(isId ? [{ _id: cleanSlug }] : []),
+    ],
     isDeleted: false,
   }).populate("category");
   return result;
@@ -247,7 +249,16 @@ const getCampaignDonorsBySlug = async (
   page = 1,
   limit = 5
 ): Promise<GetCampaignDonorsResult | null> => {
-  const campaign = await CampaignModel.findOne({ slug, isDeleted: false });
+  const cleanSlug = slug.trim();
+  const isId = mongoose.Types.ObjectId.isValid(cleanSlug);
+  const campaign = await CampaignModel.findOne({
+    $or: [
+      { slug: cleanSlug },
+      { slug: cleanSlug.toLowerCase() },
+      ...(isId ? [{ _id: cleanSlug }] : []),
+    ],
+    isDeleted: false,
+  });
   if (!campaign) return null;
 
   const skip = (page - 1) * limit;

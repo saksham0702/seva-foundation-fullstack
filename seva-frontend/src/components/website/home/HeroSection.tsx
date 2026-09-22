@@ -25,19 +25,32 @@ import { getImageUrl } from "@/lib/image";
 const DEFAULT_HERO_CAMPAIGNS = [
   {
     id: "1",
-    slug: "help-komal-fight-blood-cancer",
+    slug: "nepal-flood-relief",
     image: "",
-    category: "Medical Aid",
-    title: "Help Komal Fight Blood Cancer",
-    raised: 342000,
-    goal: 500000,
-    donors: 1284,
-    daysLeft: 12,
+    category: "Disaster Relief",
+    title: "Nepal Flood Relief Emergency Fund",
+    raised: 420000,
+    goal: 1000000,
+    donors: 1420,
+    daysLeft: 18,
     urgent: true,
-    location: "AIIMS, New Delhi",
+    location: "Kathmandu & Terai, Nepal",
   },
   {
     id: "2",
+    slug: "kerala-flood-relief",
+    image: "",
+    category: "Disaster Relief",
+    title: "Kerala Flood Relief - Wayanad & Thrissur",
+    raised: 750000,
+    goal: 1500000,
+    donors: 2890,
+    daysLeft: 14,
+    urgent: true,
+    location: "Wayanad & Thrissur, Kerala",
+  },
+  {
+    id: "3",
     slug: "books-uniforms-hill-children",
     image: "",
     category: "Education",
@@ -48,19 +61,6 @@ const DEFAULT_HERO_CAMPAIGNS = [
     daysLeft: 24,
     urgent: false,
     location: "Tehri Garhwal, Uttarakhand",
-  },
-  {
-    id: "3",
-    slug: "rebuild-homes-after-cloudburst",
-    image: "",
-    category: "Disaster Relief",
-    title: "Rebuild Homes After Cloudburst",
-    raised: 890000,
-    goal: 1200000,
-    donors: 2341,
-    daysLeft: 8,
-    urgent: true,
-    location: "Chamoli, Uttarakhand",
   },
 ];
 
@@ -259,47 +259,53 @@ export default function HeroSection() {
               onMouseLeave={() => setIsPaused(false)}
             >
               {/* Image */}
-              <div className="relative h-64 sm:h-80 bg-slate-900">
-                {featuredCampaigns.map((c, i) => {
-                  const resolvedImg = getImageUrl(c.image);
-                  return (
-                    <div
-                      key={c.id}
-                      className={`absolute inset-0 transition-opacity duration-700 ${
-                        i === current ? "opacity-100" : "opacity-0"
-                      }`}
-                    >
-                      {resolvedImg ? (
-                        <img
-                          src={resolvedImg}
-                          alt={c.title}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <div className="w-full h-full bg-gradient-to-br from-[#0a1628] via-[#1a3a6b] to-[#E8542A]/30 flex flex-col items-center justify-center p-6 text-center">
-                          <span className="text-white/40 text-xs uppercase tracking-widest font-semibold mb-2">
-                            {c.category}
-                          </span>
-                          <span className="text-white font-bold text-lg sm:text-xl max-w-md">
-                            {c.title}
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
+              <div className="relative h-64 sm:h-80 bg-slate-900 group/img">
+                <Link
+                  href={`/campaigns/${campaign.slug || campaign.id}`}
+                  className="absolute inset-0 z-0 block cursor-pointer"
+                  title={`View campaign: ${campaign.title}`}
+                >
+                  {featuredCampaigns.map((c, i) => {
+                    const resolvedImg = getImageUrl(c.image);
+                    return (
+                      <div
+                        key={c.id}
+                        className={`absolute inset-0 transition-opacity duration-700 ${
+                          i === current ? "opacity-100" : "opacity-0"
+                        }`}
+                      >
+                        {resolvedImg ? (
+                          <img
+                            src={resolvedImg}
+                            alt={c.title}
+                            className="w-full h-full object-cover group-hover/img:scale-105 transition-transform duration-700"
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-gradient-to-br from-[#0a1628] via-[#1a3a6b] to-[#E8542A]/30 flex flex-col items-center justify-center p-6 text-center">
+                            <span className="text-white/40 text-xs uppercase tracking-widest font-semibold mb-2">
+                              {c.category}
+                            </span>
+                            <span className="text-white font-bold text-lg sm:text-xl max-w-md">
+                              {c.title}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
+                </Link>
 
                 {/* Urgent badge */}
                 {campaign.urgent && (
-                  <span className="absolute top-4 left-4 bg-[#E8542A] text-white text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-full flex items-center gap-1.5 z-10">
+                  <span className="absolute top-4 left-4 bg-[#E8542A] text-white text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-full flex items-center gap-1.5 z-10 pointer-events-none">
                     <Clock size={10} />
                     Urgent — {campaign.daysLeft} days left
                   </span>
                 )}
 
                 {/* Category */}
-                <span className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm text-[#0f2347] text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-full z-10">
+                <span className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm text-[#0f2347] text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-full z-10 pointer-events-none">
                   {campaign.category}
                 </span>
 
@@ -320,9 +326,14 @@ export default function HeroSection() {
               <div className="p-6 sm:p-8">
                 <div className="flex items-start justify-between gap-4 mb-4">
                   <div>
-                    <h3 className="text-xl sm:text-2xl font-bold text-[#0f2347] leading-snug mb-2">
-                      {campaign.title}
-                    </h3>
+                    <Link
+                      href={`/campaigns/${campaign.slug || campaign.id}`}
+                      className="group/title block"
+                    >
+                      <h3 className="text-xl sm:text-2xl font-bold text-[#0f2347] leading-snug mb-2 group-hover/title:text-[#E8542A] transition-colors">
+                        {campaign.title}
+                      </h3>
+                    </Link>
                     <div className="flex items-center gap-2 text-xs text-gray-400">
                       <MapPin size={12} />
                       {campaign.location}
@@ -330,9 +341,10 @@ export default function HeroSection() {
                   </div>
                   <Link
                     href={`/campaigns/${campaign.slug || campaign.id}`}
-                    className="flex-shrink-0 w-12 h-12 rounded-xl bg-[#0f2347] hover:bg-[#1a3a6b] flex items-center justify-center text-white transition-colors"
+                    title="View Campaign Details"
+                    className="flex-shrink-0 w-12 h-12 rounded-xl bg-[#0f2347] hover:bg-[#1a3a6b] flex items-center justify-center text-white transition-colors group/arrow shadow-md"
                   >
-                    <ArrowUpRight size={20} />
+                    <ArrowUpRight size={20} className="group-hover/arrow:translate-x-0.5 group-hover/arrow:-translate-y-0.5 transition-transform" />
                   </Link>
                 </div>
 
@@ -358,13 +370,23 @@ export default function HeroSection() {
                   </div>
                 </div>
 
-                {/* Donate CTA */}
-                <Link
-                  href={`/donate?campaign=${campaign.slug || campaign.id}`}
-                  className="block w-full text-center bg-[#E8542A] hover:bg-[#c9431d] text-white font-bold py-3.5 rounded-xl text-sm transition-colors shadow-lg shadow-orange-100"
-                >
-                  Donate to This Campaign
-                </Link>
+                {/* Campaign Action CTAs */}
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <Link
+                    href={`/campaigns/${campaign.slug || campaign.id}`}
+                    className="flex-1 text-center bg-[#0f2347] hover:bg-[#1a3a6b] text-white font-bold py-3.5 rounded-xl text-xs sm:text-sm transition-all shadow-md flex items-center justify-center gap-1.5"
+                  >
+                    <span>View Campaign</span>
+                    <ArrowRight size={15} />
+                  </Link>
+                  <Link
+                    href={`/campaigns/${campaign.slug || campaign.id}#donate`}
+                    className="flex-1 text-center bg-[#E8542A] hover:bg-[#c9431d] text-white font-bold py-3.5 rounded-xl text-xs sm:text-sm transition-all shadow-lg shadow-orange-500/20 flex items-center justify-center gap-1.5"
+                  >
+                    <span>Donate Now</span>
+                    <Heart size={15} fill="currentColor" />
+                  </Link>
+                </div>
               </div>
             </div>
 
