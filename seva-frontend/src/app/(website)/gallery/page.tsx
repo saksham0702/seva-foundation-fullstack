@@ -20,7 +20,7 @@ export default async function GalleryPage({ searchParams }: PageProps) {
   const page = Math.max(1, Number(resolvedParams?.page) || 1);
 
   const apiUrl =
-    process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
+    process.env.NEXT_PUBLIC_API_URL?.trim() || "http://backend:5000/api";
 
   let initialImages: GalleryItem[] = [];
   let initialMeta: GalleryMeta = {

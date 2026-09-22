@@ -5,11 +5,14 @@ import API_URL from "@/constants/api";
  * Derived by stripping `/api` from API_URL, or falling back to environment variables.
  */
 export const IMAGE_BASE_URL: string = (() => {
-  if (process.env.NEXT_PUBLIC_IMAGE_URL) {
+  if (process.env.NEXT_PUBLIC_IMAGE_URL && process.env.NEXT_PUBLIC_IMAGE_URL.trim() !== "") {
     return process.env.NEXT_PUBLIC_IMAGE_URL.replace(/\/$/, "");
   }
-  if (API_URL) {
+  if (API_URL && API_URL.trim() !== "") {
     return API_URL.replace(/\/api\/?$/, "");
+  }
+  if (typeof window !== "undefined") {
+    return `${window.location.protocol}//${window.location.hostname}:5000`;
   }
   return "http://localhost:5000";
 })();
