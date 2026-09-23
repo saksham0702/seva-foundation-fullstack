@@ -6,6 +6,7 @@ import { createDonor, type Donor } from "@/app/api/donor";
 
 interface DonorFormProps {
   campaignId: string;
+  amount?: number;
   onCreated: (donor: Donor) => void;
 }
 
@@ -20,7 +21,7 @@ const COUNTRY_CODES = [
   { code: "+33", country: "France" },
 ];
 
-export default function DonorForm({ campaignId, onCreated }: DonorFormProps) {
+export default function DonorForm({ campaignId, amount, onCreated }: DonorFormProps) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [countryCode, setCountryCode] = useState("+91");
@@ -39,14 +40,27 @@ export default function DonorForm({ campaignId, onCreated }: DonorFormProps) {
       setError("Please enter your full name.");
       return;
     }
-    if (!email.trim() || !phone.trim()) {
-      setError("Please fill in your email and phone number.");
+    if (!email.trim()) {
+      setError("Please enter your email address.");
+      return;
+    }
+    const cleanPhone = phone.replace(/[^0-9]/g, "").trim();
+    if (!cleanPhone) {
+      setError("Please enter your phone number.");
+      return;
+    }
+    if (countryCode === "+91" && cleanPhone.length !== 10) {
+      setError("Please enter a valid 10-digit Indian mobile number.");
+      return;
+    }
+    if (cleanPhone.length < 7 || cleanPhone.length > 15) {
+      setError("Please enter a valid phone number (between 7 and 15 digits).");
       return;
     }
 
     try {
       setSubmitting(true);
-      const fullPhone = `${countryCode} ${phone.trim()}`;
+      const fullPhone = `${countryCode} ${cleanPhone}`;
       const donor = await createDonor({
         campaign: campaignId,
         name: isAnonymous ? "Anonymous Donor" : name.trim(),
@@ -54,6 +68,7 @@ export default function DonorForm({ campaignId, onCreated }: DonorFormProps) {
         phone: fullPhone,
         pan: pan.trim() ? pan.trim().toUpperCase() : undefined,
         isAnonymous,
+        amount,
       });
       onCreated(donor);
     } catch (err) {
@@ -121,11 +136,17 @@ export default function DonorForm({ campaignId, onCreated }: DonorFormProps) {
               type="tel"
               value={phone}
               onChange={(e) => setPhone(e.target.value.replace(/[^0-9]/g, ""))}
-              placeholder="9876543210"
+              placeholder={countryCode === "+91" ? "9876543210 (10 digits)" : "Phone number"}
+              maxLength={countryCode === "+91" ? 10 : 15}
               required
               className="flex-1 px-4 py-3 border border-gray-200 rounded-xl text-sm text-[#0f2347] focus:outline-none focus:ring-2 focus:ring-[#1a3a6b]/20 focus:border-[#1a3a6b]"
             />
           </div>
+          {countryCode === "+91" && phone && phone.length > 0 && phone.length < 10 && (
+            <p className="text-[11px] text-amber-600 font-medium mt-1">
+              Mobile number must be 10 digits ({phone.length}/10 entered)
+            </p>
+          )}
         </div>
 
         {/* 80G Tax Exemption PAN input toggle */}

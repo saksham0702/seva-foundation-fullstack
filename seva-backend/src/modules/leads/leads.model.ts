@@ -1,4 +1,7 @@
 import { Document, Schema, model, Types } from "mongoose";
+import "../campaigns/campaigns.model";
+import "../auth/auth.model";
+import "../donors/donors.model";
 
 export type LeadSource =
   | "SUBSCRIBER"
@@ -15,22 +18,84 @@ export type LeadStatus =
   | "CONVERTED"
   | "LOST";
 
+export type PaymentStatus = "PENDING" | "PAID" | "FAILED" | "NOT_APPLICABLE";
+
+export type FollowUpChannel = "CALL" | "WHATSAPP" | "EMAIL" | "MEETING" | "NOTE";
+
+export interface IFollowUp {
+  _id?: Types.ObjectId;
+  channel: FollowUpChannel;
+  disposition: string;
+  notes: string;
+  nextFollowUpDate?: Date;
+  loggedBy?: Types.ObjectId;
+  loggedByName?: string;
+  createdAt: Date;
+}
+
 export interface ILead extends Document {
   name: string;
   email: string;
   phone?: string;
   source: LeadSource;
   status: LeadStatus;
+  paymentStatus: PaymentStatus;
   campaign?: Types.ObjectId;
   amount?: number;
   notes?: string;
   tags?: string[];
   metadata?: Record<string, any>;
   assignedTo?: Types.ObjectId;
+  donor?: Types.ObjectId;
+  followUps: IFollowUp[];
+  latestFollowUp?: {
+    channel: FollowUpChannel;
+    disposition: string;
+    notes: string;
+    nextFollowUpDate?: Date;
+    loggedByName?: string;
+    createdAt: Date;
+  };
+  nextFollowUpDate?: Date;
   isDeleted: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
+
+const FollowUpSchema = new Schema<IFollowUp>(
+  {
+    channel: {
+      type: String,
+      enum: ["CALL", "WHATSAPP", "EMAIL", "MEETING", "NOTE"],
+      default: "CALL",
+    },
+    disposition: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    notes: {
+      type: String,
+      default: "",
+    },
+    nextFollowUpDate: {
+      type: Date,
+    },
+    loggedBy: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+    },
+    loggedByName: {
+      type: String,
+      trim: true,
+    },
+    createdAt: {
+      type: Date,
+      default: Date.now,
+    },
+  },
+  { _id: true }
+);
 
 const LeadSchema = new Schema<ILead>(
   {
@@ -49,6 +114,7 @@ const LeadSchema = new Schema<ILead>(
     phone: {
       type: String,
       trim: true,
+      index: true,
     },
     source: {
       type: String,
@@ -69,9 +135,21 @@ const LeadSchema = new Schema<ILead>(
       default: "NEW",
       index: true,
     },
+    paymentStatus: {
+      type: String,
+      enum: ["PENDING", "PAID", "FAILED", "NOT_APPLICABLE"],
+      default: "NOT_APPLICABLE",
+      index: true,
+    },
     campaign: {
       type: Schema.Types.ObjectId,
       ref: "Campaign",
+      index: true,
+    },
+    donor: {
+      type: Schema.Types.ObjectId,
+      ref: "Donor",
+      index: true,
     },
     amount: {
       type: Number,
@@ -92,6 +170,22 @@ const LeadSchema = new Schema<ILead>(
     assignedTo: {
       type: Schema.Types.ObjectId,
       ref: "User",
+    },
+    followUps: {
+      type: [FollowUpSchema],
+      default: [],
+    },
+    latestFollowUp: {
+      channel: { type: String },
+      disposition: { type: String },
+      notes: { type: String },
+      nextFollowUpDate: { type: Date },
+      loggedByName: { type: String },
+      createdAt: { type: Date },
+    },
+    nextFollowUpDate: {
+      type: Date,
+      index: true,
     },
     isDeleted: {
       type: Boolean,

@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { asyncHandler } from "../../utils/asyncHandler";
 import { sendResponse } from "../../utils/apiResponse";
 import { LeadService } from "./leads.service";
+import { AuthRequest } from "../../middlewares/auth/auth.middleware";
 
 const subscribeNewsletter = asyncHandler(async (req: Request, res: Response) => {
   const { email, name } = req.body;
@@ -148,6 +149,118 @@ const deleteLead = asyncHandler(async (req: Request, res: Response) => {
   });
 });
 
+// ── Follow-up Endpoints ───────────────────────────────────────────────────────
+const addFollowUp = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { id } = req.params as { id: string };
+  const { channel, disposition, notes, nextFollowUpDate } = req.body;
+
+  if (!disposition) {
+    return sendResponse(res, {
+      statusCode: 400,
+      success: false,
+      message: "Follow-up disposition is required.",
+    });
+  }
+
+  const updated = await LeadService.addFollowUp(id, {
+    channel,
+    disposition,
+    notes,
+    nextFollowUpDate,
+    loggedBy: req.user?.userId,
+    loggedByName: req.body.loggedByName || (req.user?.role === "admin" ? "Admin" : "Staff Member"),
+  });
+
+  if (!updated) {
+    return sendResponse(res, {
+      statusCode: 404,
+      success: false,
+      message: "Lead not found.",
+    });
+  }
+
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "Follow-up activity recorded successfully.",
+    data: updated,
+  });
+});
+
+// ── Follow-up Configs Endpoints ───────────────────────────────────────────────
+const getFollowUpConfigs = asyncHandler(async (_req: Request, res: Response) => {
+  const configs = await LeadService.getFollowUpConfigs();
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "Follow-up configurations retrieved successfully.",
+    data: configs,
+  });
+});
+
+const createFollowUpConfig = asyncHandler(async (req: Request, res: Response) => {
+  const { name, category, color, defaultNotes, requiresNextAction, sortOrder } = req.body;
+  if (!name?.trim()) {
+    return sendResponse(res, {
+      statusCode: 400,
+      success: false,
+      message: "Configuration name is required.",
+    });
+  }
+
+  const created = await LeadService.createFollowUpConfig({
+    name: name.trim(),
+    category,
+    color,
+    defaultNotes,
+    requiresNextAction: !!requiresNextAction,
+    sortOrder: Number(sortOrder) || 0,
+  });
+
+  sendResponse(res, {
+    statusCode: 201,
+    success: true,
+    message: "Follow-up configuration created successfully.",
+    data: created,
+  });
+});
+
+const updateFollowUpConfig = asyncHandler(async (req: Request, res: Response) => {
+  const { id } = req.params as { id: string };
+  const updated = await LeadService.updateFollowUpConfig(id, req.body);
+  if (!updated) {
+    return sendResponse(res, {
+      statusCode: 404,
+      success: false,
+      message: "Configuration not found.",
+    });
+  }
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "Configuration updated successfully.",
+    data: updated,
+  });
+});
+
+const deleteFollowUpConfig = asyncHandler(async (req: Request, res: Response) => {
+  const { id } = req.params as { id: string };
+  const success = await LeadService.deleteFollowUpConfig(id);
+  if (!success) {
+    return sendResponse(res, {
+      statusCode: 404,
+      success: false,
+      message: "Configuration not found.",
+    });
+  }
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "Configuration removed successfully.",
+    data: null,
+  });
+});
+
 export const LeadController = {
   subscribeNewsletter,
   captureLead,
@@ -157,4 +270,9 @@ export const LeadController = {
   createLead,
   updateLead,
   deleteLead,
+  addFollowUp,
+  getFollowUpConfigs,
+  createFollowUpConfig,
+  updateFollowUpConfig,
+  deleteFollowUpConfig,
 };

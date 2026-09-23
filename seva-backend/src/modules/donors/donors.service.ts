@@ -1,8 +1,9 @@
 import { DonorModel, IDonor } from "./donors.model";
 import { MailerService } from "../mail/mailer.service";
 import { DonationModel } from "../payments/payments.model";
+import { LeadService } from "../leads/leads.service";
 
-const createDonor = async (payload: Partial<IDonor>) => {
+const createDonor = async (payload: Partial<IDonor> & { amount?: number }) => {
   const donor = await DonorModel.create({
     campaign: payload.campaign,
     name: payload.name,
@@ -18,6 +19,20 @@ const createDonor = async (payload: Partial<IDonor>) => {
     createdBy: payload.createdBy,
     updatedBy: payload.updatedBy,
   });
+
+  // Automatically capture prospective donor as an unpaid lead in CRM
+  try {
+    await LeadService.captureLeadFromDonorForm({
+      donorId: donor._id,
+      name: donor.name,
+      email: donor.email,
+      phone: donor.phone,
+      campaignId: donor.campaign,
+      amount: payload.amount,
+    });
+  } catch (err) {
+    console.error("Failed to capture lead on donor creation:", err);
+  }
 
   return donor;
 };

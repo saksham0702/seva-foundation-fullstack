@@ -164,6 +164,11 @@ export const endpoint = {
     delete: "/leads/",
     subscribe: "/leads/subscribe",
     capture: "/leads/capture",
+    addFollowUp: (id: string) => `/leads/${id}/follow-ups`,
+    getConfigs: "/leads/configs",
+    createConfig: "/leads/configs",
+    updateConfig: (id: string) => `/leads/configs/${id}`,
+    deleteConfig: (id: string) => `/leads/configs/${id}`,
   },
 
   mail: {

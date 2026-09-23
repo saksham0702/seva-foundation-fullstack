@@ -212,6 +212,7 @@ function DonateFlow() {
         {step === "donor" && (
           <DonorForm
             campaignId={campaign._id}
+            amount={amountParam}
             onCreated={(createdDonor) => {
               setDonor(createdDonor);
               setStep("payment");

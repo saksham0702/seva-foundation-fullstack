@@ -25,6 +25,7 @@ import {
   MessageSquare,
   Mail,
   Phone,
+  PhoneCall,
   Globe,
   Images,
 } from "lucide-react";
@@ -146,6 +147,23 @@ const NAV_CONFIG: NavSection[] = [
         href: "/dashboard/donors/initiatives",
         icon: Heart,
         permission: "donations",
+      },
+    ],
+  },
+  {
+    section: "CRM & LEADS",
+    anyPermission: ["crm"],
+    items: [
+      {
+        label: "Leads & Follow-ups",
+        icon: PhoneCall,
+        permission: "crm",
+        children: [
+          { label: "Dashboard", href: "/dashboard/leads/dashboard" },
+          { label: "Lead Pipeline", href: "/dashboard/leads/all" },
+          { label: "Follow-up Tasks", href: "/dashboard/leads/followups" },
+          { label: "Follow-up Configs", href: "/dashboard/leads/configs" },
+        ],
       },
     ],
   },

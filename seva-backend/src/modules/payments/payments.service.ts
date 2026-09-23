@@ -286,7 +286,7 @@ const verifyPayment = async (input: VerifyPaymentInput) => {
   try {
     const donor = await DonorModel.findById(donorId);
     if (donor?.email || donor?.phone) {
-      await LeadService.markLeadConverted(donor.email, donor.phone);
+      await LeadService.markLeadConverted(donor.email, donor.phone, amount);
     }
   } catch (err) {
     console.error("Failed to mark lead converted:", err);

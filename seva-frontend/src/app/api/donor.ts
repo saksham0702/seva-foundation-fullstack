@@ -51,6 +51,7 @@ export interface CreateDonorPayload {
   state?: string;
   pincode?: string;
   isAnonymous?: boolean;
+  amount?: number;
 }
 
 export interface UpdateDonorPayload {
