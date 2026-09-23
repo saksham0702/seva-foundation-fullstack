@@ -1,6 +1,8 @@
 import axiosInstance from "./index";
 import { endpoint } from "./endpoints";
 
+export type FormType = "volunteer" | "corporate" | "career";
+
 export type Availability =
   | "weekends"
   | "weekdays"
@@ -16,6 +18,7 @@ export type ApplicationStatus =
 
 export interface VolunteerCategory {
   _id: string;
+  formType: FormType;
   title: string;
   slug: string;
   description: string;
@@ -31,10 +34,12 @@ export interface VolunteerCategory {
 export interface VolunteerCategoryOption {
   _id: string;
   title: string;
+  formType?: FormType;
 }
 
 export interface VolunteerApplication {
   _id: string;
+  formType: FormType;
   name: string;
   email: string;
   phone: string;
@@ -52,18 +57,30 @@ export interface VolunteerApplication {
    VOLUNTEER CATEGORIES API
 ───────────────────────────────────────────────────────────── */
 
-export const getVolunteerCategories = async (): Promise<VolunteerCategory[]> => {
-  const response = await axiosInstance.get(endpoint.volunteerCategories.getAll);
+export const getVolunteerCategories = async (
+  formType?: FormType
+): Promise<VolunteerCategory[]> => {
+  const response = await axiosInstance.get(endpoint.volunteerCategories.getAll, {
+    params: formType ? { formType } : {},
+  });
   return response.data?.data || response.data || [];
 };
 
-export const getPublicVolunteerCategories = async (): Promise<VolunteerCategory[]> => {
-  const response = await axiosInstance.get(endpoint.volunteerCategories.getPublic);
+export const getPublicVolunteerCategories = async (
+  formType: FormType = "volunteer"
+): Promise<VolunteerCategory[]> => {
+  const response = await axiosInstance.get(endpoint.volunteerCategories.getPublic, {
+    params: { formType },
+  });
   return response.data?.data || response.data || [];
 };
 
-export const getVolunteerCategoryOptions = async (): Promise<VolunteerCategoryOption[]> => {
-  const response = await axiosInstance.get(endpoint.volunteerCategories.getOptions);
+export const getVolunteerCategoryOptions = async (
+  formType?: FormType
+): Promise<VolunteerCategoryOption[]> => {
+  const response = await axiosInstance.get(endpoint.volunteerCategories.getOptions, {
+    params: formType ? { formType } : {},
+  });
   return response.data?.data || response.data || [];
 };
 
@@ -113,12 +130,24 @@ export const deleteVolunteerCategory = async (id: string): Promise<void> => {
    VOLUNTEER APPLICATIONS API
 ───────────────────────────────────────────────────────────── */
 
-export const getVolunteerApplications = async (filters?: {
-  status?: string;
-  category?: string;
-}): Promise<VolunteerApplication[]> => {
+export const getVolunteerApplications = async (
+  filters?:
+    | {
+        status?: string;
+        category?: string;
+        formType?: FormType;
+      }
+    | FormType
+): Promise<VolunteerApplication[]> => {
+  let params: Record<string, any> = {};
+  if (typeof filters === "string") {
+    params = { formType: filters };
+  } else if (filters) {
+    params = filters;
+  }
+
   const response = await axiosInstance.get(endpoint.volunteerApplications.getAll, {
-    params: filters,
+    params,
   });
   return response.data?.data || response.data || [];
 };

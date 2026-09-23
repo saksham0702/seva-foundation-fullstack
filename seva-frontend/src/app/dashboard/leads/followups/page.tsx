@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import {
@@ -38,7 +38,7 @@ const FOLLOWUP_TABS = [
   { key: "all", label: "All Scheduled", icon: Clock },
 ] as const;
 
-export default function FollowupTasksPage() {
+function FollowupTasksInner() {
   const searchParams = useSearchParams();
   const initialTab = searchParams.get("tab") || "due_today";
 
@@ -478,5 +478,20 @@ export default function FollowupTasksPage() {
         </Portal>
       )}
     </div>
+  );
+}
+
+export default function FollowupTasksPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="flex flex-col items-center gap-3 text-muted">
+          <div className="w-8 h-8 border-2 border-[#E8542A] border-t-transparent rounded-full animate-spin" />
+          <span className="text-xs font-medium">Loading follow-up tasks…</span>
+        </div>
+      </div>
+    }>
+      <FollowupTasksInner />
+    </Suspense>
   );
 }

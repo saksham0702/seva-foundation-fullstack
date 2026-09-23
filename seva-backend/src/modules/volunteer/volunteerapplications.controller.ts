@@ -23,12 +23,13 @@ const createVolunteerApplication = asyncHandler(
 
 const getAllVolunteerApplications = asyncHandler(
   async (req: Request, res: Response) => {
-    const { status, category } = req.query as {
+    const { status, category, formType } = req.query as {
       status?: ApplicationStatus;
       category?: string;
+      formType?: string;
     };
     const result = await VolunteerApplicationService.getAllVolunteerApplications(
-      { status, category }
+      { status, category, formType }
     );
     sendResponse(res, {
       statusCode: 200,

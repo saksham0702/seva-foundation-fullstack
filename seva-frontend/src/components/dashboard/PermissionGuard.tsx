@@ -12,9 +12,11 @@ const MODULE_LABELS: Record<PermissionModule, string> = {
   users: "User Management",
   certificates: "Certificates",
   departments: "Departments",
-  crm: "CRM",
+  crm: "CRM & Lead Management",
   signatures: "Signatures",
   volunteers: "Volunteers Management",
+  "volunteer-applications": "Volunteer Applications",
+  "volunteer-categories": "Volunteer Categories",
   gallery: "Media & Gallery Vault",
 };
 

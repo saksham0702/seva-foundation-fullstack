@@ -10,8 +10,12 @@ const createVolunteerCategory = async (
   return result;
 };
 
-const getAllVolunteerCategories = async (): Promise<IVolunteerCategory[]> => {
-  const result = await VolunteerCategoryModel.find({ isDeleted: false }).sort({
+const getAllVolunteerCategories = async (
+  formType?: string
+): Promise<IVolunteerCategory[]> => {
+  const filter: Record<string, any> = { isDeleted: false };
+  if (formType) filter.formType = formType;
+  const result = await VolunteerCategoryModel.find(filter).sort({
     createdAt: -1,
   });
   return result;
@@ -19,13 +23,17 @@ const getAllVolunteerCategories = async (): Promise<IVolunteerCategory[]> => {
 
 /**
  * Public listing — only active, non-deleted categories.
- * This is what the "Get Involved" page's role grid should call.
+ * Filterable by formType (volunteer | corporate | career).
  */
-const getPublicVolunteerCategories = async (): Promise<IVolunteerCategory[]> => {
-  const result = await VolunteerCategoryModel.find({
+const getPublicVolunteerCategories = async (
+  formType?: string
+): Promise<IVolunteerCategory[]> => {
+  const filter: Record<string, any> = {
     isDeleted: false,
     isActive: true,
-  }).sort({ createdAt: 1 });
+  };
+  if (formType) filter.formType = formType;
+  const result = await VolunteerCategoryModel.find(filter).sort({ createdAt: 1 });
   return result;
 };
 
@@ -60,10 +68,12 @@ const deleteVolunteerCategory = async (
   return result;
 };
 
-const getVolunteerCategoryOptions = async () => {
+const getVolunteerCategoryOptions = async (formType?: string) => {
+  const filter: Record<string, any> = { isDeleted: false };
+  if (formType) filter.formType = formType;
   const result = await VolunteerCategoryModel.find(
-    { isDeleted: false },
-    { title: 1, _id: 1 }
+    filter,
+    { title: 1, _id: 1, formType: 1 }
   );
   return result;
 };

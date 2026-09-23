@@ -1,6 +1,9 @@
 import { Document, Types, Schema, model } from "mongoose";
 
+export type FormType = "volunteer" | "corporate" | "career";
+
 export interface IVolunteerCategory extends Document {
+  formType: FormType;
   title: string;
   slug: string;
   description: string;
@@ -16,6 +19,13 @@ export interface IVolunteerCategory extends Document {
 
 const VolunteerCategorySchema = new Schema<IVolunteerCategory>(
   {
+    formType: {
+      type: String,
+      enum: ["volunteer", "corporate", "career"],
+      default: "volunteer",
+      required: true,
+      index: true,
+    },
     title: {
       type: String,
       required: true,

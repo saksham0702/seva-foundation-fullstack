@@ -26,6 +26,8 @@ export type PermissionModule =
   | "crm"
   | "signatures"
   | "volunteers"
+  | "volunteer-applications"
+  | "volunteer-categories"
   | "gallery";
 
 export interface AuthUser {

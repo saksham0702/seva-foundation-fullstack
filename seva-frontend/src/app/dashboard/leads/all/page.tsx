@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, useCallback, useMemo } from "react";
+import React, { useEffect, useState, useCallback, useMemo, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import {
@@ -68,7 +68,7 @@ const DATE_PRESETS = [
   { key: "custom", label: "Custom Range" },
 ] as const;
 
-export default function AllLeadsPage() {
+function AllLeadsInner() {
   const searchParams = useSearchParams();
   const initialLeadId = searchParams.get("id");
   const tabFromQuery = searchParams.get("tab") || "all";
@@ -1350,5 +1350,20 @@ export default function AllLeadsPage() {
         </Portal>
       )}
     </div>
+  );
+}
+
+export default function AllLeadsPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="flex flex-col items-center gap-3 text-muted">
+          <div className="w-8 h-8 border-2 border-[#E8542A] border-t-transparent rounded-full animate-spin" />
+          <span className="text-xs font-medium">Loading lead pipeline…</span>
+        </div>
+      </div>
+    }>
+      <AllLeadsInner />
+    </Suspense>
   );
 }

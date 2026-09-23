@@ -5,6 +5,7 @@ import {
   createVolunteerCategory,
   updateVolunteerCategory,
   VolunteerCategory,
+  FormType,
 } from "@/app/api/volunteer";
 
 const COLOR_PRESETS = [
@@ -23,6 +24,7 @@ const COLOR_PRESETS = [
 interface CategoryFormModalProps {
   isOpen: boolean;
   category: VolunteerCategory | null;
+  formType: FormType;
   onClose: () => void;
   onSaved: (savedCategory: VolunteerCategory, isNew: boolean) => void;
 }
@@ -30,6 +32,7 @@ interface CategoryFormModalProps {
 export const CategoryFormModal: React.FC<CategoryFormModalProps> = ({
   isOpen,
   category,
+  formType,
   onClose,
   onSaved,
 }) => {
@@ -75,6 +78,7 @@ export const CategoryFormModal: React.FC<CategoryFormModalProps> = ({
 
     try {
       const formData = new FormData();
+      formData.append("formType", category?.formType || formType);
       formData.append("title", form.title);
       if (form.slug) formData.append("slug", form.slug);
       formData.append("description", form.description);

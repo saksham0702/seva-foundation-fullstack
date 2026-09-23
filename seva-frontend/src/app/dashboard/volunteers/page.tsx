@@ -18,6 +18,7 @@ import {
   VolunteerCategory,
   VolunteerApplication,
   ApplicationStatus,
+  FormType,
 } from "@/app/api/volunteer";
 
 import { VolunteersStats } from "./components/VolunteersStats";
@@ -27,8 +28,15 @@ import { CategoriesGrid } from "./components/CategoriesGrid";
 import { CategoryFormModal } from "./components/CategoryFormModal";
 import { DeleteConfirmModal } from "./components/DeleteConfirmModal";
 
+const FORM_TYPES: { id: FormType; label: string }[] = [
+  { id: "volunteer", label: "Volunteers" },
+  { id: "corporate", label: "Corporate" },
+  { id: "career", label: "Careers" },
+];
+
 export default function VolunteersDashboardPage() {
   const [activeTab, setActiveTab] = useState<"applications" | "categories">("applications");
+  const [activeFormType, setActiveFormType] = useState<FormType>("volunteer");
 
   // State: Categories
   const [categories, setCategories] = useState<VolunteerCategory[]>([]);
@@ -65,8 +73,8 @@ export default function VolunteersDashboardPage() {
     setIsLoadingApplications(true);
     try {
       const [cats, apps] = await Promise.all([
-        getVolunteerCategories().catch(() => []),
-        getVolunteerApplications().catch(() => []),
+        getVolunteerCategories(activeFormType).catch(() => []),
+        getVolunteerApplications(activeFormType).catch(() => []),
       ]);
       setCategories(cats);
       setApplications(apps);
@@ -80,7 +88,7 @@ export default function VolunteersDashboardPage() {
 
   useEffect(() => {
     fetchAllData();
-  }, []);
+  }, [activeFormType]);
 
   // ── Filtered Applications ───────────────────────────────────────
   const filteredApplications = useMemo(() => {
@@ -235,6 +243,23 @@ export default function VolunteersDashboardPage() {
         {/* ── Stats Overview ── */}
         <VolunteersStats stats={stats} />
 
+        {/* ── Form Type Switcher ── */}
+        <div className="flex items-center gap-2 mb-6 bg-slate-100 p-1 rounded-xl w-fit">
+          {FORM_TYPES.map((ft) => (
+            <button
+              key={ft.id}
+              onClick={() => setActiveFormType(ft.id)}
+              className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${
+                activeFormType === ft.id
+                  ? "bg-white text-black shadow-sm"
+                  : "text-slate-500 hover:text-black"
+              }`}
+            >
+              {ft.label}
+            </button>
+          ))}
+        </div>
+
         {/* ── Navigation Tabs ── */}
         <div className="flex border-b border-slate-200 mb-6 gap-2 sm:gap-6">
           <button
@@ -246,7 +271,7 @@ export default function VolunteersDashboardPage() {
             }`}
           >
             <Users size={16} />
-            Volunteer Applications
+            Applications
             <span
               className={`px-2 py-0.5 text-xs rounded-full font-semibold ${
                 activeTab === "applications"
@@ -323,15 +348,16 @@ export default function VolunteersDashboardPage() {
           />
         )}
 
-        {/* ── CREATE / EDIT CATEGORY MODAL (Wide, compact, z-[99999]) ── */}
+        {/* ── CREATE / EDIT CATEGORY MODAL ── */}
         <CategoryFormModal
           isOpen={isCategoryModalOpen}
           category={editingCategory}
+          formType={activeFormType}
           onClose={() => setIsCategoryModalOpen(false)}
           onSaved={handleCategorySaved}
         />
 
-        {/* ── VIEW APPLICATION DETAIL MODAL (Wide, compact, z-[99999]) ── */}
+        {/* ── VIEW APPLICATION DETAIL MODAL ── */}
         <ApplicationDetailModal
           application={selectedApplication}
           onClose={() => setSelectedApplication(null)}

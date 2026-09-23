@@ -41,8 +41,9 @@ const createVolunteerCategory = asyncHandler(
 );
 
 const getAllVolunteerCategories = asyncHandler(
-  async (_req: Request, res: Response) => {
-    const result = await VolunteerCategoryService.getAllVolunteerCategories();
+  async (req: Request, res: Response) => {
+    const { formType } = req.query as { formType?: string };
+    const result = await VolunteerCategoryService.getAllVolunteerCategories(formType);
     sendResponse(res, {
       statusCode: 200,
       success: true,
@@ -56,9 +57,10 @@ const getAllVolunteerCategories = asyncHandler(
  * Public endpoint — no auth. Used by the frontend "Select Your Role" grid.
  */
 const getPublicVolunteerCategories = asyncHandler(
-  async (_req: Request, res: Response) => {
+  async (req: Request, res: Response) => {
+    const { formType } = req.query as { formType?: string };
     const result =
-      await VolunteerCategoryService.getPublicVolunteerCategories();
+      await VolunteerCategoryService.getPublicVolunteerCategories(formType);
     sendResponse(res, {
       statusCode: 200,
       success: true,
@@ -126,9 +128,10 @@ const deleteVolunteerCategory = asyncHandler(
 );
 
 const getVolunteerCategoryOptions = asyncHandler(
-  async (_req: Request, res: Response) => {
+  async (req: Request, res: Response) => {
+    const { formType } = req.query as { formType?: string };
     const result =
-      await VolunteerCategoryService.getVolunteerCategoryOptions();
+      await VolunteerCategoryService.getVolunteerCategoryOptions(formType);
     sendResponse(res, {
       statusCode: 200,
       success: true,

@@ -1,5 +1,7 @@
 import { Document, Types, Schema, model } from "mongoose";
 
+export type FormType = "volunteer" | "corporate" | "career";
+
 export type Availability =
   | "weekends"
   | "weekdays"
@@ -14,6 +16,7 @@ export type ApplicationStatus =
   | "rejected";
 
 export interface IVolunteerApplication extends Document {
+  formType: FormType;
   name: string;
   email: string;
   phone: string;
@@ -30,6 +33,13 @@ export interface IVolunteerApplication extends Document {
 
 const VolunteerApplicationSchema = new Schema<IVolunteerApplication>(
   {
+    formType: {
+      type: String,
+      enum: ["volunteer", "corporate", "career"],
+      default: "volunteer",
+      required: true,
+      index: true,
+    },
     name: {
       type: String,
       required: true,
