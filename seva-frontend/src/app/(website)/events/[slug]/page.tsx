@@ -11,6 +11,8 @@ interface PageProps {
   params: Promise<{ slug: string }> | { slug: string };
 }
 
+export const dynamic = "force-dynamic";
+
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const resolved = await Promise.resolve(params);
   const slug = resolved?.slug;

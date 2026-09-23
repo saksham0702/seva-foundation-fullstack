@@ -1,10 +1,8 @@
-"use client";
-
+import React, { ReactNode } from "react";
 import Link from "next/link";
 import {
   ArrowLeft,
   Calendar,
-  Share2,
   ArrowRight,
   HelpCircle,
   Loader2,
@@ -13,29 +11,29 @@ import {
 import { CmsItem } from "@/types/cms";
 import { getImageUrl, resolveRichTextHtml } from "@/lib/image";
 import { richProseClass } from "@/lib/prose";
-import React, { ReactNode, useState } from "react";
-import ShareModal from "@/components/shared/ShareModal";
+import { ShareButton } from "@/components/cms/ShareButton";
+import { CmsImage } from "@/components/cms/CmsImage";
 
-interface MetaItem {
-  icon: LucideIcon;
+export interface MetaItem {
+  icon?: LucideIcon | React.ComponentType<{ size?: number; className?: string }> | React.ReactNode;
   label: string;
   className?: string;
 }
 
-interface RelatedConfig {
+export interface RelatedConfig {
   items: CmsItem[];
   hrefPrefix: string; // e.g. "/blogs", "/news", "/events"
   sectionTitle: ReactNode; // e.g. <>More <span>Stories</span></>
   formatDate?: (item: CmsItem) => string;
 }
 
-interface ContentDetailProps {
+export interface ContentDetailProps {
   item: CmsItem | null;
-  isLoading: boolean;
+  isLoading?: boolean;
 
   backHref: string;
   backLabel: string;
-  loadingLabel: string;
+  loadingLabel?: string;
   notFoundTitle: string;
   notFoundText: string;
 
@@ -57,17 +55,17 @@ interface ContentDetailProps {
   footerName: string;
   footerSubtitle: string;
   footerIcon: ReactNode;
-  shareText: string;
+  shareText?: string;
 
   related?: RelatedConfig;
 }
 
 export function ContentDetail({
   item,
-  isLoading,
+  isLoading = false,
   backHref,
   backLabel,
-  loadingLabel,
+  loadingLabel = "Loading...",
   notFoundTitle,
   notFoundText,
   accentColor,
@@ -81,11 +79,8 @@ export function ContentDetail({
   footerName,
   footerSubtitle,
   footerIcon,
-  shareText,
   related,
 }: ContentDetailProps) {
-  const [shareOpen, setShareOpen] = useState(false);
-
   const cssVars = {
     ["--accent" as string]: accentColor,
     ["--heading" as string]: headingColor,
@@ -125,7 +120,7 @@ export function ContentDetail({
   return (
     <div className="min-h-screen bg-white" style={cssVars}>
       {/* ── Header ── */}
-      <section className=" pb-10  pt-5 ">
+      <section className="pb-10 pt-5">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
           <Link
             href={backHref}
@@ -141,16 +136,25 @@ export function ContentDetail({
             >
               {badgeLabel}
             </span>
-            {metaItems.map((m, i) => (
-              <span
-                key={i}
-                className={`flex items-center gap-1.5 text-xs font-semibold ${m.className ?? ""}`}
-                style={!m.className ? { color: headingColor } : undefined}
-              >
-                <m.icon size={13} />
-                {m.label}
-              </span>
-            ))}
+            {metaItems.map((m, i) => {
+              const IconComp = m.icon as React.ComponentType<{ size?: number }>;
+              return (
+                <span
+                  key={i}
+                  className={`flex items-center gap-1.5 text-xs font-semibold ${m.className ?? ""}`}
+                  style={!m.className ? { color: headingColor } : undefined}
+                >
+                  {m.icon &&
+                    (React.isValidElement(m.icon) ? (
+                      m.icon
+                    ) : typeof m.icon === "function" ||
+                      (typeof m.icon === "object" && "$$typeof" in (m.icon as any)) ? (
+                      <IconComp size={13} />
+                    ) : null)}
+                  {m.label}
+                </span>
+              );
+            })}
           </div>
 
           <h1
@@ -168,14 +172,10 @@ export function ContentDetail({
       {item.featuredImage && (
         <section className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 mb-8">
           <div className="rounded-lg overflow-hidden shadow-xl border border-gray-100 aspect-[16/9] bg-slate-100">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
+            <CmsImage
               src={getImageUrl(item.featuredImage)}
               alt={item.title}
               className="w-full h-full object-contain"
-              onError={(e) => {
-                (e.target as HTMLImageElement).style.display = "none";
-              }}
             />
           </div>
         </section>
@@ -240,25 +240,14 @@ export function ContentDetail({
               </div>
             </div>
 
-            <button
-              type="button"
-              onClick={() => setShareOpen(true)}
-              className="inline-flex items-center gap-2 px-5 py-2.5 bg-white border border-gray-200 text-xs font-bold uppercase tracking-wider rounded-xl transition-all shadow-sm hover:shadow"
-              style={{ color: headingColor }}
-            >
-              <Share2 size={14} />
-              Share
-            </button>
+            <ShareButton
+              title={item.title}
+              description={item.excerpt || item.title}
+              headingColor={headingColor}
+            />
           </div>
         </div>
       </section>
-
-      <ShareModal
-        isOpen={shareOpen}
-        onClose={() => setShareOpen(false)}
-        title={item.title}
-        description={item.excerpt || item.title}
-      />
 
       {/* ── Related ── */}
       {related && related.items.length > 0 && (
@@ -275,14 +264,11 @@ export function ContentDetail({
                   className="group bg-white rounded-2xl overflow-hidden border border-gray-100 hover:shadow-lg transition-all duration-300 flex flex-col"
                 >
                   <div className="relative aspect-[16/10] overflow-hidden bg-slate-100">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
+                    <CmsImage
                       src={getImageUrl(r.featuredImage)}
                       alt={r.title}
                       className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).src = getImageUrl(null);
-                      }}
+                      fallbackSrc={getImageUrl(null)}
                     />
                     <span
                       className="absolute top-4 left-4 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider rounded-full shadow text-white"
