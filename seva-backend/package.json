@@ -12,6 +12,7 @@
     "seed:kerala": "ts-node src/seeds/seedKeralaFlood.ts",
     "seed:cms": "ts-node src/seeds/seedCms.ts",
     "seed:mail": "tsx src/seeds/seedMail.ts",
+    "seed:formtype": "tsx src/seeds/migrate-formtype.ts",
     "seed:all": "ts-node src/seeds/seedCampaign.ts && ts-node src/seeds/seedVolunteerCategories.ts && ts-node src/seeds/seedCms.ts && ts-node src/seeds/seedMail.ts",
     "docker:build": "docker build -t seva-backend:latest .",
     "docker:start": "docker run --rm -p 5000:5000 --env-file .env --add-host=host.docker.internal:host-gateway --name seva-backend seva-backend:latest"

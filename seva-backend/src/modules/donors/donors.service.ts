@@ -78,16 +78,73 @@ const getAllDonors = async (query: {
     ];
   }
 
-  return await DonorModel.find(filter)
+  const donors = await DonorModel.find(filter)
     .populate("campaign")
-    .sort({ createdAt: -1 });
+    .sort({ createdAt: -1 })
+    .lean();
+
+  if (donors.length === 0) return [];
+
+  // Fetch all donations associated with these donors
+  const donorIds = donors.map((d: any) => d._id);
+  const donations = await DonationModel.find({
+    donor: { $in: donorIds },
+    isDeleted: false,
+  })
+    .populate("campaign")
+    .sort({ createdAt: -1 })
+    .lean();
+
+  const donationsByDonorId = new Map<string, any[]>();
+  for (const d of donations) {
+    const dId = String(d.donor);
+    if (!donationsByDonorId.has(dId)) {
+      donationsByDonorId.set(dId, []);
+    }
+    donationsByDonorId.get(dId)!.push(d);
+  }
+
+  return donors.map((donor: any) => {
+    const donorDonations = donationsByDonorId.get(String(donor._id)) || [];
+    const successful = donorDonations.filter((d: any) => d.paymentStatus === "SUCCESS");
+    const totalPaid = successful.reduce((sum: number, d: any) => sum + (d.amount || 0), 0);
+
+    return {
+      ...donor,
+      totalPaid,
+      donationCount: successful.length,
+      donations: donorDonations,
+    };
+  });
 };
 
 const getDonorById = async (id: string) => {
-  return await DonorModel.findOne({
+  const donor = await DonorModel.findOne({
     _id: id,
     isDeleted: false,
-  }).populate("campaign");
+  })
+    .populate("campaign")
+    .lean();
+
+  if (!donor) return null;
+
+  const donations = await DonationModel.find({
+    donor: donor._id,
+    isDeleted: false,
+  })
+    .populate("campaign")
+    .sort({ createdAt: -1 })
+    .lean();
+
+  const successful = donations.filter((d: any) => d.paymentStatus === "SUCCESS");
+  const totalPaid = successful.reduce((sum: number, d: any) => sum + (d.amount || 0), 0);
+
+  return {
+    ...donor,
+    totalPaid,
+    donationCount: successful.length,
+    donations,
+  };
 };
 
 const updateDonor = async (

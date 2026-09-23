@@ -182,12 +182,15 @@ export async function seedMailTemplates() {
         detailsRows: [
           { label: "Donor Name", value: "{{name}}" },
           { label: "Contribution Amount", value: "₹{{amount}}", isHighlight: true },
-          { label: "Campaign", value: "{{campaignName}}" },
+          { label: "Campaign / Cause", value: "{{campaignName}}" },
           { label: "Date of Donation", value: "{{donatedOn}}" },
+          { label: "Certificate Number", value: "{{certificateNo}}" },
         ],
-        noticeText: "Your official 80G tax exemption receipt will be issued to your email shortly. We deeply appreciate your trust and generosity.",
+        ctaText: "View & Download 80G Certificate",
+        ctaUrl: "{{certificateUrl}}",
+        noticeText: "Your official 80G tax exemption certificate is ready. You can verify and download it using the button above.",
       }),
-      availableVariables: ["name", "amount", "campaignName", "donatedOn"],
+      availableVariables: ["name", "amount", "campaignName", "donatedOn", "certificateNo", "certificateUrl"],
     },
     {
       key: "CERTIFICATE_GENERATED",

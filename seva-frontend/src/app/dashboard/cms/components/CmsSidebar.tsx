@@ -29,69 +29,27 @@ export function CmsSidebar() {
               onChange={(e) => set("status", e.target.value)}
               className="w-full border border-border rounded-lg px-3 py-2 text-sm text-white bg-bg focus:outline-none focus:ring-2 focus:ring-blueaccent/30 appearance-none"
             >
-              <option value="draft">Draft</option>
-              <option value="published">Published</option>
-              <option value="scheduled">Scheduled</option>
+              <option value="draft">Draft (Private)</option>
+              <option value="published">Published (Live)</option>
             </select>
           </div>
-
-          {/* Category Select */}
-          <div>
-            <label className="text-[11px] font-semibold text-muted uppercase tracking-wider mb-1.5 block">
-              Category
-            </label>
-            <input
-              type="text"
-              value={form.category}
-              onChange={(e) => set("category", e.target.value)}
-              placeholder="e.g. Humanitarian"
-              className="w-full border border-border rounded-lg px-3 py-2 text-sm text-white bg-bg focus:outline-none focus:ring-2 focus:ring-blueaccent/30"
-            />
-          </div>
-
-          {/* Scheduled Date */}
-          {form.status === "scheduled" && (
-            <div>
-              <label className="text-[11px] font-semibold text-muted uppercase tracking-wider mb-1.5 block">
-                Publish At
-              </label>
-              <input
-                type="datetime-local"
-                value={form.scheduledAt}
-                onChange={(e) => set("scheduledAt", e.target.value)}
-                className="w-full border border-border rounded-lg px-3 py-2 text-sm text-white bg-bg focus:outline-none focus:ring-2 focus:ring-blueaccent/30"
-              />
-            </div>
-          )}
         </div>
 
         <div className="mt-4 pt-4 border-t border-border space-y-2">
-          {form.status === "scheduled" ? (
-            <button
-              type="button"
-              onClick={() => saveItem("scheduled")}
-              className="w-full bg-blueaccent hover:bg-blue-dark text-white font-bold text-sm py-2.5 rounded-lg transition-all shadow-md cursor-pointer"
-            >
-              Schedule {typeLabel}
-            </button>
-          ) : (
-            <>
-              <button
-                type="button"
-                onClick={() => saveItem("published")}
-                className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm py-2.5 rounded-lg transition-all shadow-md shadow-emerald-600/20 flex items-center justify-center gap-1.5 cursor-pointer"
-              >
-                {isEditMode ? `Publish / Update Live` : `Publish ${typeLabel} Now`}
-              </button>
-              <button
-                type="button"
-                onClick={() => saveItem("draft")}
-                className="w-full bg-panel hover:bg-white/5 border border-border text-white text-xs font-semibold py-2.5 rounded-lg transition-all cursor-pointer"
-              >
-                Save as Draft
-              </button>
-            </>
-          )}
+          <button
+            type="button"
+            onClick={() => saveItem("published")}
+            className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm py-2.5 rounded-lg transition-all shadow-md shadow-emerald-600/20 flex items-center justify-center gap-1.5 cursor-pointer"
+          >
+            {isEditMode ? `Publish / Update Live` : `Publish ${typeLabel} Now`}
+          </button>
+          <button
+            type="button"
+            onClick={() => saveItem("draft")}
+            className="w-full bg-panel hover:bg-white/5 border border-border text-white text-xs font-semibold py-2.5 rounded-lg transition-all cursor-pointer"
+          >
+            Save as Draft
+          </button>
         </div>
       </div>
 

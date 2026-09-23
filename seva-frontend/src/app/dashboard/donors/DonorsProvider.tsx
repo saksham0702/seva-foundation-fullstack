@@ -22,7 +22,7 @@ export type { DonorStatus };
 
 export interface Donor extends APIDonor {}
 
-export type DonorSortKey = "name" | "status" | "createdAt";
+export type DonorSortKey = "name" | "status" | "createdAt" | "totalPaid";
 
 export const STATUS_CONFIG: Record<
   DonorStatus,
@@ -97,14 +97,79 @@ export function DonorsProvider({ children }: { children: ReactNode }) {
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
 
-  // ── Fetch ──────────────────────────────────────────────────────────────────
+  // ── Fetch & Grouping ──────────────────────────────────────────────────────
 
   const fetchDonors = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const data = await getDonors();
-      setDonors(data);
+      const rawData = await getDonors();
+
+      // Group / Deduplicate donors with the same email or phone number
+      const groupedMap = new Map<string, Donor>();
+
+      for (const donor of rawData) {
+        const emailKey = donor.email ? donor.email.toLowerCase().trim() : "";
+        const phoneKey = donor.phone ? donor.phone.replace(/\D/g, "").trim() : "";
+        const groupKey = emailKey || (phoneKey ? `phone_${phoneKey}` : donor._id);
+
+        if (!groupedMap.has(groupKey)) {
+          groupedMap.set(groupKey, {
+            ...donor,
+            donations: donor.donations ? [...donor.donations] : [],
+            totalPaid: donor.totalPaid || 0,
+            donationCount: donor.donationCount || (donor.status === "PAID" ? 1 : 0),
+          });
+        } else {
+          const existing = groupedMap.get(groupKey)!;
+          // Merge donations
+          const mergedDonations = [
+            ...(existing.donations || []),
+            ...(donor.donations || []),
+          ];
+
+          // Recompute totalPaid and count
+          const successfulDonations = mergedDonations.filter(
+            (d) => d.paymentStatus === "SUCCESS"
+          );
+          const computedTotalPaid = successfulDonations.reduce(
+            (sum, d) => sum + (d.amount || 0),
+            0
+          );
+
+          // Status promotion (PAID > FILLED_NOT_PAID > PAYMENT_FAILED)
+          let finalStatus = existing.status;
+          if (donor.status === "PAID" || existing.status === "PAID") {
+            finalStatus = "PAID";
+          } else if (
+            donor.status === "FILLED_NOT_PAID" ||
+            existing.status === "FILLED_NOT_PAID"
+          ) {
+            finalStatus = "FILLED_NOT_PAID";
+          }
+
+          groupedMap.set(groupKey, {
+            ...existing,
+            name: existing.name || donor.name,
+            email: existing.email || donor.email,
+            phone: existing.phone || donor.phone,
+            pan: existing.pan || donor.pan,
+            status: finalStatus,
+            donations: mergedDonations,
+            totalPaid: computedTotalPaid > 0 ? computedTotalPaid : (existing.totalPaid || 0) + (donor.totalPaid || 0),
+            donationCount:
+              successfulDonations.length > 0
+                ? successfulDonations.length
+                : (existing.donationCount || 0) + (donor.donationCount || 0),
+            createdAt:
+              new Date(existing.createdAt || 0) > new Date(donor.createdAt || 0)
+                ? existing.createdAt
+                : donor.createdAt,
+          });
+        }
+      }
+
+      setDonors(Array.from(groupedMap.values()));
     } catch (err: any) {
       setError(err?.message || "Failed to load donors");
     } finally {
@@ -158,6 +223,8 @@ export function DonorsProvider({ children }: { children: ReactNode }) {
         return mul * (a.name || "").localeCompare(b.name || "");
       if (sortKey === "status")
         return mul * (a.status || "").localeCompare(b.status || "");
+      if (sortKey === "totalPaid")
+        return mul * ((a.totalPaid || 0) - (b.totalPaid || 0));
       return 0;
     });
 

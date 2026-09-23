@@ -1,27 +1,33 @@
-"use client";
+import React from "react";
+import { Metadata } from "next";
+import { Scale, CheckCircle } from "lucide-react";
+import { getServerCmsPage } from "@/lib/server-api";
+import { constructMetadata } from "@/lib/seo";
 
-import React, { useEffect, useState } from "react";
-import Link from "next/link";
-import { Scale, CheckCircle, FileText, ArrowLeft } from "lucide-react";
-import { getCmsPageBySlug, CmsPage } from "@/app/api/cms";
+export async function generateMetadata(): Promise<Metadata> {
+  const pageData = await getServerCmsPage("terms");
+  const title = pageData?.seo?.metaTitle || pageData?.title || "Terms & Conditions";
+  const description =
+    pageData?.seo?.metaDescription ||
+    pageData?.subtitle ||
+    "Official Terms and Conditions governing donations, volunteer participation, and portal access at Seva India Foundation.";
 
-export default function TermsAndConditionsPage() {
-  const [pageData, setPageData] = useState<CmsPage | null>(null);
-  const [loading, setLoading] = useState(true);
+  return constructMetadata({
+    title,
+    description,
+    canonicalPath: "/terms",
+    keywords: [
+      "Terms and Conditions",
+      "NGO Terms of Service",
+      "Donation Terms India",
+      "Volunteer Terms",
+      "Seva India Foundation Legal",
+    ],
+  });
+}
 
-  useEffect(() => {
-    const load = async () => {
-      try {
-        const res = await getCmsPageBySlug("terms");
-        setPageData(res);
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    load();
-  }, []);
+export default async function TermsAndConditionsPage() {
+  const pageData = await getServerCmsPage("terms");
 
   const title = pageData?.title || "Terms & Conditions";
   const subtitle =
@@ -60,71 +66,68 @@ export default function TermsAndConditionsPage() {
               dangerouslySetInnerHTML={{ __html: customContent }}
             />
           ) : (
-            <div className="space-y-8 text-slate-700 leading-relaxed text-sm sm:text-base">
-              <section className="space-y-3">
-                <h2 className="text-xl font-bold text-[#0A1A2F] flex items-center gap-2">
-                  <CheckCircle size={18} className="text-[#F5A623]" />
-                  1. Organization Status
-                </h2>
-                <p>
-                  Seva India Foundation is a duly registered non-profit Section 8 Company incorporated under the Companies Act, 2013 in the State of Uttarakhand, India, dedicated to hunger relief, rural welfare, women empowerment, leprosy care, and youth development.
+            <>
+              {/* Section 1 */}
+              <div className="space-y-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-amber-50 text-[#F5A623] flex items-center justify-center font-bold text-sm">
+                    1
+                  </div>
+                  <h2 className="text-lg sm:text-xl font-bold text-[#0A1A2F]">
+                    Incorporation &amp; Legal Character
+                  </h2>
+                </div>
+                <p className="text-sm text-slate-600 leading-relaxed pl-11">
+                  Seva India Foundation is a registered Section 8 non-profit organization under the Companies Act, 2013, with CIN U88900UT2026NPL020825 and NGO Darpan ID UK/2026/0993905. All activities and donations are dedicated exclusively to charitable and social welfare causes without profit distribution.
                 </p>
-              </section>
+              </div>
 
-              <section className="space-y-3">
-                <h2 className="text-xl font-bold text-[#0A1A2F]">
-                  2. Voluntary Contributions &amp; Donations
-                </h2>
-                <ul className="list-disc list-inside space-y-1 text-slate-600 pl-2">
-                  <li>All donations made to Seva India Foundation are voluntary contributions meant solely for humanitarian and charitable relief programs.</li>
-                  <li>Eligible donations qualify for tax deduction under Section 80G of the Indian Income Tax Act. Official 80G tax exemption receipts are issued automatically upon confirmation of donor PAN and transaction verification.</li>
-                  <li>Donations must be remitted from legitimate accounts compliant with applicable Indian anti-money laundering (PMLA) regulations.</li>
-                </ul>
-              </section>
-
-              <section className="space-y-3">
-                <h2 className="text-xl font-bold text-[#0A1A2F]">
-                  3. Cancellation &amp; Refund Policy
-                </h2>
-                <p>
-                  Because donations immediately fund ongoing on-ground supplies, medical items, and hot meals, refunds are generally not granted except in verified cases of technical duplicate debits or unauthorized card usage reported within 7 days of the transaction.
+              {/* Section 2 */}
+              <div className="space-y-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-amber-50 text-[#F5A623] flex items-center justify-center font-bold text-sm">
+                    2
+                  </div>
+                  <h2 className="text-lg sm:text-xl font-bold text-[#0A1A2F]">
+                    Donations &amp; 80G Tax Exemption
+                  </h2>
+                </div>
+                <p className="text-sm text-slate-600 leading-relaxed pl-11">
+                  All donations made through our official portal are eligible for tax deduction under Section 80G of the Indian Income Tax Act. Instant verifiable digital receipts and certificates are issued to the donor upon transaction completion.
                 </p>
-              </section>
+              </div>
 
-              <section className="space-y-3">
-                <h2 className="text-xl font-bold text-[#0A1A2F]">
-                  4. Intellectual Property
-                </h2>
-                <p>
-                  All content, photographs of field initiatives, reports, emblems, and logos published on this website are the intellectual property of Seva India Foundation and may not be reproduced for commercial exploitation without prior written consent.
+              {/* Section 3 */}
+              <div className="space-y-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-amber-50 text-[#F5A623] flex items-center justify-center font-bold text-sm">
+                    3
+                  </div>
+                  <h2 className="text-lg sm:text-xl font-bold text-[#0A1A2F]">
+                    Refund &amp; Cancellation Policy
+                  </h2>
+                </div>
+                <p className="text-sm text-slate-600 leading-relaxed pl-11">
+                  Donations made to charitable causes are generally non-refundable once deployed to field initiatives. In the exceptional case of erroneous duplicate transactions, refund requests submitted within 48 hours to info@sevaindiafoundation.org will be reviewed and processed via original payment mode.
                 </p>
-              </section>
+              </div>
 
-              <section className="space-y-3">
-                <h2 className="text-xl font-bold text-[#0A1A2F]">
-                  5. Governing Jurisdiction
-                </h2>
-                <p>
-                  These Terms of Service are governed by the laws of India. Any disputes arising in connection with the operations or contributions of the foundation shall be subject exclusively to the courts of Dehradun, Uttarakhand.
+              {/* Section 4 */}
+              <div className="space-y-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-amber-50 text-[#F5A623] flex items-center justify-center font-bold text-sm">
+                    4
+                  </div>
+                  <h2 className="text-lg sm:text-xl font-bold text-[#0A1A2F]">
+                    Code of Conduct for Volunteers
+                  </h2>
+                </div>
+                <p className="text-sm text-slate-600 leading-relaxed pl-11">
+                  Volunteers represent Seva India Foundation in local communities and must adhere to our values of empathy, dignity, child protection, and ethical service.
                 </p>
-              </section>
-            </div>
+              </div>
+            </>
           )}
-
-          <div className="pt-6 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4">
-            <Link
-              href="/"
-              className="inline-flex items-center gap-2 text-xs font-bold text-[#0A1A2F] hover:text-[#F5A623] transition-colors"
-            >
-              <ArrowLeft size={14} /> Back to Homepage
-            </Link>
-            <Link
-              href="/donations"
-              className="px-6 py-2.5 bg-[#F5A623] hover:bg-[#e0951a] text-white text-xs font-bold uppercase tracking-wider rounded-lg transition-colors shadow-sm"
-            >
-              Donate Now
-            </Link>
-          </div>
         </div>
       </div>
     </main>

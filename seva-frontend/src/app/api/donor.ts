@@ -28,6 +28,19 @@ export interface Donor {
   pincode?: string;
   isAnonymous?: boolean;
   status: DonorStatus;
+  totalPaid?: number;
+  donationCount?: number;
+  donations?: Array<{
+    _id: string;
+    amount: number;
+    campaign?: any;
+    initiative?: string;
+    targetType?: string;
+    frequency?: string;
+    paymentStatus: string;
+    receiptNumber?: string;
+    createdAt?: string;
+  }>;
   createdBy?: string;
   updatedBy?: string;
   createdAt?: string;

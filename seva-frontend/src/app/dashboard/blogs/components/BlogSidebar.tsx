@@ -22,24 +22,10 @@ export function BlogSidebar() {
               onChange={(e) => set("status", e.target.value)}
               className="w-full border border-border rounded-lg px-3 py-2 text-sm text-white bg-bg focus:outline-none focus:ring-2 focus:ring-blueaccent/30 appearance-none"
             >
-              <option value="draft">Draft</option>
-              <option value="published">Published</option>
-              <option value="scheduled">Scheduled</option>
+              <option value="draft">Draft (Private)</option>
+              <option value="published">Published (Live)</option>
             </select>
           </div>
-
-          {/* Scheduled date */}
-          {form.status === "scheduled" && (
-            <div>
-              <label className="text-[11px] font-semibold text-muted uppercase tracking-wider mb-1.5 block">Publish At</label>
-              <input
-                type="datetime-local"
-                value={form.scheduledAt}
-                onChange={(e) => set("scheduledAt", e.target.value)}
-                className="w-full border border-border rounded-lg px-3 py-2 text-sm text-white bg-bg focus:outline-none focus:ring-2 focus:ring-blueaccent/30"
-              />
-            </div>
-          )}
         </div>
 
         <div className="mt-4 pt-4 border-t border-border space-y-2">
@@ -47,7 +33,7 @@ export function BlogSidebar() {
             type="button"
             className="w-full bg-emerald-accent hover:bg-emerald-600 text-white text-sm font-semibold py-2.5 rounded-lg transition-all shadow-sm"
           >
-            {form.status === "published" ? "Update Post" : form.status === "scheduled" ? "Schedule Post" : "Save Draft"}
+            {form.status === "published" ? "Update Post" : "Save Draft"}
           </button>
           <button
             type="button"

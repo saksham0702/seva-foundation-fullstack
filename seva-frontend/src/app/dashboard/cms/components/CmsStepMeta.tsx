@@ -1,16 +1,32 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { X, AlertCircle } from "lucide-react";
 import { Field, inputCls } from "@/components/dashboard/field/Field";
 import { useCms } from "../CmsProvider";
 import { CMS_CATEGORIES } from "../cms-data";
 import { getImageUrl } from "@/lib/image";
+import { getCategories, Category } from "@/app/api/category";
 
 export function CmsStepMeta() {
   const { form, set, contentType } = useCms();
   const fileRef = useRef<HTMLInputElement>(null);
   const [imageError, setImageError] = useState<string | null>(null);
+  const [dbCategories, setDbCategories] = useState<Category[]>([]);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const cats = await getCategories();
+        setDbCategories(cats);
+        if (cats.length > 0 && (!form.category || form.category === "General")) {
+          // keep existing if valid
+        }
+      } catch (err) {
+        console.error("Failed to fetch categories:", err);
+      }
+    })();
+  }, []);
 
   function handleTitleChange(val: string) {
     set("title", val);
@@ -21,7 +37,11 @@ export function CmsStepMeta() {
     set("slug", autoSlug);
   }
 
-  const categoryOptions = CMS_CATEGORIES[contentType] || ["General"];
+  const fallbackCategories = CMS_CATEGORIES[contentType] || ["General"];
+  const categoryOptions =
+    dbCategories.length > 0
+      ? Array.from(new Set([...dbCategories.map((c) => c.name), ...fallbackCategories]))
+      : fallbackCategories;
 
   const imagePreview: string | null =
     form.featuredImage instanceof File
@@ -65,6 +85,7 @@ export function CmsStepMeta() {
                 : "e.g. How Donations Feed 100 Families"
             }
             className={inputCls}
+            required
           />
         </Field>
 
@@ -81,7 +102,32 @@ export function CmsStepMeta() {
 
       {/* Category Select & Author */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Field label="Category" required>
+        <div>
+          <div className="flex items-center justify-between mb-1.5">
+            <label className="text-xs font-bold text-gray-300">
+              Category <span className="text-red-400">*</span>
+            </label>
+            <button
+              type="button"
+              onClick={() => {
+                const name = window.prompt("Enter new category name:");
+                if (name && name.trim()) {
+                  const trimmed = name.trim();
+                  import("@/app/api/category").then(({ createCategory }) => {
+                    createCategory({ name: trimmed }).then((newCat) => {
+                      setDbCategories((prev) => [newCat, ...prev]);
+                      set("category", newCat.name);
+                    }).catch((err) => {
+                      alert(err?.response?.data?.message || "Failed to create category");
+                    });
+                  });
+                }
+              }}
+              className="text-[11px] font-semibold text-emerald-400 hover:text-emerald-300 hover:underline"
+            >
+              + Add Category
+            </button>
+          </div>
           <select
             value={form.category}
             onChange={(e) => set("category", e.target.value)}
@@ -93,7 +139,7 @@ export function CmsStepMeta() {
               </option>
             ))}
           </select>
-        </Field>
+        </div>
 
         <Field label="Author / Credit">
           <input
@@ -119,6 +165,7 @@ export function CmsStepMeta() {
                 value={form.eventDate}
                 onChange={(e) => set("eventDate", e.target.value)}
                 className={inputCls}
+                required
               />
             </Field>
 
@@ -129,6 +176,7 @@ export function CmsStepMeta() {
                 onChange={(e) => set("eventLocation", e.target.value)}
                 placeholder="e.g. Dehradun Community Center"
                 className={inputCls}
+                required
               />
             </Field>
 
@@ -151,13 +199,14 @@ export function CmsStepMeta() {
             📰 News & Press Source
           </p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Field label="News Source / Press Outlet">
+            <Field label="News Source / Press Outlet *" required hint="Publication name, newspaper, or press agency">
               <input
                 type="text"
-                value={form.newsSource}
+                value={form.newsSource || ""}
                 onChange={(e) => set("newsSource", e.target.value)}
                 placeholder="e.g. The Times of India / Press Release"
                 className={inputCls}
+                required
               />
             </Field>
 

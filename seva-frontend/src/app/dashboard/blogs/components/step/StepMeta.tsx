@@ -1,8 +1,23 @@
+import { useState, useEffect } from "react";
 import { Field, inputCls } from "@/components/dashboard/field/Field";
 import { useBlog } from "../../BlogProvider";
+import { getCategories, Category } from "@/app/api/category";
 
 export function StepMeta() {
   const { form, set } = useBlog();
+  const [categories, setCategories] = useState<Category[]>([]);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const cats = await getCategories();
+        setCategories(cats);
+      } catch (err) {
+        console.error("Failed to load categories in StepMeta:", err);
+      }
+    })();
+  }, []);
+
   function handleTitleChange(val: string) {
     set("title", val);
     // Auto-generate slug only if user hasn't manually edited it
@@ -10,11 +25,16 @@ export function StepMeta() {
     set("slug", autoSlug);
   }
 
+  const categoryOptions =
+    categories.length > 0
+      ? Array.from(new Set([...categories.map((c) => c.name), "Stories", "Education", "Healthcare", "Food Relief", "General"]))
+      : ["Stories", "Education", "Healthcare", "Food Relief", "General"];
+
   return (
     <div className="space-y-5">
 
       {/* Title + Slug */}
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Field label="Post Title" required>
           <input
             type="text"
@@ -22,6 +42,7 @@ export function StepMeta() {
             onChange={(e) => handleTitleChange(e.target.value)}
             placeholder="e.g. How Donations Feed 100 Families"
             className={inputCls}
+            required
           />
         </Field>
         <Field label="Slug" hint="Auto-generated · editable">
@@ -33,6 +54,47 @@ export function StepMeta() {
             className={inputCls + " font-mono text-xs"}
           />
         </Field>
+      </div>
+
+      {/* Category Select */}
+      <div>
+        <div className="flex items-center justify-between mb-1.5">
+          <label className="text-xs font-bold text-gray-300">
+            Category <span className="text-red-400">*</span>
+          </label>
+          <button
+            type="button"
+            onClick={() => {
+              const name = window.prompt("Enter new category name:");
+              if (name && name.trim()) {
+                const trimmed = name.trim();
+                import("@/app/api/category").then(({ createCategory }) => {
+                  createCategory({ name: trimmed }).then((newCat) => {
+                    setCategories((prev) => [newCat, ...prev]);
+                    set("category", newCat.name);
+                  }).catch((err) => {
+                    alert(err?.response?.data?.message || "Failed to create category");
+                  });
+                });
+              }
+            }}
+            className="text-[11px] font-semibold text-emerald-400 hover:text-emerald-300 hover:underline"
+          >
+            + Add Category
+          </button>
+        </div>
+        <select
+          value={form.category || "Stories"}
+          onChange={(e) => set("category", e.target.value)}
+          className={inputCls}
+        >
+          {categoryOptions.map((cat) => (
+            <option key={cat} value={cat} className="bg-navy text-white">
+              {cat}
+            </option>
+          ))}
+        </select>
+        <p className="text-[11px] text-gray-400 mt-1">Categorize your blog post for website filters</p>
       </div>
 
       {/* Meta Title */}

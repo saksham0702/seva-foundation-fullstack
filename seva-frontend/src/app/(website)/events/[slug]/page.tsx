@@ -1,47 +1,71 @@
-"use client";
-
-import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import React from "react";
+import { Metadata } from "next";
+import { notFound } from "next/navigation";
 import { Calendar, MapPin, Clock, Users, HeartHandshake } from "lucide-react";
 import Link from "next/link";
-import { cmsAPI } from "@/app/api/cms";
-import { CmsItem } from "@/types/cms";
+import { getServerCmsItemBySlug, getServerCmsItems } from "@/lib/server-api";
+import { constructMetadata } from "@/lib/seo";
 import { ContentDetail } from "@/components/cms/ContentDetail";
 
-export default function EventDetailPage() {
-  const params = useParams<{ slug: string }>();
-  const slug = params?.slug;
+interface PageProps {
+  params: Promise<{ slug: string }> | { slug: string };
+}
 
-  const [event, setEvent] = useState<CmsItem | null>(null);
-  const [related, setRelated] = useState<CmsItem[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const resolved = await Promise.resolve(params);
+  const slug = resolved?.slug;
+  if (!slug) return constructMetadata({ title: "Event" });
 
-  useEffect(() => {
-    async function loadEvent() {
-      if (!slug) return;
-      setIsLoading(true);
-      try {
-        const item = await cmsAPI.getItemById("event", slug);
-        setEvent(item);
-        const allEvents = await cmsAPI.getItems("event");
-        setRelated(allEvents.filter((e) => e.slug !== slug).slice(0, 3));
-      } catch (err) {
-        console.error("Failed to load event detail:", err);
-      } finally {
-        setIsLoading(false);
-      }
-    }
-    loadEvent();
-  }, [slug]);
+  const event = await getServerCmsItemBySlug("event", slug);
+  if (!event) {
+    return constructMetadata({
+      title: "Event Not Found",
+      description: "The requested event or program could not be found.",
+      noIndex: true,
+    });
+  }
 
-  const isUpcoming = event?.eventDate
+  const cleanExcerpt = (event.excerpt || event.content || "")
+    .replace(/<[^>]*>/g, "")
+    .slice(0, 160);
+
+  return constructMetadata({
+    title: event.title,
+    description: cleanExcerpt || `Join ${event.title} organized by Seva India Foundation.`,
+    canonicalPath: `/events/${event.slug}`,
+    keywords: [
+      event.title,
+      event.category || "Community Event",
+      event.eventLocation || "Uttarakhand",
+      "Seva Foundation Event",
+    ],
+  });
+}
+
+export default async function EventDetailPage({ params }: PageProps) {
+  const resolved = await Promise.resolve(params);
+  const slug = resolved?.slug;
+  if (!slug) notFound();
+
+  const [event, allEvents] = await Promise.all([
+    getServerCmsItemBySlug("event", slug),
+    getServerCmsItems("event"),
+  ]);
+
+  if (!event) {
+    notFound();
+  }
+
+  const related = allEvents.filter((e) => e.slug !== slug).slice(0, 3);
+
+  const isUpcoming = event.eventDate
     ? new Date(event.eventDate).getTime() >= Date.now() - 86400000
     : true;
 
   return (
     <ContentDetail
       item={event}
-      isLoading={isLoading}
+      isLoading={false}
       backHref="/events"
       backLabel="Back to All Events"
       loadingLabel="Loading event details…"
@@ -52,22 +76,35 @@ export default function EventDetailPage() {
       badgeClassName={isUpcoming ? "bg-emerald-600 text-white" : "bg-slate-700 text-white"}
       badgeLabel={isUpcoming ? "Upcoming Event" : "Past Event"}
       metaItems={[
-        ...(event?.eventDate
-          ? [{ icon: Calendar, label: new Date(event.eventDate).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) }]
+        ...(event.eventDate
+          ? [
+              {
+                icon: Calendar,
+                label: new Date(event.eventDate).toLocaleDateString("en-IN", {
+                  day: "numeric",
+                  month: "short",
+                  year: "numeric",
+                }),
+              },
+            ]
           : []),
-        ...(event?.eventLocation ? [{ icon: MapPin, label: event.eventLocation }] : []),
-        ...(event?.readTime ? [{ icon: Clock, label: event.readTime, className: "text-gray-400 ml-auto" }] : []),
+        ...(event.eventLocation ? [{ icon: MapPin, label: event.eventLocation }] : []),
+        ...(event.readTime
+          ? [{ icon: Clock, label: event.readTime, className: "text-gray-400 ml-auto" }]
+          : []),
       ]}
       faqTitle="Event FAQs & Information"
       metaBanner={
         <div className="bg-[#f8f9fc] border border-gray-100 rounded-2xl p-5 sm:p-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {event?.eventDate && (
+          {event.eventDate && (
             <div className="flex items-start gap-3">
               <div className="p-2.5 bg-cyan-50 text-cyan-700 rounded-xl border border-cyan-100">
                 <Calendar size={18} />
               </div>
               <div>
-                <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Date &amp; Time</p>
+                <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">
+                  Date &amp; Time
+                </p>
                 <p className="text-sm font-bold text-[#0A1A2F] mt-0.5">
                   {new Date(event.eventDate).toLocaleDateString("en-IN", {
                     weekday: "long",
@@ -81,14 +118,18 @@ export default function EventDetailPage() {
               </div>
             </div>
           )}
-          {event?.eventLocation && (
+          {event.eventLocation && (
             <div className="flex items-start gap-3">
               <div className="p-2.5 bg-red-50 text-red-600 rounded-xl border border-red-100">
                 <MapPin size={18} />
               </div>
               <div>
-                <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Venue Location</p>
-                <p className="text-sm font-bold text-[#0A1A2F] mt-0.5">{event.eventLocation}</p>
+                <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">
+                  Venue Location
+                </p>
+                <p className="text-sm font-bold text-[#0A1A2F] mt-0.5">
+                  {event.eventLocation}
+                </p>
               </div>
             </div>
           )}
@@ -119,17 +160,25 @@ export default function EventDetailPage() {
           </div>
         </div>
       }
-      footerName={event?.eventOrganizer || "SEVA Community Committee"}
+      footerName={event.eventOrganizer || "SEVA Community Committee"}
       footerSubtitle="Event Organizer"
       footerIcon={<Users size={18} />}
       shareText="Event link copied to clipboard!"
       related={{
         items: related,
         hrefPrefix: "/events",
-        sectionTitle: <>More <span style={{ color: "#06B6D4" }}>Events</span></>,
+        sectionTitle: (
+          <>
+            More <span style={{ color: "#06B6D4" }}>Events</span>
+          </>
+        ),
         formatDate: (r) =>
           r.eventDate
-            ? new Date(r.eventDate).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })
+            ? new Date(r.eventDate).toLocaleDateString("en-IN", {
+                day: "numeric",
+                month: "short",
+                year: "numeric",
+              })
             : r.publishedAt,
       }}
     />

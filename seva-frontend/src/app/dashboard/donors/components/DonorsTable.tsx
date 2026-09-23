@@ -60,7 +60,7 @@ function DonorDrawer({
 }: {
   donor: Donor;
   onClose: () => void;
-}) {
+  }) {
   const cfg = STATUS_CONFIG[donor.status];
   const campaignName =
     typeof donor.campaign === "string"
@@ -69,10 +69,12 @@ function DonorDrawer({
         (donor.campaign as any)?.title ||
         "—";
 
+  const donationsList = donor.donations || [];
+
   return (
     <Portal>
       <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[99998]" onClick={onClose} />
-      <div className="fixed right-0 top-0 bottom-0 w-full max-w-md bg-white z-[99999] shadow-2xl flex flex-col">
+      <div className="fixed right-0 top-0 bottom-0 w-full max-w-md bg-white z-[99999] shadow-2xl flex flex-col animate-in slide-in-from-right duration-200">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100">
           <div className="flex items-center gap-3">
@@ -86,7 +88,7 @@ function DonorDrawer({
           </div>
           <button
             onClick={onClose}
-            className="text-slate-400 hover:text-black transition-colors text-lg font-light"
+            className="text-slate-400 hover:text-black transition-colors text-lg font-light w-8 h-8 rounded-full hover:bg-slate-100 flex items-center justify-center"
           >
             ✕
           </button>
@@ -94,8 +96,19 @@ function DonorDrawer({
 
         {/* Body */}
         <div className="flex-1 overflow-y-auto px-6 py-5 flex flex-col gap-6">
-          {/* Status */}
-          <div className="flex items-center gap-2">
+          {/* Total Paid Hero Metric */}
+          <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4 flex items-center justify-between">
+            <div>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
+                Total Contribution
+              </span>
+              <span className="text-2xl font-serif font-bold text-black">
+                ₹{(donor.totalPaid || 0).toLocaleString("en-IN")}
+              </span>
+              <p className="text-[11px] text-slate-500 mt-0.5">
+                {donor.donationCount || (donor.status === "PAID" ? 1 : 0)} successful contribution(s)
+              </p>
+            </div>
             <span
               className={`text-[10px] font-semibold uppercase tracking-widest px-3 py-1.5 rounded-full ${cfg.className}`}
             >
@@ -106,46 +119,111 @@ function DonorDrawer({
           {/* Contact details */}
           <div className="flex flex-col gap-2">
             <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
-              Contact Details
+              Donor Profile & Contact
             </p>
-            <div className="bg-slate-50 border border-slate-100 rounded-xl divide-y divide-slate-100">
-              {[
-                { label: "Phone", value: donor.phone || "—" },
-                { label: "Email", value: donor.email || "—" },
-              ].map((row) => (
-                <div
-                  key={row.label}
-                  className="flex items-center justify-between px-4 py-3"
-                >
-                  <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
-                    {row.label}
-                  </span>
-                  <span className="text-sm font-medium text-black">
-                    {row.value}
-                  </span>
-                </div>
-              ))}
+            <div className="bg-slate-50 border border-slate-100 rounded-xl divide-y divide-slate-100 text-xs">
               <div className="flex items-center justify-between px-4 py-3">
                 <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
-                  Status
+                  Phone
                 </span>
-                <span
-                  className={`text-[10px] font-semibold uppercase tracking-widest px-2.5 py-1 rounded-full ${cfg.className}`}
-                >
-                  {cfg.label}
+                <span className="font-medium text-black font-mono">
+                  {donor.phone || "—"}
                 </span>
               </div>
+              <div className="flex items-center justify-between px-4 py-3">
+                <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+                  Email
+                </span>
+                <span className="font-medium text-black">
+                  {donor.email || "—"}
+                </span>
+              </div>
+              {donor.pan && (
+                <div className="flex items-center justify-between px-4 py-3">
+                  <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+                    PAN Card
+                  </span>
+                  <span className="font-mono font-bold text-black">
+                    {donor.pan}
+                  </span>
+                </div>
+              )}
             </div>
           </div>
 
-          {/* Campaign */}
+          {/* Recursive Donation History */}
           <div className="flex flex-col gap-2">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
-              Campaign
-            </p>
-            <div className="bg-slate-50 border border-slate-100 rounded-xl px-4 py-3">
-              <p className="text-sm font-medium text-black">{campaignName}</p>
+            <div className="flex items-center justify-between">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                Contribution History ({donationsList.length || (donor.totalPaid ? 1 : 0)})
+              </p>
             </div>
+
+            {donationsList.length > 0 ? (
+              <div className="space-y-2.5">
+                {donationsList.map((d: any, idx: number) => {
+                  const camp =
+                    typeof d.campaign === "object"
+                      ? d.campaign?.name || d.campaign?.title
+                      : d.campaign || d.initiative || "General Support";
+                  return (
+                    <div
+                      key={d._id || idx}
+                      className="bg-slate-50 border border-slate-200/80 rounded-xl p-3.5 space-y-1.5 text-xs"
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="font-bold text-slate-900 text-sm">
+                          ₹{(d.amount || 0).toLocaleString("en-IN")}
+                        </span>
+                        <span
+                          className={`text-[9px] font-bold uppercase px-2 py-0.5 rounded-full ${
+                            d.paymentStatus === "SUCCESS"
+                              ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                              : d.paymentStatus === "FAILED"
+                              ? "bg-rose-50 text-rose-700 border border-rose-200"
+                              : "bg-amber-50 text-amber-700 border border-amber-200"
+                          }`}
+                        >
+                          {d.paymentStatus || "PAID"}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between text-slate-600 text-[11px]">
+                        <span className="truncate max-w-[180px] font-medium">{camp}</span>
+                        <span>
+                          {d.createdAt
+                            ? new Date(d.createdAt).toLocaleDateString("en-IN", {
+                                day: "numeric",
+                                month: "short",
+                                year: "numeric",
+                              })
+                            : "—"}
+                        </span>
+                      </div>
+                      {d.receiptNumber && (
+                        <div className="pt-1 border-t border-slate-200/60 flex items-center justify-between text-[10px] text-slate-400">
+                          <span>Receipt: <strong className="text-slate-700 font-mono">{d.receiptNumber}</strong></span>
+                          <a
+                            href={`/verify/${d.receiptNumber}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-[#4C6FFF] hover:underline font-bold"
+                          >
+                            Certificate →
+                          </a>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="bg-slate-50 border border-slate-100 rounded-xl p-3.5 text-xs text-slate-600">
+                <p className="font-medium text-slate-900">{campaignName}</p>
+                <p className="text-[11px] text-slate-400 mt-1">
+                  Primary contribution registered.
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Timestamps */}
@@ -154,19 +232,17 @@ function DonorDrawer({
               <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
                 Record Info
               </p>
-              <div className="bg-slate-50 border border-slate-100 rounded-xl divide-y divide-slate-100">
-                <div className="flex items-center justify-between px-4 py-3">
-                  <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
-                    Created
-                  </span>
-                  <span className="text-sm font-medium text-black">
-                    {new Date(donor.createdAt).toLocaleDateString("en-IN", {
-                      day: "numeric",
-                      month: "short",
-                      year: "numeric",
-                    })}
-                  </span>
-                </div>
+              <div className="bg-slate-50 border border-slate-100 rounded-xl px-4 py-3 text-xs flex items-center justify-between">
+                <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+                  First Seen
+                </span>
+                <span className="font-medium text-black">
+                  {new Date(donor.createdAt).toLocaleDateString("en-IN", {
+                    day: "numeric",
+                    month: "short",
+                    year: "numeric",
+                  })}
+                </span>
               </div>
             </div>
           )}
@@ -246,7 +322,7 @@ export function DonorsTable() {
 
   return (
     <>
-      <div className="border border-slate-200 rounded-2xl overflow-hidden">
+      <div className="border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
@@ -255,8 +331,9 @@ export function DonorsTable() {
                 <th className="text-left px-6 py-4 text-[10px] font-semibold uppercase tracking-widest text-slate-400 hidden md:table-cell">
                   Contact
                 </th>
+                <SortTh label="Total Paid" sortKey="totalPaid" />
                 <th className="text-left px-6 py-4 text-[10px] font-semibold uppercase tracking-widest text-slate-400 hidden lg:table-cell">
-                  Campaign
+                  Campaign / Cause
                 </th>
                 <SortTh label="Date" sortKey="createdAt" className="hidden sm:table-cell" />
                 <SortTh label="Status" sortKey="status" />
@@ -267,7 +344,7 @@ export function DonorsTable() {
               {paginated.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={6}
+                    colSpan={7}
                     className="px-6 py-16 text-center text-sm text-slate-400"
                   >
                     No donors match your search.
@@ -290,13 +367,25 @@ export function DonorsTable() {
                               {donor.name || "Unnamed"}
                             </p>
                             <p className="text-[11px] text-slate-400">
-                              {donor.phone || "—"}
+                              {donor.phone || donor.email || "—"}
                             </p>
                           </div>
                         </div>
                       </td>
                       <td className="px-6 py-4 hidden md:table-cell">
                         <p className="text-sm text-black">{donor.email || "—"}</p>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-bold text-slate-900">
+                            ₹{(donor.totalPaid || 0).toLocaleString("en-IN")}
+                          </span>
+                          {donor.donationCount && donor.donationCount > 1 ? (
+                            <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                              {donor.donationCount} gifts
+                            </span>
+                          ) : null}
+                        </div>
                       </td>
                       <td className="px-6 py-4 hidden lg:table-cell">
                         <CampaignBadge campaign={donor.campaign} />

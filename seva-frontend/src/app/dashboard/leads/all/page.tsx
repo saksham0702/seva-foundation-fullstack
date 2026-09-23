@@ -68,6 +68,16 @@ const DATE_PRESETS = [
   { key: "custom", label: "Custom Range" },
 ] as const;
 
+function getLocalDatetimeString(date: Date) {
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const year = date.getFullYear();
+  const month = pad(date.getMonth() + 1);
+  const day = pad(date.getDate());
+  const hours = pad(date.getHours());
+  const minutes = pad(date.getMinutes());
+  return `${year}-${month}-${day}T${hours}:${minutes}`;
+}
+
 function AllLeadsInner() {
   const searchParams = useSearchParams();
   const initialLeadId = searchParams.get("id");
@@ -709,23 +719,25 @@ function AllLeadsInner() {
                         isSelected ? "bg-orange-500/5 border-l-2 border-l-[#E8542A]" : ""
                       }`}
                     >
-                      {/* Name & Initials */}
+                      {/* Name */}
                       <td className="py-3 px-4">
-                        <div className="flex items-center gap-2.5">
-                          <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-slate-200 to-slate-100 dark:from-slate-800 dark:to-slate-700 flex items-center justify-center text-xs font-bold text-text-primary shrink-0 uppercase">
-                            {lead.name.slice(0, 2)}
-                          </div>
-                          <div className="min-w-0">
-                            <p className="font-bold text-text-primary truncate max-w-[130px]">
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <p className="font-bold text-text-primary truncate max-w-[150px]">
                               {lead.name}
                             </p>
-                            <span className="text-[10px] text-muted">
-                              {new Date(lead.createdAt).toLocaleDateString("en-IN", {
-                                day: "numeric",
-                                month: "short",
-                              })}
-                            </span>
+                            {lead.amount ? (
+                              <span className="text-[10px] font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-900/50 border border-emerald-300 dark:border-emerald-700/50 px-1.5 py-0.2 rounded-md shrink-0">
+                                ₹{lead.amount.toLocaleString("en-IN")}
+                              </span>
+                            ) : null}
                           </div>
+                          <span className="text-[10px] text-muted">
+                            {new Date(lead.createdAt).toLocaleDateString("en-IN", {
+                              day: "numeric",
+                              month: "short",
+                            })}
+                          </span>
                         </div>
                       </td>
 
@@ -925,9 +937,16 @@ function AllLeadsInner() {
                         </span>
                       )}
                     </div>
-                    <h2 className="text-xl font-bold text-text-primary">
-                      {selectedLead.name}
-                    </h2>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h2 className="text-xl font-bold text-text-primary">
+                        {selectedLead.name}
+                      </h2>
+                      {selectedLead.amount ? (
+                        <span className="text-xs font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-800 px-2 py-0.5 rounded-md">
+                          ₹{selectedLead.amount.toLocaleString("en-IN")}
+                        </span>
+                      ) : null}
+                    </div>
                     <p className="text-xs text-muted mt-0.5">
                       Captured on {new Date(selectedLead.createdAt).toLocaleString("en-IN")}
                     </p>
@@ -1077,10 +1096,14 @@ function AllLeadsInner() {
                       value={followUpDisposition}
                       onChange={(e) => setFollowUpDisposition(e.target.value)}
                       required
-                      className="w-full px-3 py-2 bg-background border border-border rounded-xl text-xs text-text-primary focus:outline-none focus:ring-2 focus:ring-[#E8542A]/20"
+                      className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-border rounded-xl text-xs text-slate-900 dark:text-slate-100 font-medium focus:outline-none focus:ring-2 focus:ring-[#E8542A]/20"
                     >
                       {configs.map((c) => (
-                        <option key={c._id} value={c.name}>
+                        <option
+                          key={c._id}
+                          value={c.name}
+                          className="bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100 py-1.5"
+                        >
                           {c.name} ({c.category})
                         </option>
                       ))}
@@ -1103,14 +1126,77 @@ function AllLeadsInner() {
 
                   {/* Schedule Next Date */}
                   <div>
-                    <label className="block text-xs font-semibold text-muted mb-1">
-                      Schedule Next Call Date & Time (Optional)
-                    </label>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="block text-xs font-semibold text-muted">
+                        Schedule Next Call Date & Time
+                      </label>
+                      {followUpNextDate && (
+                        <button
+                          type="button"
+                          onClick={() => setFollowUpNextDate("")}
+                          className="text-[10px] text-muted hover:text-rose-500"
+                        >
+                          Clear
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Quick Preset Buttons */}
+                    <div className="flex items-center gap-1.5 mb-2 overflow-x-auto pb-1 scrollbar-none">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const d = new Date();
+                          d.setHours(d.getHours() + 1);
+                          setFollowUpNextDate(getLocalDatetimeString(d));
+                        }}
+                        className="px-2 py-0.5 text-[10px] font-semibold bg-panel border border-border hover:border-[#E8542A] text-text-primary rounded-md whitespace-nowrap"
+                      >
+                        +1 Hour
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const d = new Date();
+                          d.setDate(d.getDate() + 1);
+                          d.setHours(10, 0, 0, 0);
+                          setFollowUpNextDate(getLocalDatetimeString(d));
+                        }}
+                        className="px-2 py-0.5 text-[10px] font-semibold bg-panel border border-border hover:border-[#E8542A] text-text-primary rounded-md whitespace-nowrap"
+                      >
+                        Tomorrow 10 AM
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const d = new Date();
+                          d.setDate(d.getDate() + 2);
+                          d.setHours(10, 0, 0, 0);
+                          setFollowUpNextDate(getLocalDatetimeString(d));
+                        }}
+                        className="px-2 py-0.5 text-[10px] font-semibold bg-panel border border-border hover:border-[#E8542A] text-text-primary rounded-md whitespace-nowrap"
+                      >
+                        In 2 Days 10 AM
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const d = new Date();
+                          d.setDate(d.getDate() + 7);
+                          d.setHours(10, 0, 0, 0);
+                          setFollowUpNextDate(getLocalDatetimeString(d));
+                        }}
+                        className="px-2 py-0.5 text-[10px] font-semibold bg-panel border border-border hover:border-[#E8542A] text-text-primary rounded-md whitespace-nowrap"
+                      >
+                        Next Week
+                      </button>
+                    </div>
+
                     <input
                       type="datetime-local"
                       value={followUpNextDate}
                       onChange={(e) => setFollowUpNextDate(e.target.value)}
-                      className="w-full px-3 py-2 bg-background border border-border rounded-xl text-xs text-text-primary focus:outline-none focus:ring-2 focus:ring-[#E8542A]/20"
+                      className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-border rounded-xl text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-[#E8542A]/20"
                     />
                   </div>
 

@@ -68,6 +68,7 @@ export default function InitiativeDonationSection({
   const [error, setError] = useState<string | null>(null);
   const [completedDonation, setCompletedDonation] = useState<Donation | null>(null);
   const [completedReceipt, setCompletedReceipt] = useState<string | null>(null);
+  const [completedCertificate, setCompletedCertificate] = useState<any>(null);
 
   // Fetch dynamic initiatives and real donations from backend
   useEffect(() => {
@@ -286,6 +287,7 @@ export default function InitiativeDonationSection({
 
               setCompletedDonation(verified.donation);
               setCompletedReceipt(verified.receiptNumber || `REC-${Date.now().toString(36).toUpperCase()}`);
+              setCompletedCertificate(verified.certificate || null);
               setStep(3);
             } catch (err: any) {
               setError(err?.response?.data?.message || err?.message || "Payment verification failed.");
@@ -315,6 +317,7 @@ export default function InitiativeDonationSection({
 
         setCompletedDonation(verified.donation);
         setCompletedReceipt(verified.receiptNumber || `REC-${Date.now().toString(36).toUpperCase()}`);
+        setCompletedCertificate(verified.certificate || null);
         setStep(3);
         setLoading(false);
       }
@@ -977,11 +980,21 @@ export default function InitiativeDonationSection({
                   </div>
 
                   <div className="pt-2 flex flex-col sm:flex-row gap-3">
+                    <a
+                      href={`/verify/${completedCertificate?.certificateNumber || completedReceipt}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex-1 bg-[#F5A623] hover:bg-[#e0951a] text-white font-semibold py-3 px-4 rounded-xl text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 shadow-md shadow-amber-500/20"
+                    >
+                      <Sparkles size={14} />
+                      <span>View & Download 80G Certificate</span>
+                    </a>
                     <button
                       type="button"
                       onClick={() => {
                         setStep(1);
                         setCompletedDonation(null);
+                        setCompletedCertificate(null);
                       }}
                       className="flex-1 bg-[#0A1A2F] hover:bg-[#152a4a] text-white font-semibold py-3 px-4 rounded-xl text-xs uppercase tracking-wider transition-all"
                     >

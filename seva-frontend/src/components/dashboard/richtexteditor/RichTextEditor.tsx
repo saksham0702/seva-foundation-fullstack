@@ -289,9 +289,9 @@ export function RichTextEditor({
     } ${disabled ? "opacity-50 cursor-not-allowed" : ""}`;
 
   return (
-    <div className="border border-slate-200 rounded-xl overflow-hidden bg-white">
-      {/* Toolbar */}
-      <div className="sticky top-0 z-20 flex flex-wrap items-center gap-0.5 px-3 py-2 border-b border-slate-200 bg-slate-50/95 backdrop-blur-sm shadow-xs">
+    <div className="border border-slate-200 dark:border-border rounded-xl bg-white dark:bg-panel relative">
+      {/* Sticky Fixed Toolbar */}
+      <div className="sticky top-0 z-30 flex flex-wrap items-center gap-0.5 px-3 py-2.5 border-b border-slate-200 dark:border-border bg-slate-50/95 dark:bg-slate-900/95 backdrop-blur-md rounded-t-xl shadow-xs">
         <button
           type="button"
           onClick={() => editor.chain().focus().undo().run()}

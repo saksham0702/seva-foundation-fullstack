@@ -59,6 +59,9 @@ export function UsersTable() {
               <th className="text-left px-6 py-4 text-[10px] font-semibold uppercase tracking-widest text-slate-400">
                 Role
               </th>
+              <th className="text-left px-6 py-4 text-[10px] font-semibold uppercase tracking-widest text-slate-400 hidden sm:table-cell">
+                Department
+              </th>
               <th className="text-left px-6 py-4 text-[10px] font-semibold uppercase tracking-widest text-slate-400 hidden md:table-cell">
                 Permissions
               </th>
@@ -69,7 +72,7 @@ export function UsersTable() {
             {filtered.length === 0 ? (
               <tr>
                 <td
-                  colSpan={4}
+                  colSpan={5}
                   className="px-6 py-16 text-center text-sm text-slate-400"
                 >
                   No users found.
@@ -83,6 +86,11 @@ export function UsersTable() {
                 const permissionLabels = (user.permissions || [])
                   .map((pKey) => PERMISSION_MODULES.find((m) => m.key === pKey)?.label || pKey)
                   .join(", ");
+
+                const deptName =
+                  typeof user.department === "object"
+                    ? user.department?.name
+                    : user.department;
 
                 return (
                   <tr
@@ -109,6 +117,15 @@ export function UsersTable() {
                       >
                         {user.role === "admin" ? "Admin" : "User / Team"}
                       </span>
+                    </td>
+                    <td className="px-6 py-4 hidden sm:table-cell">
+                      {deptName ? (
+                        <span className="text-[11px] font-bold px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300 border border-blue-200/60 dark:border-blue-800/40">
+                          {deptName}
+                        </span>
+                      ) : (
+                        <span className="text-xs text-slate-400 italic">No Department</span>
+                      )}
                     </td>
                     <td className="px-6 py-4 hidden md:table-cell">
                       <p className="text-sm text-slate-600 truncate max-w-xs">

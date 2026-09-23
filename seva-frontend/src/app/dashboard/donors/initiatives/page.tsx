@@ -71,8 +71,27 @@ function getInitiativeBadge(name?: string) {
 }
 
 // ─── Main Component ────────────────────────────────────────────────────────
+interface GroupedInitiativeDonor {
+  id: string;
+  donorName: string;
+  donorEmail: string;
+  donorPhone: string;
+  donorPan?: string;
+  donorAddress?: string;
+  primaryInitiative: string;
+  totalAmount: number;
+  donationCount: number;
+  frequency: string;
+  paymentStatus: string;
+  latestDate: string;
+  tribute?: string;
+  message?: string;
+  receiptNumber?: string;
+  donations: Donation[];
+}
+
 function InitiativeDonationsInner() {
-  const [donations, setDonations] = useState<Donation[]>([]);
+  const [groupedDonors, setGroupedDonors] = useState<GroupedInitiativeDonor[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -83,7 +102,7 @@ function InitiativeDonationsInner() {
   const [selectedStatus, setSelectedStatus] = useState("all");
 
   // Selected for drawer
-  const [activeDonation, setActiveDonation] = useState<Donation | null>(null);
+  const [activeDonor, setActiveDonor] = useState<GroupedInitiativeDonor | null>(null);
 
   // Pagination
   const [page, setPage] = useState(1);
@@ -101,7 +120,69 @@ function InitiativeDonationsInner() {
           d.targetType === "INITIATIVE" ||
           (!d.campaign && d.initiative)
       );
-      setDonations(initDonations);
+
+      // Group donations by email or phone
+      const map = new Map<string, GroupedInitiativeDonor>();
+
+      for (const d of initDonations) {
+        const donorObj = typeof d.donor === "object" ? d.donor : null;
+        const name = donorObj?.name || "Anonymous Donor";
+        const email = donorObj?.email ? donorObj.email.toLowerCase().trim() : "";
+        const phone = donorObj?.phone ? donorObj.phone.replace(/\D/g, "").trim() : "";
+        const groupKey = email || (phone ? `phone_${phone}` : d._id);
+
+        if (!map.has(groupKey)) {
+          map.set(groupKey, {
+            id: d._id,
+            donorName: name,
+            donorEmail: email,
+            donorPhone: donorObj?.phone || "",
+            donorPan: donorObj?.pan,
+            donorAddress: donorObj?.address,
+            primaryInitiative: d.initiative || "General Support",
+            totalAmount: d.paymentStatus === "SUCCESS" ? (d.amount || 0) : 0,
+            donationCount: d.paymentStatus === "SUCCESS" ? 1 : 0,
+            frequency: d.frequency || "ONE_TIME",
+            paymentStatus: d.paymentStatus,
+            latestDate: d.createdAt || new Date().toISOString(),
+            tribute: d.tribute,
+            message: d.message,
+            receiptNumber: d.receiptNumber,
+            donations: [d],
+          });
+        } else {
+          const existing = map.get(groupKey)!;
+          const mergedDonations = [...existing.donations, d];
+          const successful = mergedDonations.filter((item) => item.paymentStatus === "SUCCESS");
+          const totalPaid = successful.reduce((sum, item) => sum + (item.amount || 0), 0);
+
+          let finalStatus = existing.paymentStatus;
+          if (d.paymentStatus === "SUCCESS" || existing.paymentStatus === "SUCCESS") {
+            finalStatus = "SUCCESS";
+          } else if (d.paymentStatus === "PENDING" || existing.paymentStatus === "PENDING") {
+            finalStatus = "PENDING";
+          }
+
+          map.set(groupKey, {
+            ...existing,
+            donorName: existing.donorName !== "Anonymous Donor" ? existing.donorName : name,
+            donorEmail: existing.donorEmail || email,
+            donorPhone: existing.donorPhone || donorObj?.phone || "",
+            donorPan: existing.donorPan || donorObj?.pan,
+            donorAddress: existing.donorAddress || donorObj?.address,
+            totalAmount: totalPaid,
+            donationCount: successful.length,
+            paymentStatus: finalStatus,
+            donations: mergedDonations,
+            latestDate:
+              new Date(existing.latestDate) > new Date(d.createdAt || 0)
+                ? existing.latestDate
+                : d.createdAt || existing.latestDate,
+          });
+        }
+      }
+
+      setGroupedDonors(Array.from(map.values()));
     } catch (err: any) {
       console.error("Error fetching initiative donations:", err);
       setError("Failed to load initiative donations.");
@@ -114,19 +195,21 @@ function InitiativeDonationsInner() {
     fetchDonations();
   }, [fetchDonations]);
 
-  // Filtered donations
+  // Filtered donors
   const filtered = useMemo(() => {
-    return donations.filter((item) => {
+    return groupedDonors.filter((item) => {
       // Initiative filter
       if (selectedInitiative !== "all") {
-        if (!item.initiative?.toLowerCase().includes(selectedInitiative.toLowerCase())) {
-          return false;
-        }
+        const hasMatch = item.donations.some((d) =>
+          d.initiative?.toLowerCase().includes(selectedInitiative.toLowerCase())
+        );
+        if (!hasMatch) return false;
       }
 
       // Frequency filter
       if (selectedFrequency !== "all") {
-        if (item.frequency !== selectedFrequency) return false;
+        const hasMatch = item.donations.some((d) => d.frequency === selectedFrequency);
+        if (!hasMatch) return false;
       }
 
       // Status filter
@@ -137,18 +220,20 @@ function InitiativeDonationsInner() {
       // Search query
       if (search.trim()) {
         const q = search.toLowerCase();
-        const donorObj = typeof item.donor === "object" ? item.donor : null;
-        const name = donorObj?.name || "";
-        const email = donorObj?.email || "";
-        const phone = donorObj?.phone || "";
-        const init = item.initiative || "";
-        const rcpt = item.receiptNumber || "";
+        const matchesName = item.donorName.toLowerCase().includes(q);
+        const matchesEmail = item.donorEmail.toLowerCase().includes(q);
+        const matchesPhone = item.donorPhone.includes(q);
+        const matchesInit = item.primaryInitiative.toLowerCase().includes(q);
+        const matchesReceipt = item.donations.some(
+          (d) => d.receiptNumber && d.receiptNumber.toLowerCase().includes(q)
+        );
+
         if (
-          !name.toLowerCase().includes(q) &&
-          !email.toLowerCase().includes(q) &&
-          !phone.toLowerCase().includes(q) &&
-          !init.toLowerCase().includes(q) &&
-          !rcpt.toLowerCase().includes(q)
+          !matchesName &&
+          !matchesEmail &&
+          !matchesPhone &&
+          !matchesInit &&
+          !matchesReceipt
         ) {
           return false;
         }
@@ -156,7 +241,7 @@ function InitiativeDonationsInner() {
 
       return true;
     });
-  }, [donations, selectedInitiative, selectedFrequency, selectedStatus, search]);
+  }, [groupedDonors, selectedInitiative, selectedFrequency, selectedStatus, search]);
 
   // Pagination
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
@@ -167,63 +252,70 @@ function InitiativeDonationsInner() {
 
   // Stats calculations
   const stats = useMemo(() => {
-    const totalCount = donations.length;
-    const paidList = donations.filter((d) => d.paymentStatus === "SUCCESS");
-    const totalRaised = paidList.reduce((acc, curr) => acc + (curr.amount || 0), 0);
-    const monthlyCount = donations.filter((d) => d.frequency === "MONTHLY").length;
-    const oneTimeCount = donations.filter((d) => d.frequency === "ONE_TIME" || !d.frequency).length;
+    let totalCount = 0;
+    let totalRaised = 0;
+    let monthlyCount = 0;
+    let oneTimeCount = 0;
+
+    groupedDonors.forEach((g) => {
+      totalCount += g.donations.length;
+      totalRaised += g.totalAmount;
+      g.donations.forEach((d) => {
+        if (d.frequency === "MONTHLY") monthlyCount++;
+        else oneTimeCount++;
+      });
+    });
+
     return {
+      totalDonors: groupedDonors.length,
       totalCount,
       totalRaised,
       monthlyCount,
       oneTimeCount,
     };
-  }, [donations]);
+  }, [groupedDonors]);
 
   // Unique initiatives extracted dynamically from loaded donations
   const uniqueInitiatives = useMemo(() => {
     const set = new Set<string>();
-    donations.forEach((d) => {
-      if (d.initiative) set.add(d.initiative);
+    groupedDonors.forEach((g) => {
+      g.donations.forEach((d) => {
+        if (d.initiative) set.add(d.initiative);
+      });
     });
     return Array.from(set);
-  }, [donations]);
+  }, [groupedDonors]);
 
   // Export CSV
   const handleExportCSV = () => {
-    if (donations.length === 0) return;
+    if (groupedDonors.length === 0) return;
     const headers = [
       "Donor Name",
       "Email",
       "Phone",
       "PAN",
-      "Initiative",
-      "Amount",
-      "Frequency",
+      "Total Amount Paid",
+      "Donation Count",
+      "Primary Initiative",
       "Status",
-      "Receipt Number",
-      "Date",
+      "Latest Date",
     ];
-    const rows = filtered.map((d) => {
-      const donor = typeof d.donor === "object" ? d.donor : null;
-      return [
-        `"${donor?.name || ""}"`,
-        `"${donor?.email || ""}"`,
-        `"${donor?.phone || ""}"`,
-        `"${donor?.pan || ""}"`,
-        `"${d.initiative || "General Support"}"`,
-        d.amount || 0,
-        `"${d.frequency || "ONE_TIME"}"`,
-        `"${d.paymentStatus}"`,
-        `"${d.receiptNumber || ""}"`,
-        `"${new Date(d.createdAt || Date.now()).toLocaleDateString()}"`,
-      ].join(",");
-    });
-    const csvContent = "data:text/csv;charset=utf-8," + [headers.join(","), ...rows].join("\n");
+    const rows = filtered.map((d) => [
+      `"${d.donorName}"`,
+      `"${d.donorEmail}"`,
+      `"${d.donorPhone}"`,
+      `"${d.donorPan || ""}"`,
+      d.totalAmount,
+      d.donationCount,
+      `"${d.primaryInitiative}"`,
+      `"${d.paymentStatus}"`,
+      `"${new Date(d.latestDate).toLocaleDateString()}"`,
+    ]);
+    const csvContent = "data:text/csv;charset=utf-8," + [headers.join(","), ...rows.map((r) => r.join(","))].join("\n");
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `initiative_donations_${Date.now()}.csv`);
+    link.setAttribute("download", `initiative_donors_grouped_${Date.now()}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -394,24 +486,18 @@ function InitiativeDonationsInner() {
                 <thead>
                   <tr className="bg-slate-50/80 border-b border-slate-200 text-[11px] font-bold uppercase tracking-wider text-slate-500">
                     <th className="py-3.5 px-4">Donor</th>
-                    <th className="py-3.5 px-4">Initiative Paid For</th>
-                    <th className="py-3.5 px-4">Amount</th>
+                    <th className="py-3.5 px-4">Total Paid</th>
+                    <th className="py-3.5 px-4">Primary Initiative</th>
                     <th className="py-3.5 px-4">Frequency</th>
                     <th className="py-3.5 px-4">Status</th>
-                    <th className="py-3.5 px-4">Date</th>
+                    <th className="py-3.5 px-4">Latest Date</th>
                     <th className="py-3.5 px-4 text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {paginated.map((item) => {
-                    const donorObj = typeof item.donor === "object" ? item.donor : null;
-                    const donorName = donorObj?.name || "Anonymous Donor";
-                    const donorEmail = donorObj?.email || "—";
-                    const initiativeName = item.initiative || "General Support";
-                    const badgeClass = getInitiativeBadge(initiativeName);
-                    const formattedDate = new Date(
-                      item.createdAt || Date.now()
-                    ).toLocaleDateString("en-IN", {
+                    const badgeClass = getInitiativeBadge(item.primaryInitiative);
+                    const formattedDate = new Date(item.latestDate).toLocaleDateString("en-IN", {
                       day: "numeric",
                       month: "short",
                       year: "numeric",
@@ -419,32 +505,44 @@ function InitiativeDonationsInner() {
 
                     return (
                       <tr
-                        key={item._id}
-                        className="hover:bg-slate-50/50 transition-colors"
+                        key={item.id}
+                        className="hover:bg-slate-50/50 transition-colors cursor-pointer"
+                        onClick={() => setActiveDonor(item)}
                       >
                         {/* Donor */}
                         <td className="py-3.5 px-4">
                           <div className="flex items-center gap-3">
-                            <Avatar name={donorName} />
+                            <Avatar name={item.donorName} />
                             <div>
-                              <p className="font-bold text-slate-900">{donorName}</p>
-                              <p className="text-[11px] text-slate-400">{donorEmail}</p>
+                              <p className="font-bold text-slate-900">{item.donorName}</p>
+                              <p className="text-[11px] text-slate-400">
+                                {item.donorPhone || item.donorEmail || "—"}
+                              </p>
                             </div>
                           </div>
                         </td>
 
-                        {/* Initiative Paid For */}
+                        {/* Total Amount Paid */}
+                        <td className="py-3.5 px-4">
+                          <div className="flex items-center gap-2">
+                            <span className="font-bold text-slate-900 text-sm">
+                              ₹{item.totalAmount.toLocaleString("en-IN")}
+                            </span>
+                            {item.donationCount > 1 ? (
+                              <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                                {item.donationCount} gifts
+                              </span>
+                            ) : null}
+                          </div>
+                        </td>
+
+                        {/* Primary Initiative */}
                         <td className="py-3.5 px-4">
                           <span
                             className={`inline-block text-[11px] font-bold px-3 py-1 rounded-lg border ${badgeClass}`}
                           >
-                            {initiativeName}
+                            {item.primaryInitiative}
                           </span>
-                        </td>
-
-                        {/* Amount */}
-                        <td className="py-3.5 px-4 font-bold text-slate-900 text-sm">
-                          ₹{(item.amount || 0).toLocaleString("en-IN")}
                         </td>
 
                         {/* Frequency */}
@@ -485,12 +583,12 @@ function InitiativeDonationsInner() {
                         </td>
 
                         {/* Action */}
-                        <td className="py-3.5 px-4 text-right">
+                        <td className="py-3.5 px-4 text-right" onClick={(e) => e.stopPropagation()}>
                           <button
-                            onClick={() => setActiveDonation(item)}
+                            onClick={() => setActiveDonor(item)}
                             className="text-xs font-bold text-black hover:text-[#2F54EB] transition-colors"
                           >
-                            View Details
+                            View Details →
                           </button>
                         </td>
                       </tr>
@@ -506,7 +604,7 @@ function InitiativeDonationsInner() {
             <div className="px-4 py-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
               <span>
                 Showing {(page - 1) * PAGE_SIZE + 1} to{" "}
-                {Math.min(page * PAGE_SIZE, filtered.length)} of {filtered.length} donations
+                {Math.min(page * PAGE_SIZE, filtered.length)} of {filtered.length} donors
               </span>
               <div className="flex items-center gap-2">
                 <button
@@ -531,37 +629,29 @@ function InitiativeDonationsInner() {
           )}
         </div>
 
-        {/* ── Details Drawer ── */}
-        {activeDonation && (
+        {/* ── Details Drawer with Recursive Donation History ── */}
+        {activeDonor && (
           <Portal>
             <div
               className="fixed inset-0 bg-black/75 z-[99998] backdrop-blur-sm"
-              onClick={() => setActiveDonation(null)}
+              onClick={() => setActiveDonor(null)}
             />
             <div className="fixed right-0 top-0 bottom-0 w-full max-w-md bg-white z-[99999] shadow-2xl flex flex-col animate-in slide-in-from-right duration-200">
               {/* Drawer Header */}
               <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100">
                 <div className="flex items-center gap-3">
-                  <Avatar
-                    name={
-                      (typeof activeDonation.donor === "object" &&
-                        activeDonation.donor?.name) ||
-                      "Donor"
-                    }
-                  />
+                  <Avatar name={activeDonor.donorName} />
                   <div>
                     <h3 className="text-sm font-bold text-black">
-                      {(typeof activeDonation.donor === "object" &&
-                        activeDonation.donor?.name) ||
-                        "Anonymous Donor"}
+                      {activeDonor.donorName}
                     </h3>
                     <p className="text-[11px] text-slate-400">
-                      {activeDonation.initiative || "General Support"}
+                      {activeDonor.donorPhone || activeDonor.donorEmail || "Initiative Supporter"}
                     </p>
                   </div>
                 </div>
                 <button
-                  onClick={() => setActiveDonation(null)}
+                  onClick={() => setActiveDonor(null)}
                   className="w-8 h-8 rounded-full hover:bg-slate-100 flex items-center justify-center text-slate-400 hover:text-black transition-colors"
                 >
                   <X size={18} />
@@ -571,124 +661,163 @@ function InitiativeDonationsInner() {
               {/* Drawer Content */}
               <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6 text-xs">
                 {/* Amount & Status Hero Card */}
-                <div className="bg-slate-50 border border-slate-100 rounded-2xl p-4 flex items-center justify-between">
+                <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4 flex items-center justify-between">
                   <div>
                     <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
-                      Donation Amount
+                      Total Donated
                     </span>
                     <span className="text-2xl font-serif font-bold text-black">
-                      ₹{(activeDonation.amount || 0).toLocaleString("en-IN")}
+                      ₹{activeDonor.totalAmount.toLocaleString("en-IN")}
                     </span>
+                    <p className="text-[11px] text-slate-500 mt-0.5">
+                      {activeDonor.donationCount} successful contribution(s)
+                    </p>
                   </div>
                   <span
                     className={`text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-full ${
-                      activeDonation.paymentStatus === "SUCCESS"
+                      activeDonor.paymentStatus === "SUCCESS"
                         ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                        : "bg-rose-50 text-rose-700 border border-rose-200"
+                        : activeDonor.paymentStatus === "FAILED"
+                        ? "bg-rose-50 text-rose-700 border border-rose-200"
+                        : "bg-amber-50 text-amber-700 border border-amber-200"
                     }`}
                   >
-                    {activeDonation.paymentStatus}
+                    {activeDonor.paymentStatus === "SUCCESS" ? "PAID" : activeDonor.paymentStatus}
                   </span>
-                </div>
-
-                {/* Initiative & Payment Details */}
-                <div className="space-y-3">
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 block">
-                    Contribution Overview
-                  </span>
-                  <div className="bg-slate-50 border border-slate-100 rounded-xl divide-y divide-slate-100">
-                    <div className="flex justify-between p-3">
-                      <span className="text-slate-500 font-medium">Initiative:</span>
-                      <span className="font-bold text-slate-900">
-                        {activeDonation.initiative || "General Support"}
-                      </span>
-                    </div>
-                    <div className="flex justify-between p-3">
-                      <span className="text-slate-500 font-medium">Payment Frequency:</span>
-                      <span className="font-bold text-slate-900">
-                        {activeDonation.frequency === "MONTHLY"
-                          ? "Monthly Recurring"
-                          : "One-Time"}
-                      </span>
-                    </div>
-                    <div className="flex justify-between p-3">
-                      <span className="text-slate-500 font-medium">Receipt Number:</span>
-                      <span className="font-mono font-bold text-slate-900">
-                        {activeDonation.receiptNumber || "—"}
-                      </span>
-                    </div>
-                    <div className="flex justify-between p-3">
-                      <span className="text-slate-500 font-medium">Razorpay Order ID:</span>
-                      <span className="font-mono text-slate-700">
-                        {activeDonation.razorpayOrderId || "—"}
-                      </span>
-                    </div>
-                    <div className="flex justify-between p-3">
-                      <span className="text-slate-500 font-medium">Razorpay Payment ID:</span>
-                      <span className="font-mono text-slate-700">
-                        {activeDonation.razorpayPaymentId || activeDonation.transactionId || "—"}
-                      </span>
-                    </div>
-                  </div>
                 </div>
 
                 {/* Donor Contact & PAN Details */}
-                {typeof activeDonation.donor === "object" && activeDonation.donor && (
-                  <div className="space-y-3">
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 block">
-                      Donor Profile & Tax
-                    </span>
-                    <div className="bg-slate-50 border border-slate-100 rounded-xl divide-y divide-slate-100">
-                      <div className="flex justify-between p-3">
-                        <span className="text-slate-500 font-medium">Email:</span>
-                        <span className="font-medium text-slate-900">
-                          {activeDonation.donor.email || "—"}
-                        </span>
-                      </div>
-                      <div className="flex justify-between p-3">
-                        <span className="text-slate-500 font-medium">Phone:</span>
-                        <span className="font-medium text-slate-900">
-                          {activeDonation.donor.phone || "—"}
-                        </span>
-                      </div>
+                <div className="space-y-3">
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 block">
+                    Donor Profile & Tax
+                  </span>
+                  <div className="bg-slate-50 border border-slate-100 rounded-xl divide-y divide-slate-100">
+                    <div className="flex justify-between p-3">
+                      <span className="text-slate-500 font-medium">Email:</span>
+                      <span className="font-medium text-slate-900">
+                        {activeDonor.donorEmail || "—"}
+                      </span>
+                    </div>
+                    <div className="flex justify-between p-3">
+                      <span className="text-slate-500 font-medium">Phone:</span>
+                      <span className="font-medium text-slate-900 font-mono">
+                        {activeDonor.donorPhone || "—"}
+                      </span>
+                    </div>
+                    {activeDonor.donorPan && (
                       <div className="flex justify-between p-3">
                         <span className="text-slate-500 font-medium">PAN Card:</span>
                         <span className="font-mono font-bold text-slate-900">
-                          {activeDonation.donor.pan || "Not Provided"}
+                          {activeDonor.donorPan}
                         </span>
                       </div>
+                    )}
+                    {activeDonor.donorAddress && (
                       <div className="flex justify-between p-3">
                         <span className="text-slate-500 font-medium">Address:</span>
                         <span className="text-slate-900 text-right max-w-[200px]">
-                          {activeDonation.donor.address || "—"}
+                          {activeDonor.donorAddress}
                         </span>
                       </div>
-                    </div>
+                    )}
                   </div>
-                )}
+                </div>
+
+                {/* Recursive Donation History */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                      All Contributions ({activeDonor.donations.length})
+                    </span>
+                  </div>
+
+                  <div className="space-y-2.5">
+                    {activeDonor.donations.map((d, dIdx) => (
+                      <div
+                        key={d._id || dIdx}
+                        className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4 space-y-2"
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="font-bold text-slate-900 text-sm">
+                            ₹{(d.amount || 0).toLocaleString("en-IN")}
+                          </span>
+                          <span
+                            className={`text-[9px] font-bold uppercase px-2.5 py-0.5 rounded-full ${
+                              d.paymentStatus === "SUCCESS"
+                                ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                                : d.paymentStatus === "FAILED"
+                                ? "bg-rose-50 text-rose-700 border border-rose-200"
+                                : "bg-amber-50 text-amber-700 border border-amber-200"
+                            }`}
+                          >
+                            {d.paymentStatus}
+                          </span>
+                        </div>
+
+                        <div className="text-[11px] text-slate-600 flex justify-between">
+                          <span className="font-semibold text-[#0A1A2F]">
+                            {d.initiative || "General Support"}
+                          </span>
+                          <span className="text-slate-400">
+                            {d.frequency === "MONTHLY" ? "Monthly" : "One-Time"}
+                          </span>
+                        </div>
+
+                        <div className="text-[11px] text-slate-500 flex justify-between">
+                          <span>Date:</span>
+                          <span>
+                            {d.createdAt
+                              ? new Date(d.createdAt).toLocaleDateString("en-IN", {
+                                  day: "numeric",
+                                  month: "short",
+                                  year: "numeric",
+                                })
+                              : "—"}
+                          </span>
+                        </div>
+
+                        {d.receiptNumber && (
+                          <div className="pt-2 border-t border-slate-200/60 flex items-center justify-between text-[11px]">
+                            <span className="text-slate-500">
+                              Receipt: <strong className="text-slate-800 font-mono">{d.receiptNumber}</strong>
+                            </span>
+                            <a
+                              href={`/verify/${d.receiptNumber}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-[#4C6FFF] hover:underline font-bold"
+                            >
+                              Certificate →
+                            </a>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
 
                 {/* Tribute & Message */}
-                {(activeDonation.tribute || activeDonation.message) && (
+                {(activeDonor.tribute || activeDonor.message) && (
                   <div className="space-y-3">
                     <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 block">
                       Tribute & Message
                     </span>
                     <div className="bg-slate-50 border border-slate-100 rounded-xl p-3 space-y-2">
-                      {activeDonation.tribute && activeDonation.tribute !== "No Tribute" && (
+                      {activeDonor.tribute && activeDonor.tribute !== "No Tribute" && (
                         <div>
                           <span className="text-[11px] font-semibold text-slate-400 uppercase">
                             Dedication:
                           </span>
-                          <p className="font-bold text-slate-900">{activeDonation.tribute}</p>
+                          <p className="font-bold text-slate-900">{activeDonor.tribute}</p>
                         </div>
                       )}
-                      {activeDonation.message && (
+                      {activeDonor.message && (
                         <div>
                           <span className="text-[11px] font-semibold text-slate-400 uppercase">
                             Message:
                           </span>
                           <p className="text-slate-700 italic mt-0.5">
-                            &quot;{activeDonation.message}&quot;
+                            &quot;{activeDonor.message}&quot;
                           </p>
                         </div>
                       )}

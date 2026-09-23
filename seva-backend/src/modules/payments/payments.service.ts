@@ -304,6 +304,10 @@ const verifyPayment = async (input: VerifyPaymentInput) => {
         resolvedCampaignName = initiative;
       }
 
+      const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
+      const certNo = certificate?.certificateNo || receiptNumber;
+      const certUrl = `${frontendUrl}/verify/${certNo}`;
+
       MailerService.sendTemplatedMail({
         to: donor.email,
         templateKey: "CAMPAIGN_DONATION_RECEIPT",
@@ -316,6 +320,8 @@ const verifyPayment = async (input: VerifyPaymentInput) => {
             month: "short",
             year: "numeric",
           }),
+          certificateNo: certNo,
+          certificateUrl: certUrl,
         },
         relatedToModel: "Donor",
         relatedToId: String(donor._id),
@@ -413,11 +419,14 @@ const createDonation = async (payload: Partial<IDonation>) => {
       }
     }
 
+    let certificate: any = null;
     try {
-      const certificate = await CertificateService.generateCertificateForDonor(
+      certificate = await CertificateService.generateCertificateForDonor(
         String(donor._id)
       );
-      await CertificateService.regenerateCertificatePdf(String(certificate._id));
+      if (certificate?._id) {
+        await CertificateService.regenerateCertificatePdf(String(certificate._id));
+      }
     } catch (err) {
       console.error(
         `Certificate generation failed for donor ${donor._id}:`,
@@ -434,6 +443,10 @@ const createDonation = async (payload: Partial<IDonation>) => {
           if (camp?.name) resolvedCampaignName = camp.name;
         }
 
+        const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
+        const certNo = certificate?.certificateNo || `REC-${Date.now().toString(36).toUpperCase()}`;
+        const certUrl = `${frontendUrl}/verify/${certNo}`;
+
         MailerService.sendTemplatedMail({
           to: donor.email,
           templateKey: "CAMPAIGN_DONATION_RECEIPT",
@@ -446,6 +459,8 @@ const createDonation = async (payload: Partial<IDonation>) => {
               month: "short",
               year: "numeric",
             }),
+            certificateNo: certNo,
+            certificateUrl: certUrl,
           },
           relatedToModel: "Donor",
           relatedToId: String(donor._id),

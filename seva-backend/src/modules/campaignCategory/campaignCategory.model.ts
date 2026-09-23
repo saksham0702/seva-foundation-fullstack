@@ -25,6 +25,10 @@ const Category = new Schema<ICategory>(
       // unique: true,
       lowercase: true,
     },
+    description: {
+      type: String,
+      default: "",
+    },
     isDeleted: {
       type: Boolean,
       default: false,

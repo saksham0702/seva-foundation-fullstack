@@ -10,6 +10,7 @@ export type BlogStatus = "draft" | "published" | "scheduled";
 export interface BlogForm {
   title: string;
   slug: string;
+  category?: string;
   metaTitle: string;
   metaDescription: string;
   featuredImage: string;
@@ -22,6 +23,7 @@ export interface BlogForm {
 export const initialBlogForm: BlogForm = {
   title: "",
   slug: "",
+  category: "Stories",
   metaTitle: "",
   metaDescription: "",
   featuredImage: "",

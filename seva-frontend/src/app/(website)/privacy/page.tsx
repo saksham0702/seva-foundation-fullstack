@@ -1,64 +1,40 @@
-"use client";
-
-import React, { useEffect, useState } from "react";
+import React from "react";
+import { Metadata } from "next";
 import Link from "next/link";
-import { Shield, Lock, FileText, ChevronRight, ArrowLeft, Loader2, CheckCircle2, Mail } from "lucide-react";
-import { getCmsPageBySlug, CmsPage } from "@/app/api/cms";
-import { subscribeNewsletter } from "@/app/api/leads";
+import { Shield, Lock, FileText, ChevronRight, CheckCircle2 } from "lucide-react";
+import { getServerCmsPage } from "@/lib/server-api";
+import { constructMetadata } from "@/lib/seo";
+import PrivacySubscribeForm from "@/components/website/privacy/PrivacySubscribeForm";
 
-export default function PrivacyPolicyPage() {
-  const [pageData, setPageData] = useState<CmsPage | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [email, setEmail] = useState("");
-  const [subscribing, setSubscribing] = useState(false);
-  const [subscribeStatus, setSubscribeStatus] = useState<{
-    type: "success" | "error";
-    message: string;
-  } | null>(null);
+export async function generateMetadata(): Promise<Metadata> {
+  const pageData = await getServerCmsPage("privacy");
+  const title = pageData?.seo?.metaTitle || pageData?.title || "Privacy & Donor Trust Policy";
+  const description =
+    pageData?.seo?.metaDescription ||
+    pageData?.subtitle ||
+    "Seva India Foundation is committed to 100% data security, 80G tax receipt transparency, and strict donor confidentiality.";
 
-  const handleSubscribe = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!email || !email.includes("@")) return;
-    setSubscribing(true);
-    setSubscribeStatus(null);
-    try {
-      const res = await subscribeNewsletter(email.trim(), "Privacy Page Subscriber");
-      setSubscribeStatus({
-        type: "success",
-        message: res.message || "Thank you for subscribing to Seva Foundation transparency updates!",
-      });
-      setEmail("");
-    } catch (err: any) {
-      setSubscribeStatus({
-        type: "error",
-        message:
-          err?.response?.data?.message ||
-          err?.message ||
-          "Failed to subscribe. Please try again.",
-      });
-    } finally {
-      setSubscribing(false);
-    }
-  };
+  return constructMetadata({
+    title,
+    description,
+    canonicalPath: "/privacy",
+    keywords: [
+      "Privacy Policy",
+      "Donor Trust",
+      "Data Protection NGO",
+      "80G Tax Exemption Policy",
+      "Seva India Foundation Privacy",
+    ],
+  });
+}
 
-  useEffect(() => {
-    const load = async () => {
-      try {
-        const res = await getCmsPageBySlug("privacy");
-        setPageData(res);
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    load();
-  }, []);
+export default async function PrivacyPolicyPage() {
+  const pageData = await getServerCmsPage("privacy");
 
   const title = pageData?.title || "Privacy & Donor Trust Policy";
   const subtitle =
     pageData?.subtitle ||
-    "Seva India Foundation is committed to protecting the privacy and personal data of our donors, volunteers, beneficiaries, and website visitors.";
+    "At Seva India Foundation, trust isn't a promise—it's a practice. We protect your personal and financial information with rigorous security standards.";
   const customContent = pageData?.content;
 
   return (
@@ -68,8 +44,8 @@ export default function PrivacyPolicyPage() {
         <div className="absolute inset-0 bg-[radial-gradient(#F5A623_1px,transparent_1px)] [background-size:20px_20px] opacity-10" />
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/10 text-[#F5A623] text-xs font-bold uppercase tracking-wider mb-4">
-            <Shield size={14} />
-            Data Protection &amp; Confidentiality
+            <Lock size={14} />
+            Section 8 Transparency &amp; Data Security
           </div>
           <h1 className="text-3xl sm:text-4xl lg:text-5xl font-semibold font-serif tracking-tight text-white mb-4">
             {title}
@@ -78,7 +54,7 @@ export default function PrivacyPolicyPage() {
             {subtitle}
           </p>
           <p className="text-xs text-white/50 mt-4">
-            Last Updated: September 2026 | Effective for all Seva India Foundation platforms
+            CIN: U88900UT2026NPL020825 | NGO Darpan ID: UK/2026/0993905
           </p>
         </div>
       </section>
@@ -92,134 +68,74 @@ export default function PrivacyPolicyPage() {
               dangerouslySetInnerHTML={{ __html: customContent }}
             />
           ) : (
-            <div className="space-y-8 text-slate-700 leading-relaxed text-sm sm:text-base">
-              <section className="space-y-3">
-                <h2 className="text-xl font-bold text-[#0A1A2F] flex items-center gap-2">
-                  <Lock size={18} className="text-[#F5A623]" />
-                  1. Information We Collect
-                </h2>
-                <p>
-                  When you donate, register as a volunteer, or subscribe to updates through Seva India Foundation, we collect relevant information such as:
-                </p>
-                <ul className="list-disc list-inside space-y-1 text-slate-600 pl-2">
-                  <li>Full legal name, email address, phone number, and postal address.</li>
-                  <li>Permanent Account Number (PAN) for issuing 80G tax exemption donation certificates under Indian Income Tax regulations.</li>
-                  <li>Transaction reference identifiers and donation amounts (payment credentials like card numbers or UPI PINs are processed securely by PCI-DSS certified payment gateways such as Razorpay and are never stored on our servers).</li>
-                </ul>
-              </section>
-
-              <section className="space-y-3">
-                <h2 className="text-xl font-bold text-[#0A1A2F]">
-                  2. Purpose &amp; Use of Personal Information
-                </h2>
-                <p>We use your information strictly to:</p>
-                <ul className="list-disc list-inside space-y-1 text-slate-600 pl-2">
-                  <li>Process donations, generate official receipts, and issue 80G tax exemption certificates.</li>
-                  <li>Send transparency updates, impact reports, and program newsletters (you may opt out anytime).</li>
-                  <li>Coordinate volunteer tasks, disaster relief deployments, and food distribution camps.</li>
-                  <li>Comply with statutory reporting requirements under the Companies Act, 2013 and Section 8 NGO governance rules.</li>
-                </ul>
-              </section>
-
-              <section className="space-y-3">
-                <h2 className="text-xl font-bold text-[#0A1A2F]">
-                  3. Non-Disclosure &amp; Zero-Spam Guarantee
-                </h2>
-                <p>
-                  We have a strict <strong>Zero-Sale Policy</strong>. We do not sell, rent, trade, or transfer your personal data to any commercial third parties or advertisers under any circumstances.
-                </p>
-              </section>
-
-              <section className="space-y-3">
-                <h2 className="text-xl font-bold text-[#0A1A2F]">
-                  4. Data Security &amp; Encryption
-                </h2>
-                <p>
-                  All transactions and interactions on our website are encrypted using 256-bit SSL protocols. Access to donor databases is restricted to authorized personnel who have signed strict non-disclosure covenants.
-                </p>
-              </section>
-
-              <section className="space-y-3">
-                <h2 className="text-xl font-bold text-[#0A1A2F]">
-                  5. Contact &amp; Grievance Redressal
-                </h2>
-                <p>
-                  If you have questions regarding this Privacy Policy or wish to update your records, please contact our Compliance Officer at:
-                </p>
-                <div className="bg-gray-50 border border-gray-100 rounded-xl p-4 text-xs sm:text-sm space-y-1">
-                  <p className="font-bold text-[#0A1A2F]">Seva India Foundation Grievance Desk</p>
-                  <p>20, Sahastradhara Road, Upper Adhoiwala, Dehradun, Uttarakhand – 248001</p>
-                  <p>Email: <a href="mailto:info@sevaindiafoundation.org" className="text-[#F5A623] underline">info@sevaindiafoundation.org</a> | Phone: +91 94565 17577</p>
+            <>
+              {/* Pillar 1 */}
+              <div className="space-y-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-amber-50 text-[#F5A623] flex items-center justify-center font-bold text-sm">
+                    1
+                  </div>
+                  <h2 className="text-lg sm:text-xl font-bold text-[#0A1A2F]">
+                    Information We Collect
+                  </h2>
                 </div>
-              </section>
-            </div>
+                <p className="text-sm text-slate-600 leading-relaxed pl-11">
+                  When you donate, apply to volunteer, or subscribe to our updates, we collect your name, email, phone number, PAN (for 80G tax receipt issuance), and communication preferences. We do not store sensitive payment card details or netbanking passwords on our servers.
+                </p>
+              </div>
+
+              {/* Pillar 2 */}
+              <div className="space-y-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-amber-50 text-[#F5A623] flex items-center justify-center font-bold text-sm">
+                    2
+                  </div>
+                  <h2 className="text-lg sm:text-xl font-bold text-[#0A1A2F]">
+                    How Your Information Is Used
+                  </h2>
+                </div>
+                <ul className="text-sm text-slate-600 space-y-2 pl-11 list-disc">
+                  <li>To generate and deliver cryptographically sealed 80G tax exemption certificates.</li>
+                  <li>To transmit transactional receipts and verification records directly to your registered email.</li>
+                  <li>To notify you about the tangible field progress of programs you have funded.</li>
+                  <li>To verify volunteer applicants and conduct orientation sessions.</li>
+                </ul>
+              </div>
+
+              {/* Pillar 3 */}
+              <div className="space-y-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-amber-50 text-[#F5A623] flex items-center justify-center font-bold text-sm">
+                    3
+                  </div>
+                  <h2 className="text-lg sm:text-xl font-bold text-[#0A1A2F]">
+                    Zero-Spam &amp; Non-Disclosure Guarantee
+                  </h2>
+                </div>
+                <p className="text-sm text-slate-600 leading-relaxed pl-11">
+                  We maintain a strict zero-tolerance policy against selling, renting, or commercializing donor data. Your details are accessible only by authorized compliance officers for statutory filing with the Income Tax Department of India.
+                </p>
+              </div>
+
+              {/* Pillar 4 */}
+              <div className="space-y-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-amber-50 text-[#F5A623] flex items-center justify-center font-bold text-sm">
+                    4
+                  </div>
+                  <h2 className="text-lg sm:text-xl font-bold text-[#0A1A2F]">
+                    Payment Security &amp; Encryption
+                  </h2>
+                </div>
+                <p className="text-sm text-slate-600 leading-relaxed pl-11">
+                  All transactions on our platform are processed through PCI-DSS Level 1 certified payment gateways with 256-bit TLS encryption, ensuring bank-grade protection for every transaction.
+                </p>
+              </div>
+            </>
           )}
 
-          {/* Subscription Banner */}
-          <div className="bg-[#0A1A2F] text-white rounded-2xl p-6 sm:p-8 flex flex-col md:flex-row items-center justify-between gap-6 border border-white/10 shadow-lg">
-            <div className="space-y-1.5 text-center md:text-left max-w-md">
-              <span className="inline-flex items-center gap-1.5 text-[#F5A623] text-xs font-bold uppercase tracking-wider">
-                <Mail size={14} />
-                Stay Informed &amp; Protected
-              </span>
-              <h3 className="text-xl font-semibold font-serif text-white">
-                Subscribe to Transparency Disclosures
-              </h3>
-              <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
-                Receive annual audited financial reports, 80G tax receipt updates, and program transparency digests directly to your email.
-              </p>
-            </div>
-
-            <div className="w-full md:w-auto">
-              <form onSubmit={handleSubscribe} className="flex flex-col sm:flex-row gap-2.5 w-full sm:w-80">
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="Enter your email"
-                  required
-                  className="px-4 py-2.5 bg-white/10 border border-white/20 rounded-xl text-xs sm:text-sm text-white placeholder:text-slate-400 focus:outline-none focus:bg-white/15 focus:border-[#F5A623] transition-all w-full"
-                />
-                <button
-                  type="submit"
-                  disabled={subscribing}
-                  className="px-5 py-2.5 bg-[#F5A623] hover:bg-[#d98f16] text-[#0A1A2F] text-xs font-bold uppercase tracking-wider rounded-xl transition-all shadow-md disabled:opacity-50 shrink-0"
-                >
-                  {subscribing ? (
-                    <Loader2 size={14} className="animate-spin" />
-                  ) : (
-                    "Subscribe"
-                  )}
-                </button>
-              </form>
-              {subscribeStatus && (
-                <p
-                  className={`text-xs mt-2 font-medium text-center md:text-left ${
-                    subscribeStatus.type === "success"
-                      ? "text-[#F5A623]"
-                      : "text-rose-400"
-                  }`}
-                >
-                  {subscribeStatus.message}
-                </p>
-              )}
-            </div>
-          </div>
-
-          <div className="pt-6 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4">
-            <Link
-              href="/"
-              className="inline-flex items-center gap-2 text-xs font-bold text-[#0A1A2F] hover:text-[#F5A623] transition-colors"
-            >
-              <ArrowLeft size={14} /> Back to Homepage
-            </Link>
-            <Link
-              href="/donations"
-              className="px-6 py-2.5 bg-[#F5A623] hover:bg-[#e0951a] text-white text-xs font-bold uppercase tracking-wider rounded-lg transition-colors shadow-sm"
-            >
-              Support Our Mission
-            </Link>
-          </div>
+          {/* Subscribe to Transparency Reports */}
+          <PrivacySubscribeForm />
         </div>
       </div>
     </main>

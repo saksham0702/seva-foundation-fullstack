@@ -38,6 +38,16 @@ const FOLLOWUP_TABS = [
   { key: "all", label: "All Scheduled", icon: Clock },
 ] as const;
 
+function getLocalDatetimeString(date: Date) {
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const year = date.getFullYear();
+  const month = pad(date.getMonth() + 1);
+  const day = pad(date.getDate());
+  const hours = pad(date.getHours());
+  const minutes = pad(date.getMinutes());
+  return `${year}-${month}-${day}T${hours}:${minutes}`;
+}
+
 function FollowupTasksInner() {
   const searchParams = useSearchParams();
   const initialTab = searchParams.get("tab") || "due_today";
@@ -281,15 +291,22 @@ function FollowupTasksInner() {
                     </span>
 
                     {lead.amount ? (
-                      <span className="text-xs font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded-lg">
+                      <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800/40 px-2 py-0.5 rounded-lg">
                         ₹{lead.amount.toLocaleString("en-IN")}
                       </span>
                     ) : null}
                   </div>
 
-                  <h3 className="font-bold text-sm text-text-primary">
-                    {lead.name}
-                  </h3>
+                  <div className="flex items-center gap-2 flex-wrap mb-1">
+                    <h3 className="font-bold text-sm text-text-primary">
+                      {lead.name}
+                    </h3>
+                    {lead.amount ? (
+                      <span className="text-[11px] font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-900/50 border border-emerald-300 dark:border-emerald-700/50 px-1.5 py-0.2 rounded-md">
+                        ₹{lead.amount.toLocaleString("en-IN")}
+                      </span>
+                    ) : null}
+                  </div>
                   <p className="text-xs text-muted mt-0.5">{lead.email}</p>
                   {lead.phone && (
                     <p className="text-xs font-mono text-text-primary mt-1">
@@ -371,10 +388,17 @@ function FollowupTasksInner() {
             <div className="relative w-full max-w-md bg-background border border-border rounded-2xl p-6 shadow-2xl z-10">
               <div className="flex items-center justify-between mb-4">
                 <div>
-                  <h3 className="text-base font-bold text-text-primary">
-                    Record Call Outcome
-                  </h3>
-                  <p className="text-xs text-muted">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h3 className="text-base font-bold text-text-primary">
+                      Record Call Outcome
+                    </h3>
+                    {activeLeadForLog.amount ? (
+                      <span className="text-xs font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-800 px-2 py-0.5 rounded-md">
+                        ₹{activeLeadForLog.amount.toLocaleString("en-IN")}
+                      </span>
+                    ) : null}
+                  </div>
+                  <p className="text-xs text-muted mt-0.5">
                     {activeLeadForLog.name} ({activeLeadForLog.phone || activeLeadForLog.email})
                   </p>
                 </div>
@@ -419,10 +443,14 @@ function FollowupTasksInner() {
                     value={disposition}
                     onChange={(e) => setDisposition(e.target.value)}
                     required
-                    className="w-full px-3 py-2 bg-panel border border-border rounded-xl text-xs text-text-primary focus:outline-none focus:ring-2 focus:ring-[#E8542A]/20"
+                    className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-border rounded-xl text-xs text-slate-900 dark:text-slate-100 font-medium focus:outline-none focus:ring-2 focus:ring-[#E8542A]/20"
                   >
                     {configs.map((c) => (
-                      <option key={c._id} value={c.name}>
+                      <option
+                        key={c._id}
+                        value={c.name}
+                        className="bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100 py-1.5"
+                      >
                         {c.name} ({c.category})
                       </option>
                     ))}
@@ -443,16 +471,79 @@ function FollowupTasksInner() {
                   />
                 </div>
 
-                {/* Next Date */}
+                {/* Next Date with quick presets */}
                 <div>
-                  <label className="block text-xs font-semibold text-muted mb-1">
-                    Reschedule Next Call Date (Optional)
-                  </label>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block text-xs font-semibold text-muted">
+                      Schedule Next Call Date & Time
+                    </label>
+                    {nextDate && (
+                      <button
+                        type="button"
+                        onClick={() => setNextDate("")}
+                        className="text-[10px] text-muted hover:text-rose-500"
+                      >
+                        Clear
+                      </button>
+                    )}
+                  </div>
+                  
+                  {/* Quick Preset Buttons */}
+                  <div className="flex items-center gap-1.5 mb-2 overflow-x-auto pb-1 scrollbar-none">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const d = new Date();
+                        d.setHours(d.getHours() + 1);
+                        setNextDate(getLocalDatetimeString(d));
+                      }}
+                      className="px-2 py-0.5 text-[10px] font-semibold bg-panel border border-border hover:border-[#E8542A] text-text-primary rounded-md whitespace-nowrap"
+                    >
+                      +1 Hour
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const d = new Date();
+                        d.setDate(d.getDate() + 1);
+                        d.setHours(10, 0, 0, 0);
+                        setNextDate(getLocalDatetimeString(d));
+                      }}
+                      className="px-2 py-0.5 text-[10px] font-semibold bg-panel border border-border hover:border-[#E8542A] text-text-primary rounded-md whitespace-nowrap"
+                    >
+                      Tomorrow 10 AM
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const d = new Date();
+                        d.setDate(d.getDate() + 2);
+                        d.setHours(10, 0, 0, 0);
+                        setNextDate(getLocalDatetimeString(d));
+                      }}
+                      className="px-2 py-0.5 text-[10px] font-semibold bg-panel border border-border hover:border-[#E8542A] text-text-primary rounded-md whitespace-nowrap"
+                    >
+                      In 2 Days 10 AM
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const d = new Date();
+                        d.setDate(d.getDate() + 7);
+                        d.setHours(10, 0, 0, 0);
+                        setNextDate(getLocalDatetimeString(d));
+                      }}
+                      className="px-2 py-0.5 text-[10px] font-semibold bg-panel border border-border hover:border-[#E8542A] text-text-primary rounded-md whitespace-nowrap"
+                    >
+                      Next Week
+                    </button>
+                  </div>
+
                   <input
                     type="datetime-local"
                     value={nextDate}
                     onChange={(e) => setNextDate(e.target.value)}
-                    className="w-full px-3 py-2 bg-panel border border-border rounded-xl text-xs text-text-primary focus:outline-none focus:ring-2 focus:ring-[#E8542A]/20"
+                    className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-border rounded-xl text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-[#E8542A]/20"
                   />
                 </div>
 

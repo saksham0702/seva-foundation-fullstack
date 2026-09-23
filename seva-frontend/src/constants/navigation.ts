@@ -14,6 +14,9 @@ import {
   Briefcase,
   Building,
   UserCheck,
+  FolderTree,
+  Calendar,
+  Newspaper,
 } from "lucide-react";
 
 export type NavChild = {
@@ -35,36 +38,13 @@ export type NavSection = {
 };
 
 export const NAV_CONFIG: NavSection[] = [
-  // {
-  //   items: [
-  //     {
-  //       label: "Overview",
-  //       href: "/dashboard",
-  //       icon: LayoutDashboard,
-  //     },
-  //   ],
-  // },
   {
     section: "Management",
     items: [
       {
-        label: "Campaigns",
-        icon: Megaphone,
-        children: [
-          { label: "All Campaigns", href: "/dashboard/campaigns" },
-          { label: "Create Campaign", href: "/dashboard/campaigns/create-campaign" },
-          { label: "Campaign Category", href: "/dashboard/campaigns/category" },
-        ],
-      },
-      {
-        label: "Volunteers",
-        href: "/dashboard/volunteers",
-        icon: HeartHandshake,
-      },
-      {
-        label: "Website CMS",
-        href: "/dashboard/cms",
-        icon: Briefcase,
+        label: "Categories",
+        href: "/dashboard/categories",
+        icon: FolderTree,
       },
       {
         label: "Blogs",
@@ -73,6 +53,41 @@ export const NAV_CONFIG: NavSection[] = [
           { label: "All Blogs", href: "/dashboard/blogs" },
           { label: "Create Blog", href: "/dashboard/blogs/create-blog" },
         ],
+      },
+      {
+        label: "Events",
+        icon: Calendar,
+        children: [
+          { label: "All Events", href: "/dashboard/events" },
+          { label: "Create Event", href: "/dashboard/events/create-event" },
+        ],
+      },
+      {
+        label: "News & Media",
+        icon: Newspaper,
+        children: [
+          { label: "All News", href: "/dashboard/news" },
+          { label: "Create News", href: "/dashboard/news/create-news" },
+        ],
+      },
+      {
+        label: "Website CMS",
+        href: "/dashboard/cms",
+        icon: Briefcase,
+      },
+      {
+        label: "Campaigns",
+        icon: Megaphone,
+        children: [
+          { label: "All Campaigns", href: "/dashboard/campaigns" },
+          { label: "Create Campaign", href: "/dashboard/campaigns/create-campaign" },
+          { label: "Inventory & Products", href: "/dashboard/campaigns/category" },
+        ],
+      },
+      {
+        label: "Volunteers",
+        href: "/dashboard/volunteers",
+        icon: HeartHandshake,
       },
       {
         label: "Departments",

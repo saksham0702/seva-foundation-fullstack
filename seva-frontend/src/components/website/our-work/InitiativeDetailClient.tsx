@@ -108,8 +108,8 @@ export default function InitiativeDetailClient({
         {/* ── Main Initiative Card ── */}
         <InitiativeCard initiative={initiative} isSinglePage={true} />
 
-        {/* ── Direct Initiative Donation Module ── */}
-        <div className="pt-4">
+        {/* ── Direct Initiative Donation Module (In-page) ── */}
+        <div id="initiative-donation-form" className="pt-4 scroll-mt-24">
           <InitiativeDonationSection
             initialInitiative={initiative.title || initiative.name || cleanKey}
           />
