@@ -502,13 +502,6 @@ function AllLeadsInner() {
 
         <div className="flex items-center gap-2.5">
           <button
-            onClick={exportCSV}
-            className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-xl bg-panel border border-border text-muted hover:text-text-primary hover:bg-panel/80 transition-colors shadow-sm"
-          >
-            <Download size={14} />
-            <span>Export CSV</span>
-          </button>
-          <button
             onClick={() => setShowAddModal(true)}
             className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold rounded-xl bg-[#E8542A] hover:bg-[#c9431d] text-white shadow-md shadow-orange-500/20 transition-all"
           >

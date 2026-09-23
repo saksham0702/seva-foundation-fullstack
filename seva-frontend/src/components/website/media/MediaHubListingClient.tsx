@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import Link from "next/link";
 import {
   Calendar,
@@ -20,6 +20,8 @@ import {
 import { CmsItem } from "@/types/cms";
 import { getImageUrl } from "@/lib/image";
 import { EventRegisterModal } from "@/components/website/events/EventRegisterModal";
+import { getCategories } from "@/app/api/category";
+import { cmsAPI } from "@/app/api/cms";
 
 /* ------------------------------------------------------------------ */
 /*  CARD COMPONENTS (DISTINCT DESIGNS FOR BLOG, EVENT, NEWS)          */
@@ -275,10 +277,6 @@ export function NewsCard({ item }: { item: CmsItem }) {
   );
 }
 
-/* ------------------------------------------------------------------ */
-/*  MEDIA HUB LISTING CLIENT (UNIFIED TAB & CATEGORY HANDLER)         */
-/* ------------------------------------------------------------------ */
-
 export type MediaTab = "all" | "blogs" | "events" | "news";
 
 interface MediaHubListingClientProps {
@@ -300,18 +298,58 @@ export default function MediaHubListingClient({
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [search, setSearch] = useState("");
   const [registeringEvent, setRegisteringEvent] = useState<CmsItem | null>(null);
+  const [showAllCategories, setShowAllCategories] = useState(false);
+
+  const [blogsList, setBlogsList] = useState<CmsItem[]>(blogs);
+  const [eventsList, setEventsList] = useState<CmsItem[]>(events);
+  const [newsList, setNewsList] = useState<CmsItem[]>(news);
+  const [categoriesList, setCategoriesList] = useState(categories);
+
+  // Client-side hydration to ensure data is always fresh and loaded
+  useEffect(() => {
+    if (blogs.length > 0) setBlogsList(blogs);
+    if (events.length > 0) setEventsList(events);
+    if (news.length > 0) setNewsList(news);
+    if (categories.length > 0) setCategoriesList(categories);
+
+    (async () => {
+      try {
+        const [catsRes, blogsRes, eventsRes, newsRes] = await Promise.allSettled([
+          getCategories(),
+          cmsAPI.getItems("blog"),
+          cmsAPI.getItems("event"),
+          cmsAPI.getItems("news"),
+        ]);
+
+        if (catsRes.status === "fulfilled" && Array.isArray(catsRes.value) && catsRes.value.length > 0) {
+          setCategoriesList(catsRes.value);
+        }
+        if (blogsRes.status === "fulfilled" && Array.isArray(blogsRes.value) && blogsRes.value.length > 0) {
+          setBlogsList(blogsRes.value);
+        }
+        if (eventsRes.status === "fulfilled" && Array.isArray(eventsRes.value) && eventsRes.value.length > 0) {
+          setEventsList(eventsRes.value);
+        }
+        if (newsRes.status === "fulfilled" && Array.isArray(newsRes.value) && newsRes.value.length > 0) {
+          setNewsList(newsRes.value);
+        }
+      } catch (err) {
+        console.error("Client fetch error in MediaHubListingClient:", err);
+      }
+    })();
+  }, [blogs, events, news, categories]);
 
   // Dynamic category options computed from DB categories + items
   const categoryList = useMemo(() => {
     const set = new Set<string>();
-    categories.forEach((cat) => {
+    categoriesList.forEach((cat) => {
       if (cat.name) set.add(cat.name);
     });
-    blogs.forEach((b) => b.category && set.add(b.category));
-    events.forEach((e) => e.category && set.add(e.category));
-    news.forEach((n) => n.category && set.add(n.category));
+    blogsList.forEach((b) => b.category && set.add(b.category));
+    eventsList.forEach((e) => e.category && set.add(e.category));
+    newsList.forEach((n) => n.category && set.add(n.category));
     return ["all", ...Array.from(set)];
-  }, [categories, blogs, events, news]);
+  }, [categoriesList, blogsList, eventsList, newsList]);
 
   // Helper filter function
   const filterList = (items: CmsItem[]) => {
@@ -334,9 +372,9 @@ export default function MediaHubListingClient({
     });
   };
 
-  const filteredBlogs = useMemo(() => filterList(blogs), [blogs, search, selectedCategory]);
-  const filteredEvents = useMemo(() => filterList(events), [events, search, selectedCategory]);
-  const filteredNews = useMemo(() => filterList(news), [news, search, selectedCategory]);
+  const filteredBlogs = useMemo(() => filterList(blogsList), [blogsList, search, selectedCategory]);
+  const filteredEvents = useMemo(() => filterList(eventsList), [eventsList, search, selectedCategory]);
+  const filteredNews = useMemo(() => filterList(newsList), [newsList, search, selectedCategory]);
 
   const totalBlogs = filteredBlogs.length;
   const totalEvents = filteredEvents.length;
@@ -369,11 +407,6 @@ export default function MediaHubListingClient({
               >
                 <Layers size={14} />
                 All Updates
-                <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${
-                  activeTab === "all" ? "bg-white/20 text-white" : "bg-gray-100 text-gray-600"
-                }`}>
-                  {blogs.length + events.length + news.length}
-                </span>
               </button>
 
               <button
@@ -386,11 +419,6 @@ export default function MediaHubListingClient({
               >
                 <BookOpen size={14} />
                 Blogs &amp; Stories
-                <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${
-                  activeTab === "blogs" ? "bg-white/20 text-white" : "bg-gray-100 text-gray-600"
-                }`}>
-                  {blogs.length}
-                </span>
               </button>
 
               <button
@@ -403,11 +431,6 @@ export default function MediaHubListingClient({
               >
                 <Calendar size={14} />
                 Events &amp; Drives
-                <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${
-                  activeTab === "events" ? "bg-white/20 text-white" : "bg-gray-100 text-gray-600"
-                }`}>
-                  {events.length}
-                </span>
               </button>
 
               <button
@@ -420,11 +443,6 @@ export default function MediaHubListingClient({
               >
                 <Newspaper size={14} />
                 News &amp; Media
-                <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${
-                  activeTab === "news" ? "bg-black/15 text-[#0A1A2F]" : "bg-gray-100 text-gray-600"
-                }`}>
-                  {news.length}
-                </span>
               </button>
             </div>
 
@@ -444,27 +462,51 @@ export default function MediaHubListingClient({
             </div>
           </div>
 
-          {/* Bottom Row: Dynamic Category Filter Chips */}
-          <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
-            <span className="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1.5 mr-1 shrink-0">
-              <Filter size={12} /> Category:
-            </span>
-            {categoryList.map((cat) => {
-              const isSelected = selectedCategory.toLowerCase() === cat.toLowerCase();
-              return (
+          {/* Bottom Row: Dynamic Category Filter Chips with View More */}
+          <div className="space-y-2">
+            <div className={`flex items-center gap-2 pb-1 ${showAllCategories ? "flex-wrap" : "overflow-x-auto scrollbar-none"}`}>
+              <span className="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1.5 mr-1 shrink-0">
+                <Filter size={12} /> Category:
+              </span>
+              
+              {(showAllCategories ? categoryList : categoryList.slice(0, 7)).map((cat) => {
+                const isSelected = selectedCategory.toLowerCase() === cat.toLowerCase();
+                return (
+                  <button
+                    key={cat}
+                    onClick={() => setSelectedCategory(cat)}
+                    className={`text-xs font-bold px-4 py-1.5 rounded-full capitalize transition-all whitespace-nowrap border cursor-pointer ${
+                      isSelected
+                        ? "bg-[#0A1A2F] border-[#0A1A2F] text-white shadow-xs"
+                        : "bg-white border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-gray-100/50"
+                    }`}
+                  >
+                    {cat === "all" ? "All Categories" : cat}
+                  </button>
+                );
+              })}
+
+              {/* Ensure currently selected category is visible even if not in first 7 */}
+              {!showAllCategories &&
+                selectedCategory !== "all" &&
+                !categoryList.slice(0, 7).some((c) => c.toLowerCase() === selectedCategory.toLowerCase()) && (
+                  <button
+                    onClick={() => setSelectedCategory(selectedCategory)}
+                    className="text-xs font-bold px-4 py-1.5 rounded-full capitalize transition-all whitespace-nowrap border cursor-pointer bg-[#0A1A2F] border-[#0A1A2F] text-white shadow-xs"
+                  >
+                    {selectedCategory}
+                  </button>
+                )}
+
+              {categoryList.length > 7 && (
                 <button
-                  key={cat}
-                  onClick={() => setSelectedCategory(cat)}
-                  className={`text-xs font-bold px-4 py-1.5 rounded-full capitalize transition-all whitespace-nowrap border cursor-pointer ${
-                    isSelected
-                      ? "bg-[#0A1A2F] border-[#0A1A2F] text-white shadow-xs"
-                      : "bg-white border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-gray-100/50"
-                  }`}
+                  onClick={() => setShowAllCategories((prev) => !prev)}
+                  className="text-xs font-bold px-3.5 py-1.5 rounded-full transition-all whitespace-nowrap border cursor-pointer bg-slate-100 hover:bg-slate-200 border-slate-300 text-[#0A1A2F] flex items-center gap-1 shrink-0 shadow-xs"
                 >
-                  {cat === "all" ? "All Categories" : cat}
+                  {showAllCategories ? "Show Less ↑" : "+ View More Categories ↓"}
                 </button>
-              );
-            })}
+              )}
+            </div>
           </div>
         </div>
       </section>

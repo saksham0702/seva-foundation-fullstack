@@ -6,6 +6,7 @@ import { Plus, Search, Filter, Layers, FileText, CheckCircle2, Clock, FileCheck 
 import { useCms } from "../CmsProvider";
 import { CmsCard } from "./CmsCard";
 import { CmsStatus } from "@/types/cms";
+import { DashboardCategoryBar } from "@/components/dashboard/categories/DashboardCategoryBar";
 
 export function CmsListPageLayout() {
   const { items, contentType, isLoading } = useCms();
@@ -119,16 +120,15 @@ export function CmsListPageLayout() {
               <p className="text-lg font-bold text-slate-300 leading-tight">{stats.draft}</p>
             </div>
           </div>
+        </div>
 
-          <div className="bg-panel border border-border rounded-xl p-3.5 flex items-center gap-3">
-            <div className="p-2.5 rounded-lg bg-blue-500/10 text-blue-400 border border-blue-500/20">
-              <Clock size={18} />
-            </div>
-            <div>
-              <p className="text-[11px] font-medium text-muted">Scheduled</p>
-              <p className="text-lg font-bold text-blue-400 leading-tight">{stats.scheduled}</p>
-            </div>
-          </div>
+        {/* Dynamic Category Taxonomy Bar */}
+        <div className="mb-6">
+          <DashboardCategoryBar
+            selectedCategory={selectedCategory}
+            onCategorySelected={(cat) => setSelectedCategory(cat)}
+            title={`${title} Categories`}
+          />
         </div>
 
         {/* Controls Toolbar: Search & Filters */}

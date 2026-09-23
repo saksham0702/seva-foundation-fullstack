@@ -119,17 +119,24 @@ const updateCertificate = async (id: string, payload: Partial<ICertificate>): Pr
 };
 
 const revokeCertificate = async (id: string, reason: string, updatedBy?: string): Promise<ICertificate | null> => {
+  const updateObj: Record<string, any> = { status: "REVOKED", revokedReason: reason };
+  if (updatedBy) updateObj.updatedBy = updatedBy;
   return CertificateModel.findOneAndUpdate(
     { _id: id, isDeleted: false },
-    { $set: { status: "REVOKED", revokedReason: reason, updatedBy } },
+    { $set: updateObj },
     { new: true }
   );
 };
 
-const reactivateCertificate = async (id: string, updatedBy?: string) => {
+const reactivateCertificate = async (id: string, updatedBy?: string): Promise<ICertificate | null> => {
+  const updateObj: Record<string, any> = { status: "ACTIVE" };
+  if (updatedBy) updateObj.updatedBy = updatedBy;
   return CertificateModel.findOneAndUpdate(
     { _id: id, isDeleted: false },
-    { $set: { status: "ACTIVE", revokedReason: undefined, updatedBy } },
+    {
+      $set: updateObj,
+      $unset: { revokedReason: 1 },
+    },
     { new: true }
   );
 };

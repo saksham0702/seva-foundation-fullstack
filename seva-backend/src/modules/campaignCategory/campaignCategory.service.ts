@@ -45,7 +45,22 @@ const createCategory = async (payload: Partial<ICategory>): Promise<ICategory> =
   return result;
 };
 
+const DEFAULT_CATEGORIES = [
+  { name: "Education (Vidhya)", slug: "education-vidhya", description: "Child education and rural bridge schools" },
+  { name: "Healthcare (Arogya)", slug: "healthcare-arogya", description: "Mobile health clinics and medical relief" },
+  { name: "Elderly Care (Sammaan)", slug: "elderly-care-sammaan", description: "Senior citizen shelter and nutrition" },
+  { name: "Women Empowerment (Shakti)", slug: "women-empowerment-shakti", description: "Vocational skills and micro-grants" },
+  { name: "Food Relief (Annapurna)", slug: "food-relief-annapurna", description: "Daily community kitchens and ration drives" },
+  { name: "Disaster Relief (Rakshak)", slug: "disaster-relief-rakshak", description: "Emergency response and rehabilitation" },
+  { name: "Stories of Impact", slug: "stories-of-impact", description: "Beneficiary transformations and real life stories" },
+  { name: "Press & Announcements", slug: "press-announcements", description: "Official media coverage and statements" },
+];
+
 const getAllCategories = async () => {
+  const count = await CategoryModel.countDocuments({ isDeleted: false });
+  if (count === 0) {
+    await CategoryModel.insertMany(DEFAULT_CATEGORIES);
+  }
   const result = await CategoryModel.find({ isDeleted: false }).sort({ createdAt: -1 });
   return result;
 };

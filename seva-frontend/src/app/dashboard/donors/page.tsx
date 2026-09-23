@@ -27,14 +27,10 @@ function DonorsPageInner() {
           <div className="flex items-center gap-3">
             <button
               onClick={openCreateModal}
-              className="flex items-center gap-2 bg-black text-white text-sm font-bold px-5 py-3 rounded-xl transition-all hover:bg-slate-800 shadow-sm"
+              className="flex items-center gap-2 bg-black text-white text-sm font-bold px-5 py-2.5 rounded-xl transition-all hover:bg-slate-800 shadow-sm"
             >
               <Plus size={15} strokeWidth={2.5} />
               Add Donor
-            </button>
-            <button className="flex items-center gap-2 border border-slate-200 hover:border-black text-black text-sm font-bold px-5 py-3 rounded-xl transition-all shadow-sm">
-              <Download size={15} strokeWidth={2.5} />
-              Export
             </button>
           </div>
         </div>

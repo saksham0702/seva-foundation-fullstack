@@ -335,16 +335,6 @@ function InitiativeDonationsInner() {
               Direct donations received across Seva Foundation&apos;s grassroots initiatives.
             </p>
           </div>
-
-          <div className="flex items-center gap-3">
-            <button
-              onClick={handleExportCSV}
-              className="flex items-center gap-2 border border-slate-200 hover:border-black text-black text-sm font-bold px-5 py-2.5 rounded-xl transition-all shadow-sm"
-            >
-              <Download size={15} strokeWidth={2.5} />
-              <span>Export CSV</span>
-            </button>
-          </div>
         </div>
 
         {/* ── View Switcher Tabs ── */}
@@ -469,7 +459,7 @@ function InitiativeDonationsInner() {
         </div>
 
         {/* ── Donations Table ── */}
-        <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
+        <div className="border-y border-slate-200 overflow-hidden">
           {loading ? (
             <div className="py-20 flex flex-col items-center justify-center gap-3 text-slate-500">
               <Loader2 className="animate-spin text-[#F5A623]" size={30} />
@@ -484,7 +474,7 @@ function InitiativeDonationsInner() {
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse text-xs">
                 <thead>
-                  <tr className="bg-slate-50/80 border-b border-slate-200 text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                  <tr className="bg-slate-50/80 border-b border-slate-200 text-[10px] font-bold uppercase tracking-widest text-slate-500">
                     <th className="py-3.5 px-4">Donor</th>
                     <th className="py-3.5 px-4">Total Paid</th>
                     <th className="py-3.5 px-4">Primary Initiative</th>
@@ -511,14 +501,11 @@ function InitiativeDonationsInner() {
                       >
                         {/* Donor */}
                         <td className="py-3.5 px-4">
-                          <div className="flex items-center gap-3">
-                            <Avatar name={item.donorName} />
-                            <div>
-                              <p className="font-bold text-slate-900">{item.donorName}</p>
-                              <p className="text-[11px] text-slate-400">
-                                {item.donorPhone || item.donorEmail || "—"}
-                              </p>
-                            </div>
+                          <div>
+                            <p className="text-sm font-bold text-slate-900">{item.donorName}</p>
+                            <p className="text-[11px] text-slate-400 mt-0.5">
+                              {item.donorPhone || item.donorEmail || "—"}
+                            </p>
                           </div>
                         </td>
 
@@ -529,8 +516,8 @@ function InitiativeDonationsInner() {
                               ₹{item.totalAmount.toLocaleString("en-IN")}
                             </span>
                             {item.donationCount > 1 ? (
-                              <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
-                                {item.donationCount} gifts
+                              <span className="text-[11px] text-slate-500 font-medium">
+                                ({item.donationCount} donations)
                               </span>
                             ) : null}
                           </div>

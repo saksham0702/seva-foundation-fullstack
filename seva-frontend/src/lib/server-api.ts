@@ -64,19 +64,82 @@ export async function getServerCampaignDonors(
 }
 
 // ── CMS Items (Blogs / News / Events) ────────────────────────────────────────
+function mapBackendToCmsItem(backendItem: any, contentType: CmsContentType): CmsItem {
+  let images: string[] = [];
+  if (Array.isArray(backendItem.images)) {
+    images = backendItem.images;
+  } else if (typeof backendItem.images === "string") {
+    images = [backendItem.images];
+  } else if (backendItem.featuredImage) {
+    images = [backendItem.featuredImage];
+  }
+
+  let faqs = [];
+  if (Array.isArray(backendItem.faqs)) {
+    faqs = backendItem.faqs;
+  } else if (typeof backendItem.faqs === "string") {
+    try {
+      faqs = JSON.parse(backendItem.faqs);
+    } catch {}
+  }
+
+  return {
+    id: backendItem._id || backendItem.id,
+    _id: backendItem._id || backendItem.id,
+    type: backendItem.type || contentType,
+    title: backendItem.title || backendItem.name || "",
+    slug: backendItem.slug || "",
+    status: backendItem.status === "active" ? "published" : backendItem.status || "draft",
+    category:
+      typeof backendItem.category === "object" && backendItem.category?.name
+        ? backendItem.category.name
+        : backendItem.category || "General",
+    publishedAt:
+      backendItem.publishedAt ||
+      (backendItem.createdAt
+        ? new Date(backendItem.createdAt).toLocaleDateString("en-IN", {
+            day: "numeric",
+            month: "short",
+            year: "numeric",
+          })
+        : new Date().toLocaleDateString("en-IN", {
+            day: "numeric",
+            month: "short",
+            year: "numeric",
+          })),
+    featuredImage: images[0] || "",
+    images,
+    excerpt: backendItem.metaDescription || backendItem.description || "",
+    content: backendItem.content || backendItem.description || "",
+    metaTitle: backendItem.metaTitle || backendItem.title || "",
+    metaDescription: backendItem.metaDescription || "",
+    faqs,
+    scheduledAt: backendItem.scheduledAt,
+    eventDate: backendItem.eventDate,
+    eventLocation: backendItem.eventLocation,
+    eventOrganizer: backendItem.eventOrganizer,
+    newsSource: backendItem.newsSource,
+    authorName: backendItem.authorName,
+    readTime: backendItem.readTime || "3 min read",
+    createdAt: backendItem.createdAt,
+    updatedAt: backendItem.updatedAt,
+  };
+}
+
 export async function getServerCmsItems(type: CmsContentType): Promise<CmsItem[]> {
-  const data = await safeServerFetch<CmsItem[]>(`/cms/type/${type}`, 60, [`cms-${type}`]);
-  return Array.isArray(data) ? data : [];
+  const data = await safeServerFetch<any[]>(`/cms/type/${type}`, 60, [`cms-${type}`]);
+  if (!Array.isArray(data)) return [];
+  return data.map((item) => mapBackendToCmsItem(item, type));
 }
 
 export async function getServerCmsItemBySlug(
   type: CmsContentType,
   slug: string
 ): Promise<CmsItem | null> {
-  const data = await safeServerFetch<CmsItem>(`/cms/type/${type}/${slug}`, 60, [
+  const data = await safeServerFetch<any>(`/cms/type/${type}/${slug}`, 60, [
     `cms-${type}-${slug}`,
   ]);
-  return data;
+  return data ? mapBackendToCmsItem(data, type) : null;
 }
 
 // ── CMS Pages (About / Our Work / Get Involved / Privacy / Terms) ─────────────

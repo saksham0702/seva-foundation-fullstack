@@ -322,25 +322,25 @@ export function DonorsTable() {
 
   return (
     <>
-      <div className="border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
+      <div className="border-y border-slate-200 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-slate-100 bg-slate-50">
+              <tr className="border-b border-slate-200 bg-slate-50/70">
                 <SortTh label="Donor" sortKey="name" />
-                <th className="text-left px-6 py-4 text-[10px] font-semibold uppercase tracking-widest text-slate-400 hidden md:table-cell">
+                <th className="text-left px-6 py-3.5 text-[10px] font-bold uppercase tracking-widest text-slate-500 hidden md:table-cell">
                   Contact
                 </th>
                 <SortTh label="Total Paid" sortKey="totalPaid" />
-                <th className="text-left px-6 py-4 text-[10px] font-semibold uppercase tracking-widest text-slate-400 hidden lg:table-cell">
+                <th className="text-left px-6 py-3.5 text-[10px] font-bold uppercase tracking-widest text-slate-500 hidden lg:table-cell">
                   Campaign / Cause
                 </th>
                 <SortTh label="Date" sortKey="createdAt" className="hidden sm:table-cell" />
                 <SortTh label="Status" sortKey="status" />
-                <th className="px-6 py-4" />
+                <th className="px-6 py-3.5" />
               </tr>
             </thead>
-            <tbody>
+            <tbody className="divide-y divide-slate-100">
               {paginated.length === 0 ? (
                 <tr>
                   <td
@@ -357,23 +357,20 @@ export function DonorsTable() {
                     <tr
                       key={donor._id}
                       onClick={() => setSelectedDonor(donor)}
-                      className="border-b border-slate-100 last:border-0 hover:bg-slate-50/60 transition-colors cursor-pointer"
+                      className="hover:bg-slate-50/80 transition-colors cursor-pointer"
                     >
                       <td className="px-6 py-4">
-                        <div className="flex items-center gap-3">
-                          <Avatar name={donor.name || "?"} />
-                          <div>
-                            <p className="text-sm font-semibold text-black">
-                              {donor.name || "Unnamed"}
-                            </p>
-                            <p className="text-[11px] text-slate-400">
-                              {donor.phone || donor.email || "—"}
-                            </p>
-                          </div>
+                        <div>
+                          <p className="text-sm font-bold text-slate-900">
+                            {donor.name || "Unnamed Donor"}
+                          </p>
+                          <p className="text-[11px] text-slate-400 mt-0.5">
+                            {donor.phone || donor.email || "—"}
+                          </p>
                         </div>
                       </td>
                       <td className="px-6 py-4 hidden md:table-cell">
-                        <p className="text-sm text-black">{donor.email || "—"}</p>
+                        <p className="text-sm text-slate-700">{donor.email || "—"}</p>
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-2">
@@ -381,8 +378,8 @@ export function DonorsTable() {
                             ₹{(donor.totalPaid || 0).toLocaleString("en-IN")}
                           </span>
                           {donor.donationCount && donor.donationCount > 1 ? (
-                            <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
-                              {donor.donationCount} gifts
+                            <span className="text-[11px] text-slate-500 font-medium">
+                              ({donor.donationCount} donations)
                             </span>
                           ) : null}
                         </div>

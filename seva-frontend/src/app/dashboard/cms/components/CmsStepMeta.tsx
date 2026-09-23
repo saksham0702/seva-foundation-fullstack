@@ -159,14 +159,16 @@ export function CmsStepMeta() {
             📅 Event Details
           </p>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Field label="Event Date & Time" required>
-              <input
-                type="datetime-local"
-                value={form.eventDate}
-                onChange={(e) => set("eventDate", e.target.value)}
-                className={inputCls}
-                required
-              />
+            <Field label="Event Date & Time" required hint="Pick event date & time from calendar">
+              <div className="relative">
+                <input
+                  type="datetime-local"
+                  value={form.eventDate}
+                  onChange={(e) => set("eventDate", e.target.value)}
+                  className={inputCls + " [color-scheme:dark] pr-3 cursor-pointer"}
+                  required
+                />
+              </div>
             </Field>
 
             <Field label="Location / Venue" required>

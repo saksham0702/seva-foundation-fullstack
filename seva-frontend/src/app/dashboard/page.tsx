@@ -421,30 +421,30 @@ export default function SevaCommandCenter() {
             </div>
           </div>
 
-          {/* Quick Header CTA Buttons */}
-          <div className="flex flex-wrap sm:flex-nowrap gap-3 w-full lg:w-auto">
+          {/* Executive Header CTA Actions */}
+          <div className="flex flex-wrap sm:flex-nowrap items-center gap-3 w-full lg:w-auto">
             <Link
               href="/dashboard/campaigns/create-campaign"
-              className="inline-flex items-center justify-center gap-2 bg-[#2F54EB] hover:bg-[#2546c7] text-white px-5 py-2.5 rounded-xl text-xs font-semibold uppercase tracking-wider transition-all shadow-lg shadow-blue-500/20"
+              className="group relative inline-flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-md hover:shadow-blue-500/25 border border-blue-400/20"
             >
-              <Plus className="w-4 h-4" />
-              <span>New Campaign</span>
+              <Plus className="w-4 h-4 transition-transform group-hover:rotate-90" />
+              <span>Launch Campaign</span>
             </Link>
 
             <Link
               href="/dashboard/donors"
-              className="inline-flex items-center justify-center gap-2 bg-white/[0.06] hover:bg-white/[0.1] border border-white/15 text-white px-4 py-2.5 rounded-xl text-xs font-semibold uppercase tracking-wider transition-all"
+              className="inline-flex items-center justify-center gap-2 bg-slate-900/90 hover:bg-slate-800 text-slate-200 hover:text-white border border-slate-700/80 px-4 py-2.5 rounded-xl text-xs font-semibold uppercase tracking-wider transition-all shadow-xs"
             >
-              <Wallet className="w-4 h-4 text-[#F5A623]" />
-              <span>Donor Vault</span>
+              <Wallet className="w-4 h-4 text-emerald-400" />
+              <span>Donor Records</span>
             </Link>
 
             <Link
               href="/dashboard/donors/initiatives"
-              className="inline-flex items-center justify-center gap-2 bg-white/[0.06] hover:bg-white/[0.1] border border-white/15 text-white px-4 py-2.5 rounded-xl text-xs font-semibold uppercase tracking-wider transition-all"
+              className="inline-flex items-center justify-center gap-2 bg-slate-900/90 hover:bg-slate-800 text-slate-200 hover:text-white border border-slate-700/80 px-4 py-2.5 rounded-xl text-xs font-semibold uppercase tracking-wider transition-all shadow-xs"
             >
               <Heart className="w-4 h-4 text-rose-400" />
-              <span>Initiative Donations</span>
+              <span>Initiative Logs</span>
             </Link>
           </div>
         </div>

@@ -9,7 +9,6 @@ import {
   ShieldCheck,
   ShieldOff,
   Trash2,
-  FileText,
   X,
   AlertTriangle,
   Download,
@@ -59,7 +58,7 @@ function CertificateDrawer({
   cert: Certificate;
   onClose: () => void;
 }) {
-  const { revokeCert, reactivateCert, deleteCert, actionLoading, actionError } =
+  const { revokeCert, reactivateCert, deleteCert, actionLoading, actionError, refetch } =
     useCertificates();
   const [revokeReason, setRevokeReason] = useState("");
   const [showRevokeInput, setShowRevokeInput] = useState(false);
@@ -73,13 +72,24 @@ function CertificateDrawer({
   const handleRevoke = async () => {
     if (!revokeReason.trim()) return;
     await revokeCert(cert._id, revokeReason.trim());
+    setShowRevokeInput(false);
   };
 
-  const handleGeneratePdf = async () => {
+  const handleDownload = async () => {
+    if (pdfUrl) {
+      window.open(getImageUrl(pdfUrl), "_blank");
+      return;
+    }
     setPdfLoading(true);
     try {
       const updated = await generatePdf(cert._id);
-      setPdfUrl(updated.pdfUrl || null);
+      if (updated?.pdfUrl) {
+        setPdfUrl(updated.pdfUrl);
+        window.open(getImageUrl(updated.pdfUrl), "_blank");
+        refetch();
+      }
+    } catch (err) {
+      console.error("PDF download failed:", err);
     } finally {
       setPdfLoading(false);
     }
@@ -304,32 +314,20 @@ function CertificateDrawer({
         </div>
 
         {/* Footer actions */}
-        <div className="px-6 py-4 border-t border-border flex flex-col gap-2">
-          {/* PDF */}
-          <div className="flex gap-2">
-            <button
-              onClick={handleGeneratePdf}
-              disabled={pdfLoading}
-              className="flex-1 flex items-center justify-center gap-2 border border-border text-sm text-muted px-3 py-2.5 rounded-lg hover:text-text-primary transition-colors"
-            >
-              {pdfLoading ? (
-                <Loader2 size={14} className="animate-spin" />
-              ) : (
-                <FileText size={14} />
-              )}
-              Generate PDF
-            </button>
-            {pdfUrl && (
-              <a
-                href={getImageUrl(pdfUrl)}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center justify-center gap-2 bg-blueaccent/15 text-blueaccent text-sm font-semibold px-3 py-2.5 rounded-lg border border-blueaccent/30"
-              >
-                Download
-              </a>
+        <div className="px-6 py-4 border-t border-border flex flex-col gap-2.5">
+          {/* Download Button */}
+          <button
+            onClick={handleDownload}
+            disabled={pdfLoading}
+            className="w-full flex items-center justify-center gap-2 bg-blueaccent hover:bg-blue-600 text-white text-sm font-semibold px-4 py-2.5 rounded-lg transition-colors shadow-sm disabled:opacity-60"
+          >
+            {pdfLoading ? (
+              <Loader2 size={15} className="animate-spin" />
+            ) : (
+              <Download size={15} />
             )}
-          </div>
+            Download Certificate (PDF)
+          </button>
 
           {/* Revoke / Reactivate */}
           {cert.status === "ACTIVE" ? (

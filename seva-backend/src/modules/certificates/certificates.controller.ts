@@ -57,14 +57,16 @@ const updateCertificate = asyncHandler(async (req: Request, res: Response) => {
 const revokeCertificate = asyncHandler(async (req: Request, res: Response) => {
   const { id } = req.params as { id: string };
   const { reason } = req.body as { reason: string };
-  const result = await CertificateService.revokeCertificate(id, reason, req.body.updatedBy);
+  const updatedBy = (req as any).user?._id || req.body?.updatedBy;
+  const result = await CertificateService.revokeCertificate(id, reason, updatedBy);
   if (!result) return sendResponse(res, { statusCode: 404, success: false, message: "Certificate not found" });
   sendResponse(res, { statusCode: 200, success: true, message: "Certificate revoked successfully", data: result });
 });
 
 const reactivateCertificate = asyncHandler(async (req: Request, res: Response) => {
   const { id } = req.params as { id: string };
-  const result = await CertificateService.reactivateCertificate(id, req.body.updatedBy);
+  const updatedBy = (req as any).user?._id || req.body?.updatedBy;
+  const result = await CertificateService.reactivateCertificate(id, updatedBy);
   if (!result) return sendResponse(res, { statusCode: 404, success: false, message: "Certificate not found" });
   sendResponse(res, { statusCode: 200, success: true, message: "Certificate reactivated successfully", data: result });
 });

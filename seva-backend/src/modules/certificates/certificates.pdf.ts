@@ -55,24 +55,24 @@ export const generateCertificatePdf = async (certificate: ICertificate): Promise
       .font("Times-Italic")
       .text("This certificate is proudly presented to", 0, 235, { align: "center" });
 
-    doc.fillColor("#111").fontSize(30).font("Times-Bold").text(certificate.recipientName, 0, 260, { align: "center" });
+    const capitalizedRecipient = (certificate.recipientName || "").toUpperCase();
+    doc.fillColor("#111").fontSize(28).font("Times-Bold").text(capitalizedRecipient, 0, 260, { align: "center" });
 
     doc
       .fillColor("#444")
       .fontSize(11)
       .font("Times-Roman")
-      .text(certificate.body, 120, 310, { width: width - 240, align: "center", lineGap: 4 });
+      .text(certificate.body, 120, 308, { width: width - 240, align: "center", lineGap: 4 });
+
+    const causeText = certificate.projectName
+      ? `${certificate.programName} — ${certificate.projectName}`
+      : certificate.programName;
 
     doc
-      .fillColor("#111")
-      .fontSize(11)
+      .fillColor("#0B2C6B")
+      .fontSize(13)
       .font("Times-Bold")
-      .text(
-        `Program/Project: ${certificate.programName}${certificate.projectName ? " — " + certificate.projectName : ""}`,
-        0,
-        400,
-        { align: "center" }
-      );
+      .text(`Cause / Program: ${causeText}`, 0, 395, { align: "center" });
 
     // Helper to resolve an image path or data URI to a Buffer or local file path
     const resolveImage = (imgSrc?: string): Buffer | string | null => {
@@ -120,12 +120,12 @@ export const generateCertificatePdf = async (certificate: ICertificate): Promise
 
     const sigY = 495;
 
-    // Secretary Signature
+    // Secretary Signature - positioned close above the signature line
     if (certificate.signatures?.secretary) {
       const secImg = resolveImage(certificate.signatures.secretary.imageUrl);
       if (secImg) {
         try {
-          doc.image(secImg, 130, sigY - 55, { fit: [140, 50], align: "center", valign: "bottom" });
+          doc.image(secImg, 130, sigY - 42, { fit: [140, 40], align: "center", valign: "bottom" });
         } catch (err) {
           console.warn("Secretary signature render error:", err);
         }
@@ -137,12 +137,12 @@ export const generateCertificatePdf = async (certificate: ICertificate): Promise
       doc.fontSize(8).fillColor("#666").font("Times-Roman").text(secLabel, 120, sigY + 16, { width: 160, align: "center" });
     }
 
-    // President Signature
+    // President Signature - positioned close above the signature line
     if (certificate.signatures?.president) {
       const presImg = resolveImage(certificate.signatures.president.imageUrl);
       if (presImg) {
         try {
-          doc.image(presImg, width - 270, sigY - 55, { fit: [140, 50], align: "center", valign: "bottom" });
+          doc.image(presImg, width - 270, sigY - 42, { fit: [140, 40], align: "center", valign: "bottom" });
         } catch (err) {
           console.warn("President signature render error:", err);
         }

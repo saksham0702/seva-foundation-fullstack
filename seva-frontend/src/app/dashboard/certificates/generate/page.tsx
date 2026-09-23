@@ -297,8 +297,8 @@ export default function GenerateCertificatePage() {
               <p className="text-[10px] text-muted italic">
                 This certificate is proudly presented to
               </p>
-              <p className="font-display text-xl font-bold text-text-primary">
-                {form.recipientName || "Recipient Name"}
+              <p className="font-display text-xl font-bold text-text-primary tracking-wide">
+                {form.recipientName ? form.recipientName.toUpperCase() : "RECIPIENT NAME"}
               </p>
               {form.programName && (
                 <p className="text-[10px] text-muted mt-1">{form.programName}</p>

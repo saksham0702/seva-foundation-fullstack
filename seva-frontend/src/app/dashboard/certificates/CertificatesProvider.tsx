@@ -167,7 +167,9 @@ export function CertificatesProvider({ children }: { children: ReactNode }) {
       await apiRevoke(id, reason);
       await fetchCertificates();
       await fetchStats();
-      setSelectedCert(null);
+      setSelectedCert((prev) =>
+        prev && prev._id === id ? { ...prev, status: "REVOKED", revokedReason: reason } : prev
+      );
     } catch (err: any) {
       setActionError(err?.response?.data?.message || err?.message || "Failed to revoke");
     } finally {
@@ -182,7 +184,9 @@ export function CertificatesProvider({ children }: { children: ReactNode }) {
       await apiReactivate(id);
       await fetchCertificates();
       await fetchStats();
-      setSelectedCert(null);
+      setSelectedCert((prev) =>
+        prev && prev._id === id ? { ...prev, status: "ACTIVE", revokedReason: undefined } : prev
+      );
     } catch (err: any) {
       setActionError(err?.response?.data?.message || err?.message || "Failed to reactivate");
     } finally {

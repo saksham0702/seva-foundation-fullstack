@@ -4,9 +4,18 @@ import { authMiddleware } from "../../middlewares/auth/auth.middleware";
 import { permissionMiddleware } from "../../middlewares/auth/permission.middleware";
 import { uploadCmsImage } from "../../middlewares/upload";
 
+import { BlogController } from "../blogs/blogs.controller";
+
 const router = express.Router();
 
 const guard = [authMiddleware, permissionMiddleware("cms")];
+
+// Type-based items for Blogs / News / Events
+router.get("/type/:type", (req, res, next) => {
+  req.query.type = req.params.type;
+  BlogController.getAllBlogs(req, res, next);
+});
+router.get("/type/:type/:id", BlogController.getBlogById);
 
 // Public read endpoints for website rendering
 router.get("/pages", CmsController.getAllPages);
