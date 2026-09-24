@@ -2,12 +2,14 @@ export type CmsContentType = "blog" | "news" | "event";
 
 // ── CMS Page / Section types (mirrors backend cms.model.ts) ────────────────────
 export interface ICmsSection {
+  _id?: string;
   key: string;
   name?: string;
   title?: string;
   subtitle?: string;
   description?: string;
   image?: string;
+  video?: string;
   items?: Array<Record<string, any>>;
   extra?: Record<string, any>;
 }
@@ -19,6 +21,7 @@ export interface CmsPage {
   title?: string;
   subtitle?: string;
   bannerImage?: string;
+  bannerVideo?: string;
   content?: string;
   sections: ICmsSection[];
   settings?: Record<string, any>;
@@ -66,6 +69,7 @@ export interface CmsItem {
   newsSource?: string;
   authorName?: string;
   readTime?: string;
+  viewsCount?: number;
 
   createdAt?: string;
   updatedAt?: string;

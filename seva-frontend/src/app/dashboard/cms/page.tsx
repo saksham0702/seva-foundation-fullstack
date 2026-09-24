@@ -26,10 +26,131 @@ import {
   Tag,
   Layers,
   Check,
+  Video,
 } from "lucide-react";
-import { getCmsPages, getCmsPageBySlug, saveCmsPage, deleteCmsSection, uploadCmsImageFile, CmsPage, CmsSection } from "@/app/api/cms";
+import { getCmsPages, getCmsPageBySlug, saveCmsPage, deleteCmsSection, uploadCmsImageFile, uploadCmsMediaFile, CmsPage, CmsSection } from "@/app/api/cms";
 import { getImageUrl } from "@/lib/image";
 import { PermissionGuard } from "@/components/dashboard/PermissionGuard";
+
+function CmsVideoField({
+  label = "Hero Banner Video",
+  value = "",
+  onChange,
+  recommended = "MP4, WebM, MOV · Max 50MB · Takes priority over static image in hero background",
+  placeholder = "Upload video or enter URL (e.g. /uploads/... or https://...)",
+}: {
+  label?: string;
+  value?: string;
+  onChange: (url: string) => void;
+  recommended?: string;
+  placeholder?: string;
+}) {
+  const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleVideoFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 50 * 1024 * 1024) {
+      setError("Video file exceeds 50MB size limit. Please optimize or compress the video.");
+      return;
+    }
+
+    const validExts = [".mp4", ".webm", ".mov", ".ogg", ".m4v"];
+    const ext = file.name.substring(file.name.lastIndexOf(".")).toLowerCase();
+    if (!file.type.startsWith("video/") && !validExts.includes(ext)) {
+      setError("Please select a valid video format (MP4, WebM, MOV, OGG).");
+      return;
+    }
+
+    try {
+      setUploading(true);
+      setError(null);
+      const url = await uploadCmsMediaFile(file);
+      if (url) {
+        onChange(url);
+      }
+    } catch (err: any) {
+      setError(err?.response?.data?.message || "Failed to upload video to server");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center justify-between">
+        <label className="block text-xs font-semibold text-gray-600 dark:text-muted flex items-center gap-1.5">
+          <Video size={13} className="text-[#E8542A]" />
+          {label}
+        </label>
+        <span className="text-[10px] text-gray-400 font-medium">
+          {recommended}
+        </span>
+      </div>
+
+      <div className="flex gap-2">
+        <input
+          type="text"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder={placeholder}
+          className="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 dark:border-border bg-gray-50 dark:bg-bg text-sm text-[#0f2347] dark:text-text-primary focus:outline-none focus:ring-2 focus:ring-[#1a3a6b]/20"
+        />
+        <label className="cursor-pointer inline-flex items-center gap-1.5 px-4 py-2.5 bg-white dark:bg-panel border border-gray-200 dark:border-border hover:bg-gray-50 text-xs font-bold rounded-xl text-[#0f2347] dark:text-text-primary shrink-0 transition-colors shadow-sm">
+          {uploading ? (
+            <Loader2 size={14} className="animate-spin text-[#E8542A]" />
+          ) : (
+            <Upload size={14} className="text-[#E8542A]" />
+          )}
+          <span>{uploading ? "Uploading..." : "Upload Video"}</span>
+          <input
+            type="file"
+            accept="video/mp4,video/webm,video/quicktime,video/ogg,video/*"
+            className="hidden"
+            disabled={uploading}
+            onChange={handleVideoFileChange}
+          />
+        </label>
+        {value && (
+          <button
+            type="button"
+            onClick={() => onChange("")}
+            className="px-3 py-2.5 bg-white dark:bg-panel border border-gray-200 dark:border-border text-xs font-semibold text-red-500 rounded-xl hover:bg-red-50 transition-colors"
+          >
+            Clear Video
+          </button>
+        )}
+      </div>
+
+      {error && (
+        <p className="text-xs text-red-500 font-medium flex items-center gap-1">
+          <AlertCircle size={12} /> {error}
+        </p>
+      )}
+
+      {value && (
+        <div className="p-3 bg-gray-50 dark:bg-bg/50 rounded-xl border border-gray-100 dark:border-border mt-2 flex items-center gap-3">
+          <div className="w-20 h-12 bg-black rounded-lg overflow-hidden flex items-center justify-center shrink-0">
+            <video
+              src={getImageUrl(value)}
+              className="w-full h-full object-cover"
+              muted
+              playsInline
+            />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-xs font-medium text-gray-700 dark:text-gray-300 truncate">
+              {value}
+            </p>
+            <p className="text-[10px] text-emerald-600 font-semibold">Video Ready · Plays automatically in hero section</p>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 function CmsImageField({
   label,
@@ -296,14 +417,14 @@ export default function CmsDashboardPage() {
   return (
     <PermissionGuard module="cms">
       <div className="min-h-screen bg-[#f8fafc] dark:bg-bg p-4 sm:p-6 lg:p-8">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+        {/* Sticky Top Header Bar */}
+        <div className="sticky top-0 z-30 bg-[#f8fafc]/95 dark:bg-bg/95 backdrop-blur-md py-3.5 -mx-4 px-4 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 border-b border-slate-200/80 dark:border-border/80 mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm">
           <div>
-            <h1 className="text-2xl font-bold text-[#0f2347] dark:text-text-primary tracking-tight">
+            <h1 className="text-xl sm:text-2xl font-bold text-[#0f2347] dark:text-text-primary tracking-tight">
               Website CMS Manager
             </h1>
-            <p className="text-xs text-gray-500 dark:text-muted mt-1">
-              Customize text, banner images, contact details, and static page sections
+            <p className="text-xs text-gray-500 dark:text-muted mt-0.5">
+              Editing: <span className="font-bold text-[#E8542A]">{activeMeta.name}</span> ({activeMeta.path})
             </p>
           </div>
 
@@ -312,23 +433,23 @@ export default function CmsDashboardPage() {
               href={activeMeta.path}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 px-4 py-2.5 bg-white dark:bg-panel border border-gray-200 dark:border-border rounded-xl text-xs font-semibold text-[#0f2347] dark:text-text-primary hover:border-[#1a3a6b] transition-colors"
+              className="inline-flex items-center gap-1.5 px-4 py-2 bg-white dark:bg-panel border border-gray-200 dark:border-border rounded-xl text-xs font-semibold text-[#0f2347] dark:text-text-primary hover:border-[#1a3a6b] transition-colors shadow-sm"
             >
-              <ExternalLink size={14} />
-              Preview Live Page
+              <ExternalLink size={13} />
+              Preview Page
             </a>
             <button
               type="button"
               onClick={handleSave}
               disabled={saveMutation.isPending}
-              className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#E8542A] hover:bg-[#c9431d] disabled:opacity-60 text-white rounded-xl text-xs font-bold transition-all shadow-md shadow-orange-500/20"
+              className="inline-flex items-center gap-2 px-6 py-2.5 bg-[#E8542A] hover:bg-[#c9431d] disabled:opacity-60 text-white rounded-xl text-xs font-bold transition-all shadow-md shadow-orange-500/20"
             >
               {saveMutation.isPending ? (
                 <Loader2 size={14} className="animate-spin" />
               ) : (
                 <Save size={14} />
               )}
-              {saveMutation.isPending ? "Saving..." : "Save Changes"}
+              {saveMutation.isPending ? "Saving changes..." : "Save Changes"}
             </button>
           </div>
         </div>
@@ -427,7 +548,7 @@ export default function CmsDashboardPage() {
                           />
                         </div>
 
-                        <div className="sm:col-span-2">
+                        <div className="sm:col-span-2 space-y-4">
                           <CmsImageField
                             label="Hero Banner Background Image"
                             value={formData.bannerImage || ""}
@@ -436,6 +557,16 @@ export default function CmsDashboardPage() {
                             }
                             recommendedDimensions="1920 × 600 px · Max 5MB"
                             placeholder="Upload banner image or enter custom URL..."
+                          />
+
+                          <CmsVideoField
+                            label="Hero Banner Video (Optional)"
+                            value={formData.bannerVideo || ""}
+                            onChange={(url) =>
+                              setFormData({ ...formData, bannerVideo: url })
+                            }
+                            recommended="MP4 / WebM video URL · Takes priority over image in hero background"
+                            placeholder="Paste video URL (e.g. /uploads/video.mp4 or https://...)"
                           />
                         </div>
                       </div>
@@ -1265,22 +1396,6 @@ export default function CmsDashboardPage() {
                     </div>
                   </div>
                 )}
-
-                {/* Bottom Save Action */}
-                <div className="flex justify-end pt-4">
-                  <button
-                    type="submit"
-                    disabled={saveMutation.isPending}
-                    className="inline-flex items-center gap-2 px-6 py-3 bg-[#E8542A] hover:bg-[#c9431d] disabled:opacity-60 text-white rounded-xl text-sm font-bold transition-all shadow-lg shadow-orange-500/20"
-                  >
-                    {saveMutation.isPending ? (
-                      <Loader2 size={16} className="animate-spin" />
-                    ) : (
-                      <Save size={16} />
-                    )}
-                    {saveMutation.isPending ? "Saving changes..." : "Save Page Settings"}
-                  </button>
-                </div>
               </form>
             )}
           </div>

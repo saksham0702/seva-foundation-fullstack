@@ -1,11 +1,17 @@
 import { DonorModel, IDonor } from "./donors.model";
 import { MailerService } from "../mail/mailer.service";
 import { DonationModel } from "../payments/payments.model";
+import { CertificateModel } from "../certificates/certificates.model";
 import { LeadService } from "../leads/leads.service";
 
 const createDonor = async (payload: Partial<IDonor> & { amount?: number }) => {
   const donor = await DonorModel.create({
     campaign: payload.campaign,
+    targetType: payload.targetType || (payload.campaign ? "CAMPAIGN" : (payload.initiative ? "INITIATIVE" : "GENERAL")),
+    initiative: payload.initiative,
+    frequency: payload.frequency || "ONE_TIME",
+    tribute: payload.tribute || "No Tribute",
+    message: payload.message || "",
     name: payload.name,
     email: payload.email,
     phone: payload.phone,
@@ -19,6 +25,31 @@ const createDonor = async (payload: Partial<IDonor> & { amount?: number }) => {
     createdBy: payload.createdBy,
     updatedBy: payload.updatedBy,
   });
+
+  // If created as PAID with an amount, record donation entry
+  if (payload.amount && payload.amount > 0 && payload.status === "PAID") {
+    try {
+      const receiptNumber = `REC-${Date.now().toString(36).toUpperCase()}-${Math.floor(1000 + Math.random() * 9000)}`;
+      await DonationModel.create({
+        donor: donor._id,
+        campaign: donor.campaign,
+        targetType: donor.targetType || (donor.campaign ? "CAMPAIGN" : (donor.initiative ? "INITIATIVE" : "GENERAL")),
+        initiative: donor.initiative,
+        frequency: donor.frequency || "ONE_TIME",
+        tribute: donor.tribute || "No Tribute",
+        message: donor.message || "",
+        amount: payload.amount,
+        donationType: "MONEY",
+        paymentMethod: "OFFLINE",
+        paymentStatus: "SUCCESS",
+        receiptNumber,
+        remarks: "Manually recorded donation",
+        createdBy: payload.createdBy,
+      });
+    } catch (dErr) {
+      console.error("Failed to create initial donation record for donor:", dErr);
+    }
+  }
 
   // Automatically capture prospective donor as an unpaid lead in CRM
   try {
@@ -85,15 +116,22 @@ const getAllDonors = async (query: {
 
   if (donors.length === 0) return [];
 
-  // Fetch all donations associated with these donors
   const donorIds = donors.map((d: any) => d._id);
-  const donations = await DonationModel.find({
-    donor: { $in: donorIds },
-    isDeleted: false,
-  })
-    .populate("campaign")
-    .sort({ createdAt: -1 })
-    .lean();
+  const [donations, certificates] = await Promise.all([
+    DonationModel.find({
+      donor: { $in: donorIds },
+      isDeleted: false,
+    })
+      .populate("campaign")
+      .sort({ createdAt: -1 })
+      .lean(),
+    CertificateModel.find({
+      donor: { $in: donorIds },
+      isDeleted: false,
+    })
+      .select("certificateNo donor status certificateType issueDate pdfUrl")
+      .lean(),
+  ]);
 
   const donationsByDonorId = new Map<string, any[]>();
   for (const d of donations) {
@@ -104,16 +142,34 @@ const getAllDonors = async (query: {
     donationsByDonorId.get(dId)!.push(d);
   }
 
+  const certificatesByDonorId = new Map<string, any>();
+  for (const c of certificates) {
+    if (c.donor) {
+      certificatesByDonorId.set(String(c.donor), c);
+    }
+  }
+
   return donors.map((donor: any) => {
     const donorDonations = donationsByDonorId.get(String(donor._id)) || [];
+    const cert = certificatesByDonorId.get(String(donor._id)) || null;
     const successful = donorDonations.filter((d: any) => d.paymentStatus === "SUCCESS");
     const totalPaid = successful.reduce((sum: number, d: any) => sum + (d.amount || 0), 0);
+
+    const enrichedDonations = donorDonations.map((d: any) => ({
+      ...d,
+      certificateNo: cert?.certificateNo || null,
+      certificateUrl: cert?.certificateNo ? `/verify/${cert.certificateNo}` : null,
+    }));
 
     return {
       ...donor,
       totalPaid,
       donationCount: successful.length,
-      donations: donorDonations,
+      certificateNo: cert?.certificateNo || null,
+      certificateId: cert?._id || null,
+      certificateUrl: cert?.certificateNo ? `/verify/${cert.certificateNo}` : null,
+      certificate: cert,
+      donations: enrichedDonations,
     };
   });
 };
@@ -128,22 +184,38 @@ const getDonorById = async (id: string) => {
 
   if (!donor) return null;
 
-  const donations = await DonationModel.find({
-    donor: donor._id,
-    isDeleted: false,
-  })
-    .populate("campaign")
-    .sort({ createdAt: -1 })
-    .lean();
+  const [donations, cert] = await Promise.all([
+    DonationModel.find({
+      donor: donor._id,
+      isDeleted: false,
+    })
+      .populate("campaign")
+      .sort({ createdAt: -1 })
+      .lean(),
+    CertificateModel.findOne({
+      donor: donor._id,
+      isDeleted: false,
+    }).lean(),
+  ]);
 
   const successful = donations.filter((d: any) => d.paymentStatus === "SUCCESS");
   const totalPaid = successful.reduce((sum: number, d: any) => sum + (d.amount || 0), 0);
+
+  const enrichedDonations = donations.map((d: any) => ({
+    ...d,
+    certificateNo: cert?.certificateNo || null,
+    certificateUrl: cert?.certificateNo ? `/verify/${cert.certificateNo}` : null,
+  }));
 
   return {
     ...donor,
     totalPaid,
     donationCount: successful.length,
-    donations,
+    certificateNo: cert?.certificateNo || null,
+    certificateId: cert?._id || null,
+    certificateUrl: cert?.certificateNo ? `/verify/${cert.certificateNo}` : null,
+    certificate: cert,
+    donations: enrichedDonations,
   };
 };
 

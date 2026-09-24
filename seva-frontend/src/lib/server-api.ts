@@ -3,6 +3,7 @@ import { CmsItem, CmsPage, CmsContentType } from "@/types/cms";
 import { VolunteerCategory, FormType } from "@/app/api/volunteer";
 import { Certificate } from "@/app/api/certificate";
 import { Product } from "@/app/api/product";
+import { GalleryItem } from "@/app/api/gallery";
 
 const API_URL =
   process.env.INTERNAL_API_URL ||
@@ -132,6 +133,16 @@ export async function getServerCmsItems(type: CmsContentType): Promise<CmsItem[]
   return data.map((item) => mapBackendToCmsItem(item, type));
 }
 
+export async function getServerRecentBlogs(limit: number = 4): Promise<CmsItem[]> {
+  const data = await safeServerFetch<any[]>(`/blogs/recent?limit=${limit}`, 60, ["recent-blogs"]);
+  if (Array.isArray(data) && data.length > 0) {
+    return data.map((item) => mapBackendToCmsItem(item, item.type || "blog"));
+  }
+  // Fallback: fetch from /cms/type/blog
+  const fallback = await getServerCmsItems("blog");
+  return fallback.slice(0, limit);
+}
+
 export async function getServerCmsItemBySlug(
   type: CmsContentType,
   slug: string
@@ -150,12 +161,15 @@ export async function getServerCmsPage(slug: string): Promise<CmsPage | null> {
 
 // ── Volunteer Categories ─────────────────────────────────────────────────────
 export async function getServerPublicVolunteerCategories(
-  formType: FormType = "volunteer"
+  formType?: FormType
 ): Promise<VolunteerCategory[]> {
+  const url = formType
+    ? `/volunteer-categories/public?formType=${formType}`
+    : `/volunteer-categories/public`;
   const data = await safeServerFetch<VolunteerCategory[]>(
-    `/volunteer/public/categories?formType=${formType}`,
+    url,
     60,
-    [`volunteer-categories-${formType}`]
+    [formType ? `volunteer-categories-${formType}` : `volunteer-categories-all`]
   );
   return Array.isArray(data) ? data : [];
 }
@@ -187,3 +201,13 @@ export async function getServerProducts(): Promise<Product[]> {
   const data = await safeServerFetch<Product[]>("/products", 60, ["products"]);
   return Array.isArray(data) ? data : [];
 }
+
+// ── Gallery Items ────────────────────────────────────────────────────────────
+export async function getServerGalleryImages(limit: number = 6): Promise<GalleryItem[]> {
+  const data = await safeServerFetch<any>(`/gallery?limit=${limit}`, 60, ["gallery-images"]);
+  if (Array.isArray(data)) return data;
+  if (Array.isArray(data?.images)) return data.images;
+  if (Array.isArray(data?.data)) return data.data;
+  return [];
+}
+

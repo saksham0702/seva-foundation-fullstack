@@ -12,6 +12,7 @@ export interface ICampaign extends Document {
   goal: number;
   raisedAmount: number;
   donorCount: number;
+  viewsCount?: number;
   startDate?: Date;
   endDate?: Date;
   urgent?: boolean;
@@ -70,6 +71,10 @@ const CampaignSchema = new Schema<ICampaign>(
       default: 0,
     },
     donorCount: {
+      type: Number,
+      default: 0,
+    },
+    viewsCount: {
       type: Number,
       default: 0,
     },

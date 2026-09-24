@@ -18,10 +18,15 @@ import { LeadRoutes } from "../modules/leads/leads.routes";
 import { MailConfigRoutes } from "../modules/mail/mailconfig.routes";
 import { MailTemplateRoutes } from "../modules/mail/mailtemplates.routes";
 import { MailLogRoutes } from "../modules/mail/maillogs.routes";
+import { AnalyticsRoutes } from "../modules/analytics/analytics.routes";
 
 const router = express.Router();
 
 const moduleRoutes = [
+  {
+    path: "/analytics",
+    route: AnalyticsRoutes,
+  },
   {
     path: "/categories",
     route: CategoryRoutes,

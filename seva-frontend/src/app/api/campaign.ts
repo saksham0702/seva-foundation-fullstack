@@ -17,6 +17,7 @@ export interface Campaign {
   goal: number;
   raisedAmount: number;
   donorCount: number;
+  viewsCount?: number;
   startDate?: string | Date;
   endDate?: string | Date;
   urgent?: boolean;

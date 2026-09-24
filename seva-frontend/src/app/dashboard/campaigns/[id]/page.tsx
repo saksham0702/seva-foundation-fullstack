@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
-import { Loader2, AlertCircle, ExternalLink } from "lucide-react";
+import { Loader2, AlertCircle, ExternalLink, Eye } from "lucide-react";
 import { getCampaignById, Campaign } from "@/app/api/campaign";
 import { CampaignStepper } from "../components/CampaignStepper";
 import { StepBasicInfo } from "../components/steps/StepBasicInfo";
@@ -85,16 +85,25 @@ function EditCampaignPage() {
             </h1>
           </div>
 
-          {campaign.slug && (
+          <div className="flex items-center gap-2">
             <Link
-              href={`/campaigns/${campaign.slug}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-1.5 text-xs font-bold text-muted hover:text-blueaccent border border-border hover:border-blueaccent/40 bg-panel px-4 py-2 rounded-xl transition-all"
+              href={`/dashboard/campaigns/${campaign._id}/overview`}
+              className="flex items-center gap-1.5 text-xs font-bold text-blueaccent bg-blueaccent/10 border border-blueaccent/30 hover:bg-blueaccent hover:text-white px-3.5 py-2 rounded-xl transition-all"
             >
-              <ExternalLink size={13} /> View on Website
+              <Eye size={13} /> View Campaign Overview
             </Link>
-          )}
+
+            {campaign.slug && (
+              <Link
+                href={`/campaigns/${campaign.slug}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1.5 text-xs font-bold text-muted hover:text-blueaccent border border-border hover:border-blueaccent/40 bg-panel px-4 py-2 rounded-xl transition-all"
+              >
+                <ExternalLink size={13} /> View on Website
+              </Link>
+            )}
+          </div>
         </div>
 
         {/* Stepper */}

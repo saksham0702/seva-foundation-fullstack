@@ -131,7 +131,7 @@ export default function CampaignsSection() {
           </div>
         )}
 
-        <div className="mt-14 rounded-2xl bg-gradient-to-br from-[#0f2347] to-[#1a3a6b] px-8 py-10 flex flex-col sm:flex-row items-center justify-between gap-6 shadow-xl shadow-blue-900/20">
+        {/* <div className="mt-14 rounded-2xl bg-gradient-to-br from-[#0f2347] to-[#1a3a6b] px-8 py-10 flex flex-col sm:flex-row items-center justify-between gap-6 shadow-xl shadow-blue-900/20">
           <div>
             <p className="text-white font-bold text-xl">
               Can&apos;t find a cause you care about?
@@ -146,7 +146,7 @@ export default function CampaignsSection() {
           >
             Start a Campaign →
           </Link>
-        </div>
+        </div> */}
       </div>
     </section>
   );

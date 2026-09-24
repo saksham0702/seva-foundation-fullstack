@@ -1,5 +1,6 @@
-import React from "react";
+import React, { Suspense } from "react";
 import { Metadata } from "next";
+import Image from "next/image";
 import { Heart, ArrowRight, ChevronDown } from "lucide-react";
 import {
   getServerCmsPage,
@@ -72,7 +73,7 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function GetInvolvedPage() {
   const [cmsPage, categories] = await Promise.all([
     getServerCmsPage("get-involved"),
-    getServerPublicVolunteerCategories("volunteer"),
+    getServerPublicVolunteerCategories(),
   ]);
 
   const heroTitle =
@@ -82,6 +83,9 @@ export default async function GetInvolvedPage() {
     "We do not need your money. We need your hands, your mind, and your heart. Whether you have 2 hours or 2 years — there is a place for you here.";
   const heroBannerUrl = cmsPage?.bannerImage
     ? getImageUrl(cmsPage.bannerImage)
+    : "";
+  const heroBannerVideo = cmsPage?.bannerVideo
+    ? getImageUrl(cmsPage.bannerVideo)
     : "";
 
   const impactNumbers =
@@ -97,16 +101,29 @@ export default async function GetInvolvedPage() {
       {/* ── Hero ── */}
       <section className="relative min-h-[70vh] flex items-center overflow-hidden">
         <div className="absolute inset-0 bg-[#0B1120]">
-          {heroBannerUrl ? (
-            <img
+          {heroBannerVideo ? (
+            <video
+              src={heroBannerVideo}
+              autoPlay
+              loop
+              muted
+              playsInline
+              className="w-full h-full object-cover"
+            />
+          ) : heroBannerUrl ? (
+            <Image
               src={heroBannerUrl}
               alt="Volunteers working together in community"
-              className="w-full h-full object-cover"
+              fill
+              priority
+              sizes="100vw"
+              className="object-cover"
             />
           ) : (
             <div className="w-full h-full bg-gradient-to-br from-[#0f2347] via-[#102a5c] to-[#0B1120]" />
           )}
-          <div className="absolute inset-0 bg-gradient-to-r from-[#0f2347]/95 via-[#0f2347]/85 to-[#0f2347]/60" />
+          {/* Lightened, lively gradient overlay */}
+          <div className="absolute inset-0 bg-gradient-to-r from-[#0f2347]/80 via-[#0f2347]/50 to-black/30" />
         </div>
 
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 w-full">
@@ -118,7 +135,7 @@ export default async function GetInvolvedPage() {
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-semibold text-white leading-[1.1] mb-6">
               {heroTitle}
             </h1>
-            <p className="text-lg text-gray-300 leading-relaxed mb-8 max-w-lg">
+            <p className="text-lg text-gray-200 leading-relaxed mb-8 max-w-lg">
               {heroSubtitle}
             </p>
             <div className="flex flex-wrap gap-4">
@@ -161,7 +178,9 @@ export default async function GetInvolvedPage() {
       </section>
 
       {/* ── Interactive Selection Grid & Form ── */}
-      <GetInvolvedClient categories={categories} faqs={faqs} />
+      <Suspense fallback={<div className="py-20 text-center text-gray-400">Loading volunteer categories...</div>}>
+        <GetInvolvedClient categories={categories} faqs={faqs} />
+      </Suspense>
     </div>
   );
 }

@@ -1,5 +1,7 @@
+import { isValidObjectId } from "mongoose";
 import { ICertificate, CertificateModel, RecipientType, CertificateType } from "./certificates.model";
 import { DonorModel } from "../donors/donors.model";
+import { DonationModel } from "../payments/payments.model";
 import { SignatureService } from "../signatures/signatures.service";
 import { generateCertificateNumber, buildVerifyUrl, generateQrCodeDataUrl } from "./certificates.utils";
 import { generateCertificatePdf } from "./certificates.pdf";
@@ -102,7 +104,56 @@ const getCertificateById = async (id: string): Promise<ICertificate | null> => {
 };
 
 const getCertificateByCertificateNo = async (certificateNo: string): Promise<ICertificate | null> => {
-  return CertificateModel.findOne({ certificateNo, isDeleted: false }).populate("campaign", "name");
+  if (!certificateNo) return null;
+  const cleaned = certificateNo.trim();
+
+  // 1. Match exact or case-insensitive certificateNo
+  let cert: any = await CertificateModel.findOne({
+    certificateNo: { $regex: new RegExp(`^${cleaned}$`, "i") },
+    isDeleted: false,
+  }).populate("campaign", "name");
+
+  if (cert) return cert;
+
+  // 2. If it's a receipt number (starts with REC- or contains REC)
+  if (cleaned.toUpperCase().includes("REC")) {
+    const donation = await DonationModel.findOne({
+      receiptNumber: { $regex: new RegExp(`^${cleaned}$`, "i") },
+      isDeleted: false,
+    });
+    if (donation?.donor) {
+      cert = await CertificateModel.findOne({
+        donor: donation.donor,
+        isDeleted: false,
+      }).populate("campaign", "name");
+      if (cert) return cert;
+
+      // Auto-generate for paid donor if missing
+      try {
+        cert = await generateCertificateForDonor(String(donation.donor));
+        if (cert) return cert;
+      } catch {}
+    }
+  }
+
+  // 3. If valid MongoDB ObjectId
+  if (isValidObjectId(cleaned)) {
+    cert = await CertificateModel.findOne({ _id: cleaned, isDeleted: false }).populate("campaign", "name");
+    if (cert) return cert;
+
+    cert = await CertificateModel.findOne({ donor: cleaned, isDeleted: false }).populate("campaign", "name");
+    if (cert) return cert;
+
+    cert = await CertificateModel.findOne({ recipientRef: cleaned, isDeleted: false }).populate("campaign", "name");
+    if (cert) return cert;
+
+    try {
+      cert = await generateCertificateForDonor(cleaned);
+      if (cert) return cert;
+    } catch {}
+  }
+
+  return null;
 };
 const getCertificateByDonor = async (donorId: string): Promise<ICertificate | null> => {
   return CertificateModel.findOne({ donor: donorId, isDeleted: false })

@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react";
 import Link from "next/link";
-import { Plus, Search, Filter, Layers, FileText, CheckCircle2, Clock, FileCheck } from "lucide-react";
+import { Plus, Search, Filter, Layers, FileText, CheckCircle2, Clock, FileCheck, Eye } from "lucide-react";
 import { useCms } from "../CmsProvider";
 import { CmsCard } from "./CmsCard";
 import { CmsStatus } from "@/types/cms";
@@ -63,7 +63,8 @@ export function CmsListPageLayout() {
     const published = items.filter((i) => i.status === "published").length;
     const draft = items.filter((i) => i.status === "draft").length;
     const scheduled = items.filter((i) => i.status === "scheduled").length;
-    return { total: items.length, published, draft, scheduled };
+    const views = items.reduce((acc, i) => acc + (i.viewsCount || 0), 0);
+    return { total: items.length, published, draft, scheduled, views };
   }, [items]);
 
   return (
@@ -118,6 +119,16 @@ export function CmsListPageLayout() {
             <div>
               <p className="text-[11px] font-medium text-muted">Drafts</p>
               <p className="text-lg font-bold text-slate-300 leading-tight">{stats.draft}</p>
+            </div>
+          </div>
+
+          <div className="bg-panel border border-border rounded-xl p-3.5 flex items-center gap-3">
+            <div className="p-2.5 rounded-lg bg-purple-500/10 text-purple-400 border border-purple-500/20">
+              <Eye size={18} />
+            </div>
+            <div>
+              <p className="text-[11px] font-medium text-muted">Total Views</p>
+              <p className="text-lg font-bold text-purple-400 leading-tight">{stats.views.toLocaleString("en-IN")}</p>
             </div>
           </div>
         </div>

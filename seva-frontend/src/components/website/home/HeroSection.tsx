@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import {
   ArrowRight,
   ArrowUpRight,
@@ -215,14 +216,14 @@ export default function HeroSection() {
                   className="group-hover:translate-x-0.5 transition-transform"
                 />
               </Link>
-              <Link
+              {/* <Link
                 href="/donate"
                 className="inline-flex items-center gap-2 text-white/70 hover:text-white font-semibold text-sm transition-colors"
               >
                 <Heart size={16} className="text-[#E8542A]" />
                 Start a Campaign
                 <ArrowUpRight size={14} />
-              </Link>
+              </Link> */}
             </div>
 
             {/* Live stats ticker */}
@@ -270,15 +271,17 @@ export default function HeroSection() {
                     return (
                       <div
                         key={c.id}
-                        className={`absolute inset-0 transition-opacity duration-700 ${
-                          i === current ? "opacity-100" : "opacity-0"
-                        }`}
+                        className={`absolute inset-0 transition-opacity duration-700 ${i === current ? "opacity-100" : "opacity-0"
+                          }`}
                       >
                         {resolvedImg ? (
-                          <img
+                          <Image
                             src={resolvedImg}
                             alt={c.title}
-                            className="w-full h-full object-cover group-hover/img:scale-105 transition-transform duration-700"
+                            fill
+                            sizes="(max-width: 1024px) 100vw, 50vw"
+                            priority={i === 0}
+                            className="object-cover group-hover/img:scale-105 transition-transform duration-700"
                           />
                         ) : (
                           <div className="w-full h-full bg-gradient-to-br from-[#0a1628] via-[#1a3a6b] to-[#E8542A]/30 flex flex-col items-center justify-center p-6 text-center">
@@ -401,17 +404,18 @@ export default function HeroSection() {
                       onClick={() => setCurrent(i)}
                       onMouseEnter={() => setHoveredCard(i)}
                       onMouseLeave={() => setHoveredCard(null)}
-                      className={`relative w-20 h-14 rounded-xl overflow-hidden transition-all duration-300 ${
-                        i === current
+                      className={`relative w-20 h-14 rounded-xl overflow-hidden transition-all duration-300 ${i === current
                           ? "ring-2 ring-[#E8542A] ring-offset-2 ring-offset-[#0a1628] scale-105"
                           : "opacity-50 hover:opacity-80"
-                      }`}
+                        }`}
                     >
                       {resolvedThumb ? (
-                        <img
+                        <Image
                           src={resolvedThumb}
-                          alt=""
-                          className="w-full h-full object-cover"
+                          alt={c.title}
+                          fill
+                          sizes="80px"
+                          className="object-cover"
                         />
                       ) : (
                         <div className="w-full h-full bg-[#1a3a6b] flex items-center justify-center p-1 text-center">

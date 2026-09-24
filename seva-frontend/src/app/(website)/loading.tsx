@@ -1,3 +1,5 @@
+import Image from "next/image";
+
 export default function WebsiteLoading() {
   return (
     <div className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-white">
@@ -14,11 +16,13 @@ export default function WebsiteLoading() {
         {/* Outer glow ring */}
         <span className="absolute inline-flex h-28 w-28 rounded-full bg-[#E8542A]/10 animate-ping" />
         {/* Inner static ring */}
-        <span className="relative inline-flex h-24 w-24 rounded-full border-2 border-[#E8542A]/20 items-center justify-center bg-white shadow-xl shadow-orange-100">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
+        <span className="relative inline-flex h-24 w-24 rounded-full border-2 border-[#E8542A]/20 items-center justify-center bg-white shadow-xl shadow-orange-100 p-3">
+          <Image
             src="/assets/seva-logo.png"
             alt="Seva India Foundation"
+            width={64}
+            height={64}
+            priority
             className="h-16 w-auto object-contain"
           />
         </span>

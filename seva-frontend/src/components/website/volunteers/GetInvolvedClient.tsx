@@ -1,6 +1,8 @@
 "use client";
 
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
+import Image from "next/image";
+import { useSearchParams } from "next/navigation";
 import {
   Heart,
   CheckCircle2,
@@ -13,11 +15,13 @@ import {
   Loader2,
   HandHeart,
   Sparkles,
+  Briefcase,
 } from "lucide-react";
 import {
   createVolunteerApplication,
   VolunteerCategory,
   Availability,
+  FormType,
 } from "@/app/api/volunteer";
 
 const ACTIVE_VOLUNTEERS = [
@@ -129,12 +133,24 @@ export default function GetInvolvedClient({
   categories,
   faqs,
 }: GetInvolvedClientProps) {
+  const searchParams = useSearchParams();
+  const urlType = searchParams.get("type") || searchParams.get("tab") || searchParams.get("formType");
+  const initialType: FormType =
+    urlType === "corporate" ? "corporate" : urlType === "career" || urlType === "careers" ? "career" : "volunteer";
+
+  const [activeFormType, setActiveFormType] = useState<FormType>(initialType);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
+
+  const filteredCategories = categories.filter(
+    (c) => (c.formType || "volunteer") === activeFormType
+  );
+
+  const initialCat = filteredCategories[0] || categories[0];
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>(
-    categories[0]?._id || ""
+    initialCat?._id || ""
   );
   const [selectedRole, setSelectedRole] = useState<string>(
-    categories[0]?.title || ""
+    initialCat?.title || (initialType === "corporate" ? "CSR Partnership" : initialType === "career" ? "Career Opportunity" : "General Volunteer Support")
   );
   const [countryCode, setCountryCode] = useState("+91");
   const [phoneNumber, setPhoneNumber] = useState("");
@@ -144,13 +160,49 @@ export default function GetInvolvedClient({
     name: "",
     email: "",
     city: "",
-    role: categories[0]?.title || "",
+    role: initialCat?.title || (initialType === "corporate" ? "CSR Partnership" : initialType === "career" ? "Career Opportunity" : "General Volunteer Support"),
     availability: "" as Availability | "",
     message: "",
   });
   const [submitted, setSubmitted] = useState(false);
 
   const formRef = useRef<HTMLDivElement | null>(null);
+
+  const handleTabChange = (type: FormType) => {
+    setActiveFormType(type);
+    const newFiltered = categories.filter((c) => (c.formType || "volunteer") === type);
+    const firstNew = newFiltered[0];
+    if (firstNew) {
+      setSelectedCategoryId(firstNew._id);
+      setSelectedRole(firstNew.title);
+      setFormData((prev) => ({ ...prev, role: firstNew.title }));
+    } else {
+      setSelectedCategoryId("");
+      const fallbackRole =
+        type === "corporate"
+          ? "CSR Partnership"
+          : type === "career"
+          ? "Career Opportunity"
+          : "Volunteer Support";
+      setSelectedRole(fallbackRole);
+      setFormData((prev) => ({
+        ...prev,
+        role: fallbackRole,
+      }));
+    }
+  };
+
+  useEffect(() => {
+    if (urlType) {
+      const target: FormType =
+        urlType === "corporate"
+          ? "corporate"
+          : urlType === "career" || urlType === "careers"
+          ? "career"
+          : "volunteer";
+      handleTabChange(target);
+    }
+  }, [urlType]);
 
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const onlyDigits = e.target.value.replace(/\D/g, "").slice(0, 15);
@@ -190,23 +242,23 @@ export default function GetInvolvedClient({
 
     try {
       let categoryIdToSend = selectedCategoryId;
-      if (!categoryIdToSend && categories.length > 0) {
-        const found = categories.find(
+      if (!categoryIdToSend && filteredCategories.length > 0) {
+        const found = filteredCategories.find(
           (c) => c.title.toLowerCase() === formData.role.toLowerCase()
         );
-        categoryIdToSend = found ? found._id : categories[0]._id;
+        categoryIdToSend = found ? found._id : filteredCategories[0]._id;
       }
 
       const fullPhone = `${countryCode} ${phoneNumber.trim()}`;
 
       await createVolunteerApplication({
-        formType: "volunteer",
+        formType: activeFormType,
         name: formData.name,
         email: formData.email,
         phone: fullPhone,
         city: formData.city,
-        category: categoryIdToSend,
-        availability: formData.availability as Availability,
+        category: categoryIdToSend || undefined,
+        availability: (formData.availability as Availability) || "flexible",
         message: formData.message,
       });
 
@@ -231,20 +283,92 @@ export default function GetInvolvedClient({
           <div className="grid lg:grid-cols-12 gap-12 lg:gap-16 items-start">
             {/* Left 7 Columns: Selection Part */}
             <div className="lg:col-span-7">
-              <h2 className="text-3xl sm:text-4xl font-semibold text-[#0f2347] mb-3">
-                Select Your <span className="text-[#E8542A]">Role</span>
-              </h2>
-              <p className="text-gray-500 text-sm sm:text-base mb-8 max-w-xl">
-                Choose a volunteer role below to instantly select it in your application.
-              </p>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+                <div>
+                  <h2 className="text-3xl sm:text-4xl font-semibold text-[#0f2347]">
+                    Select Your <span className="text-[#E8542A]">Role</span>
+                  </h2>
+                  <p className="text-gray-500 text-sm mt-1">
+                    Choose a role below to instantly auto-fill your application.
+                  </p>
+                </div>
+              </div>
+
+              {/* Form Type Tabs: Volunteer vs Corporate vs Careers */}
+              <div className="inline-flex flex-wrap p-1 bg-slate-100 rounded-2xl border border-slate-200/80 mb-6 gap-1">
+                <button
+                  type="button"
+                  onClick={() => handleTabChange("volunteer")}
+                  className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all ${
+                    activeFormType === "volunteer"
+                      ? "bg-white text-[#0f2347] shadow-sm"
+                      : "text-gray-500 hover:text-[#0f2347]"
+                  }`}
+                >
+                  <HandHeart size={15} className={activeFormType === "volunteer" ? "text-[#E8542A]" : ""} />
+                  <span>Volunteers</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleTabChange("corporate")}
+                  className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all ${
+                    activeFormType === "corporate"
+                      ? "bg-white text-[#0f2347] shadow-sm"
+                      : "text-gray-500 hover:text-[#0f2347]"
+                  }`}
+                >
+                  <Sparkles size={15} className={activeFormType === "corporate" ? "text-[#E8542A]" : ""} />
+                  <span>Corporate & CSR</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleTabChange("career")}
+                  className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all ${
+                    activeFormType === "career"
+                      ? "bg-white text-[#0f2347] shadow-sm"
+                      : "text-gray-500 hover:text-[#0f2347]"
+                  }`}
+                >
+                  <Briefcase size={15} className={activeFormType === "career" ? "text-[#E8542A]" : ""} />
+                  <span>Careers & Fellowships</span>
+                </button>
+              </div>
 
               <div className="grid sm:grid-cols-2 gap-4 mb-8">
-                {categories.length === 0 ? (
-                  <p className="col-span-2 text-sm text-gray-400 text-center py-6">
-                    No volunteer roles configured at the moment. Please check back soon.
-                  </p>
+                {filteredCategories.length === 0 ? (
+                  <div className="col-span-2 text-center py-10 bg-slate-50 border border-dashed border-slate-200 rounded-2xl p-6">
+                    <p className="text-sm font-semibold text-[#0f2347] mb-1">
+                      {activeFormType === "corporate"
+                        ? "Corporate CSR Opportunities"
+                        : activeFormType === "career"
+                        ? "Open Career & Fellowship Positions"
+                        : "Volunteer Opportunities"}
+                    </p>
+                    <p className="text-xs text-gray-500 max-w-sm mx-auto mb-4">
+                      {activeFormType === "corporate"
+                        ? "We welcome customized corporate CSR partnerships, employee giving, and skill-based sponsorships."
+                        : activeFormType === "career"
+                        ? "Explore full-time, part-time, and fellowship opportunities to build a meaningful career in grassroots social change."
+                        : "We are always welcoming enthusiastic individuals. Please submit your application using the form."}
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        handleRoleSelect(
+                          activeFormType === "corporate"
+                            ? "Corporate CSR Partnership"
+                            : activeFormType === "career"
+                            ? "General Career Opportunity"
+                            : "General Volunteer Support"
+                        )
+                      }
+                      className="px-4 py-2 bg-[#0f2347] text-white text-xs font-bold rounded-xl hover:bg-[#1a3a6b] transition-colors"
+                    >
+                      Select General {activeFormType === "corporate" ? "Corporate" : activeFormType === "career" ? "Career" : "Volunteer"} Role
+                    </button>
+                  </div>
                 ) : (
-                  categories.map((cat) => {
+                  filteredCategories.map((cat) => {
                     const isSelected = selectedRole === cat.title;
                     return (
                       <button
@@ -268,13 +392,12 @@ export default function GetInvolvedClient({
                           style={{ backgroundColor: (cat.color || "#E8542A") + "15" }}
                         >
                           {cat.icon ? (
-                            <img
+                            <Image
                               src={cat.icon}
-                              alt=""
+                              alt={cat.title || ""}
+                              width={20}
+                              height={20}
                               className="w-5 h-5 object-contain"
-                              onError={(e) => {
-                                (e.target as HTMLElement).style.display = "none";
-                              }}
                             />
                           ) : (
                             <HandHeart
@@ -303,14 +426,14 @@ export default function GetInvolvedClient({
                   fill="currentColor"
                 />
                 <h3 className="text-white font-bold mb-4 relative">
-                  Volunteer Journey
+                  {activeFormType === "corporate" ? "CSR Partnership Journey" : "Volunteer Journey"}
                 </h3>
                 <ul className="space-y-2.5 relative">
                   {[
-                    "Step 1: Select your preferred role above",
+                    "Step 1: Select your preferred role or initiative above",
                     "Step 2: Complete the application form on the right",
-                    "Step 3: Attend orientation at our Rajpur Road office",
-                    "Step 4: Get assigned to a centre and start serving",
+                    "Step 3: Connect with our coordinator for induction / CSR proposal",
+                    "Step 4: Create real, grassroots social impact together",
                   ].map((item) => (
                     <li
                       key={item}
@@ -341,7 +464,7 @@ export default function GetInvolvedClient({
                     Application Received!
                   </h3>
                   <p className="text-gray-500 text-sm leading-relaxed max-w-sm mx-auto">
-                    Thank you for applying. We will reach out to you within 48 hours to discuss next steps.
+                    Thank you for reaching out. Our team will contact you within 48 hours to coordinate next steps.
                   </p>
                   <button
                     onClick={() => {
@@ -365,17 +488,18 @@ export default function GetInvolvedClient({
               ) : (
                 <>
                   <h2 className="text-2xl font-bold text-[#0f2347] mb-6">
-                    Application <span className="text-[#E8542A]">Form</span>
+                    {activeFormType === "corporate" ? "CSR Partner" : "Volunteer"}{" "}
+                    <span className="text-[#E8542A]">Application</span>
                   </h2>
                   <form onSubmit={handleSubmit} className="space-y-5">
                     <div>
                       <label className="block text-[11px] font-bold text-[#0f2347] uppercase tracking-wider mb-2">
-                        Selected Role
+                        Selected Role / Purpose
                       </label>
                       <div className="w-full px-4 py-3 bg-orange-50/50 border border-[#E8542A]/20 rounded-xl text-sm text-[#0f2347] font-semibold flex items-center justify-between">
                         <span className="text-[#E8542A]">{formData.role}</span>
                         <span className="text-[10px] text-gray-400 font-normal italic">
-                          Selected from left grid
+                          Selected role
                         </span>
                       </div>
                     </div>
@@ -383,7 +507,7 @@ export default function GetInvolvedClient({
                     <div className="grid sm:grid-cols-2 gap-5">
                       <div>
                         <label className="block text-[11px] font-bold text-[#0f2347] uppercase tracking-wider mb-2">
-                          Full Name *
+                          {activeFormType === "corporate" ? "Contact Person / Org *" : "Full Name *"}
                         </label>
                         <input
                           type="text"
@@ -392,7 +516,7 @@ export default function GetInvolvedClient({
                           onChange={(e) =>
                             setFormData({ ...formData, name: e.target.value })
                           }
-                          placeholder="Your full name"
+                          placeholder={activeFormType === "corporate" ? "e.g. Acme Corp / Rahul" : "Your full name"}
                           className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm text-[#0f2347] focus:outline-none focus:ring-2 focus:ring-[#1a3a6b]/20 focus:border-[#1a3a6b] bg-white placeholder:text-gray-300"
                         />
                       </div>
@@ -445,7 +569,7 @@ export default function GetInvolvedClient({
                       </div>
                       <div>
                         <label className="block text-[11px] font-bold text-[#0f2347] uppercase tracking-wider mb-2">
-                          City / Town *
+                          City / Location *
                         </label>
                         <input
                           type="text"
@@ -463,25 +587,27 @@ export default function GetInvolvedClient({
                     <div className="grid sm:grid-cols-2 gap-5">
                       <div>
                         <label className="block text-[11px] font-bold text-[#0f2347] uppercase tracking-wider mb-2">
-                          Preferred Role Dropdown
+                          Role Dropdown
                         </label>
                         <select
                           value={formData.role}
                           onChange={(e) => {
                             const val = e.target.value;
                             setSelectedRole(val);
-                            const found = categories.find((c) => c.title === val);
+                            const found = filteredCategories.find((c) => c.title === val);
                             if (found) setSelectedCategoryId(found._id);
                             setFormData({ ...formData, role: val });
                           }}
                           className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm text-[#0f2347] focus:outline-none focus:ring-2 focus:ring-[#1a3a6b]/20 focus:border-[#1a3a6b] bg-white"
                         >
-                          {categories.map((cat) => (
+                          {filteredCategories.map((cat) => (
                             <option key={cat._id} value={cat.title}>
                               {cat.title}
                             </option>
                           ))}
-                          <option value="Open to any role">Open to anything</option>
+                          <option value={activeFormType === "corporate" ? "General CSR Partnership" : "Open to any role"}>
+                            {activeFormType === "corporate" ? "General CSR Partnership" : "Open to any role"}
+                          </option>
                         </select>
                       </div>
                       <div>
@@ -503,9 +629,9 @@ export default function GetInvolvedClient({
                           <option value="weekends">Weekends only</option>
                           <option value="weekdays">Weekdays only</option>
                           <option value="both">Both weekdays &amp; weekends</option>
-                          <option value="flexible">Flexible / As needed</option>
+                          <option value="flexible">Flexible / Project based</option>
                           <option value="fulltime">
-                            Full-time (40+ hours/week)
+                            Full-time / Active partnership
                           </option>
                         </select>
                       </div>
@@ -513,7 +639,9 @@ export default function GetInvolvedClient({
 
                     <div>
                       <label className="block text-[11px] font-bold text-[#0f2347] uppercase tracking-wider mb-2">
-                        Why do you want to volunteer? (Optional)
+                        {activeFormType === "corporate"
+                          ? "Partnership Details / Message (Optional)"
+                          : "Why do you want to volunteer? (Optional)"}
                       </label>
                       <textarea
                         rows={4}
@@ -521,7 +649,11 @@ export default function GetInvolvedClient({
                         onChange={(e) =>
                           setFormData({ ...formData, message: e.target.value })
                         }
-                        placeholder="Tell us a bit about yourself, your skills, or what motivates you..."
+                        placeholder={
+                          activeFormType === "corporate"
+                            ? "Tell us about your organization, CSR focus areas, or proposed initiatives..."
+                            : "Tell us a bit about yourself, your skills, or what motivates you..."
+                        }
                         className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm text-[#0f2347] focus:outline-none focus:ring-2 focus:ring-[#1a3a6b]/20 focus:border-[#1a3a6b] placeholder:text-gray-300 resize-none bg-white"
                       />
                     </div>
@@ -545,13 +677,13 @@ export default function GetInvolvedClient({
                       ) : (
                         <>
                           <Send size={16} />
-                          Submit Application
+                          Submit {activeFormType === "corporate" ? "CSR Proposal" : "Application"}
                         </>
                       )}
                     </button>
 
                     <p className="text-[11px] text-center text-gray-400">
-                      By submitting, you agree to our volunteer terms. We will never share your data.
+                      By submitting, you agree to our terms. We will never share your data.
                     </p>
                   </form>
                 </>

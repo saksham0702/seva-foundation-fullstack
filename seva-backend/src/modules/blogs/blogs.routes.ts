@@ -10,6 +10,7 @@ const guard = [authMiddleware, permissionMiddleware("cms")];
 
 // Public read endpoints for website & dashboard viewers
 router.get("/", BlogController.getAllBlogs);
+router.get("/recent", BlogController.getRecentBlogs);
 router.get("/options", BlogController.getBlogOptions);
 router.get("/:id", BlogController.getBlogById);
 

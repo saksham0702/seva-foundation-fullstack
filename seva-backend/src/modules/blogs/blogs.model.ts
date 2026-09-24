@@ -27,6 +27,7 @@ export interface IBlog extends Document {
   newsSource?: string;
   authorName?: string;
   readTime?: string;
+  viewsCount?: number;
 
   scheduledAt?: string;
   createdBy?: Types.ObjectId;
@@ -77,6 +78,7 @@ const BlogSchema = new Schema<IBlog>(
     newsSource: { type: String },
     authorName: { type: String },
     readTime: { type: String },
+    viewsCount: { type: Number, default: 0 },
 
     scheduledAt: { type: String },
     createdBy: { type: Types.ObjectId, ref: "User" },

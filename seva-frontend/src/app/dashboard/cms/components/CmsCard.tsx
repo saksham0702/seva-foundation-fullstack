@@ -79,6 +79,10 @@ export function CmsCard({ item }: { item: CmsItem }) {
                 </span>
               </>
             )}
+            <span className="text-muted/50">•</span>
+            <span className="text-purple-400/90 font-medium flex items-center gap-1">
+              <Eye size={11} /> {(item.viewsCount || 0).toLocaleString("en-IN")} views
+            </span>
           </div>
 
           {/* Title & Excerpt */}

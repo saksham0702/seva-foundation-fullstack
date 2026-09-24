@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { Users, Clock } from "lucide-react";
 import { getImageUrl } from "@/lib/image";
 
@@ -68,21 +69,20 @@ export function CampaignCard({
         className="bg-white border border-slate-200 rounded-2xl overflow-hidden hover:shadow-xl hover:border-slate-300 transition-all group flex flex-col"
       >
         <div className="relative h-56 overflow-hidden bg-slate-100">
-          <img
+          <Image
             src={getImageUrl(campaign.image)}
             alt={campaign.name}
-            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
-            onError={(e) => {
-              (e.target as HTMLImageElement).src = getImageUrl(null);
-            }}
+            fill
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            className="object-cover group-hover:scale-110 transition-transform duration-700"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent z-10" />
           <span
-            className={`absolute top-4 right-4 text-[10px] font-semibold uppercase tracking-widest px-3 py-1.5 rounded-full shadow-lg ${cfg.className}`}
+            className={`absolute top-4 right-4 text-[10px] font-semibold uppercase tracking-widest px-3 py-1.5 rounded-full shadow-lg z-10 ${cfg.className}`}
           >
             {cfg.label}
           </span>
-          <span className="absolute bottom-4 left-4 text-[10px] font-semibold uppercase tracking-widest text-white bg-black/40 backdrop-blur-md px-3 py-1.5 rounded-full">
+          <span className="absolute bottom-4 left-4 text-[10px] font-semibold uppercase tracking-widest text-white bg-black/40 backdrop-blur-md px-3 py-1.5 rounded-full z-10">
             {campaign.category}
           </span>
         </div>
@@ -139,29 +139,28 @@ export function CampaignCard({
     >
       {/* Image */}
       <div className="relative h-52 overflow-hidden bg-gray-100">
-        <img
+        <Image
           src={getImageUrl(campaign.image)}
           alt={campaign.name}
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-          onError={(e) => {
-            (e.target as HTMLImageElement).src = getImageUrl(null);
-          }}
+          fill
+          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+          className="object-cover group-hover:scale-105 transition-transform duration-500"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/10 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/10 to-transparent z-10" />
 
         {campaign.urgent && (
-          <span className="absolute top-3 left-3 bg-[#E8542A] text-white text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full">
+          <span className="absolute top-3 left-3 bg-[#E8542A] text-white text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full z-10">
             Urgent
           </span>
         )}
 
         {Boolean(campaign.productsCount && campaign.productsCount > 0) && (
-          <span className="absolute top-3 right-3 bg-white/95 backdrop-blur-sm text-[#0f2347] text-[10px] font-semibold uppercase tracking-wider px-2.5 py-1 rounded-full shadow-sm">
+          <span className="absolute top-3 right-3 bg-white/95 backdrop-blur-sm text-[#0f2347] text-[10px] font-semibold uppercase tracking-wider px-2.5 py-1 rounded-full shadow-sm z-10">
             📦 {campaign.productsCount} Items
           </span>
         )}
 
-        <span className="absolute bottom-3 left-3 text-[10px] font-semibold uppercase tracking-widest text-white bg-black/40 backdrop-blur-sm px-2.5 py-1 rounded-full">
+        <span className="absolute bottom-3 left-3 text-[10px] font-semibold uppercase tracking-widest text-white bg-black/40 backdrop-blur-sm px-2.5 py-1 rounded-full z-10">
           {campaign.category}
         </span>
       </div>

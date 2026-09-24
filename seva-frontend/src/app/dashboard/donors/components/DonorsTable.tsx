@@ -116,6 +116,28 @@ function DonorDrawer({
             </span>
           </div>
 
+          {/* Certificate Quick Action */}
+          {(donor.certificateNo || donor.certificateUrl) && (
+            <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3.5 flex items-center justify-between gap-3">
+              <div>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-800 block">
+                  Official 80G Certificate
+                </span>
+                <span className="font-mono font-bold text-xs text-emerald-950">
+                  {donor.certificateNo || "Verified"}
+                </span>
+              </div>
+              <a
+                href={`/verify/${donor.certificateNo || donor._id}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-lg shadow-sm transition-all flex items-center gap-1"
+              >
+                Verify Certificate →
+              </a>
+            </div>
+          )}
+
           {/* Contact details */}
           <div className="flex flex-col gap-2">
             <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
@@ -166,10 +188,11 @@ function DonorDrawer({
                     typeof d.campaign === "object"
                       ? d.campaign?.name || d.campaign?.title
                       : d.campaign || d.initiative || "General Support";
+                  const certCode = d.certificateNo || donor.certificateNo || d.receiptNumber;
                   return (
                     <div
                       key={d._id || idx}
-                      className="bg-slate-50 border border-slate-200/80 rounded-xl p-3.5 space-y-1.5 text-xs"
+                      className="bg-slate-50 border border-slate-200/80 rounded-xl p-3.5 space-y-2 text-xs"
                     >
                       <div className="flex items-center justify-between">
                         <span className="font-bold text-slate-900 text-sm">
@@ -199,17 +222,25 @@ function DonorDrawer({
                             : "—"}
                         </span>
                       </div>
-                      {d.receiptNumber && (
-                        <div className="pt-1 border-t border-slate-200/60 flex items-center justify-between text-[10px] text-slate-400">
-                          <span>Receipt: <strong className="text-slate-700 font-mono">{d.receiptNumber}</strong></span>
-                          <a
-                            href={`/verify/${d.receiptNumber}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-[#4C6FFF] hover:underline font-bold"
-                          >
-                            Certificate →
-                          </a>
+                      {(d.receiptNumber || certCode) && (
+                        <div className="pt-2 border-t border-slate-200/60 flex items-center justify-between text-[11px]">
+                          <span className="text-slate-500">
+                            {d.certificateNo || donor.certificateNo ? (
+                              <>Cert: <strong className="text-emerald-700 font-mono font-bold">{d.certificateNo || donor.certificateNo}</strong></>
+                            ) : (
+                              <>Receipt: <strong className="text-slate-700 font-mono">{d.receiptNumber}</strong></>
+                            )}
+                          </span>
+                          {certCode && (
+                            <a
+                              href={`/verify/${certCode}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-emerald-600 hover:underline font-bold"
+                            >
+                              Certificate →
+                            </a>
+                          )}
                         </div>
                       )}
                     </div>

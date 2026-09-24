@@ -58,21 +58,77 @@ export const generateCertificatePdf = async (certificate: ICertificate): Promise
     const capitalizedRecipient = (certificate.recipientName || "").toUpperCase();
     doc.fillColor("#111").fontSize(28).font("Times-Bold").text(capitalizedRecipient, 0, 260, { align: "center" });
 
-    doc
-      .fillColor("#444")
-      .fontSize(11)
-      .font("Times-Roman")
-      .text(certificate.body, 120, 308, { width: width - 240, align: "center", lineGap: 4 });
+    const bodyText = certificate.body || "";
+    // Match anything in quotes: "...", “...”, '...', ‘...’
+    const quoteRegex = /(["“][^"“”]+["”]|'[^']+'|‘[^’]+’)/g;
+    const matches = Array.from(bodyText.matchAll(quoteRegex));
+
+    if (matches.length > 0) {
+      let currentIndex = 0;
+      const segments: Array<{ text: string; isBold: boolean }> = [];
+
+      for (const m of matches) {
+        const matchIndex = m.index!;
+        if (matchIndex > currentIndex) {
+          segments.push({
+            text: bodyText.substring(currentIndex, matchIndex),
+            isBold: false,
+          });
+        }
+        segments.push({
+          text: m[0],
+          isBold: true,
+        });
+        currentIndex = matchIndex + m[0].length;
+      }
+      if (currentIndex < bodyText.length) {
+        segments.push({
+          text: bodyText.substring(currentIndex),
+          isBold: false,
+        });
+      }
+
+      // Render segments with PDFKit continued: true
+      segments.forEach((seg, sIdx) => {
+        const isLast = sIdx === segments.length - 1;
+        if (seg.isBold) {
+          doc.fontSize(12).font("Times-Bold").fillColor("#0B2C6B");
+        } else {
+          doc.fontSize(11).font("Times-Roman").fillColor("#444");
+        }
+
+        if (sIdx === 0) {
+          doc.text(seg.text, 120, 305, {
+            width: width - 240,
+            align: "center",
+            lineGap: 4,
+            continued: !isLast,
+          });
+        } else {
+          doc.text(seg.text, {
+            continued: !isLast,
+          });
+        }
+      });
+    } else {
+      doc
+        .fillColor("#444")
+        .fontSize(11)
+        .font("Times-Roman")
+        .text(bodyText, 120, 308, { width: width - 240, align: "center", lineGap: 4 });
+    }
 
     const causeText = certificate.projectName
       ? `${certificate.programName} — ${certificate.projectName}`
       : certificate.programName;
 
-    doc
-      .fillColor("#0B2C6B")
-      .fontSize(13)
-      .font("Times-Bold")
-      .text(`Cause / Program: ${causeText}`, 0, 395, { align: "center" });
+    if (causeText) {
+      doc
+        .fillColor("#0B2C6B")
+        .fontSize(13.5)
+        .font("Times-Bold")
+        .text(`Cause / Program: "${causeText}"`, 0, 395, { align: "center" });
+    }
 
     // Helper to resolve an image path or data URI to a Buffer or local file path
     const resolveImage = (imgSrc?: string): Buffer | string | null => {

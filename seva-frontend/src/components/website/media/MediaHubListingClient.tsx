@@ -2,6 +2,7 @@
 
 import React, { useMemo, useState, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import {
   Calendar,
   MapPin,
@@ -35,16 +36,14 @@ export function BlogCard({ post }: { post: CmsItem }) {
     >
       <div>
         <div className="relative h-52 overflow-hidden bg-slate-100">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
+          <Image
             src={getImageUrl(post.featuredImage)}
             alt={post.title}
-            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-            onError={(e) => {
-              (e.target as HTMLImageElement).src = getImageUrl(null);
-            }}
+            fill
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            className="object-cover transition-transform duration-700 group-hover:scale-105"
           />
-          <div className="absolute top-4 left-4 flex items-center gap-2">
+          <div className="absolute top-4 left-4 flex items-center gap-2 z-10">
             <span className="px-3 py-1.5 bg-[#E8542A] text-white text-[10px] font-bold uppercase tracking-wider rounded-full shadow-md">
               {post.category || "Story"}
             </span>
@@ -113,16 +112,14 @@ export function EventCard({
     <div className="group bg-white rounded-3xl overflow-hidden border border-gray-100 hover:border-cyan-500/40 hover:shadow-2xl transition-all duration-300 flex flex-col justify-between">
       <div>
         <div className="relative h-56 overflow-hidden bg-slate-100">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
+          <Image
             src={getImageUrl(event.featuredImage)}
             alt={event.title}
-            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-            onError={(e) => {
-              (e.target as HTMLImageElement).src = getImageUrl(null);
-            }}
+            fill
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            className="object-cover transition-transform duration-700 group-hover:scale-105"
           />
-          <div className="absolute top-4 left-4 flex flex-wrap items-center gap-2">
+          <div className="absolute top-4 left-4 flex flex-wrap items-center gap-2 z-10">
             <span
               className={`px-3 py-1 text-[10px] font-bold uppercase tracking-wider rounded-full shadow-md ${
                 isUpcoming
@@ -216,16 +213,14 @@ export function NewsCard({ item }: { item: CmsItem }) {
     >
       <div>
         <div className="relative h-52 overflow-hidden bg-slate-100">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
+          <Image
             src={getImageUrl(item.featuredImage)}
             alt={item.title}
-            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-            onError={(e) => {
-              (e.target as HTMLImageElement).src = getImageUrl(null);
-            }}
+            fill
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            className="object-cover transition-transform duration-500 group-hover:scale-105"
           />
-          <div className="absolute top-4 left-4 flex items-center gap-2">
+          <div className="absolute top-4 left-4 flex items-center gap-2 z-10">
             <span className="px-3 py-1 bg-[#0A1A2F] text-[#F5A623] text-[10px] font-bold uppercase tracking-wider rounded-full shadow-md border border-[#F5A623]/30">
               {item.category || "Press"}
             </span>

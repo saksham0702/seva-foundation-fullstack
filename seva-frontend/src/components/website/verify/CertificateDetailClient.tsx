@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import {
   ShieldCheck,
   ShieldAlert,
@@ -96,11 +97,15 @@ export default function CertificateDetailClient({
               <div className="absolute inset-2 sm:inset-3 border-2 border-[#D4A843] rounded-2xl pointer-events-none opacity-80" />
 
               {cert.signatures?.seal?.imageUrl && (
-                <img
-                  src={getImageUrl(cert.signatures.seal.imageUrl)}
-                  alt="Watermark Seal"
-                  className="absolute inset-0 m-auto w-64 h-64 object-contain opacity-5 pointer-events-none"
-                />
+                <div className="absolute inset-0 m-auto w-64 h-64 opacity-5 pointer-events-none">
+                  <Image
+                    src={getImageUrl(cert.signatures.seal.imageUrl)}
+                    alt="Watermark Seal"
+                    fill
+                    sizes="256px"
+                    className="object-contain"
+                  />
+                </div>
               )}
 
               {/* Header */}
@@ -158,10 +163,13 @@ export default function CertificateDetailClient({
 
                 {cert.qrCodeImage && (
                   <div className="flex items-center gap-2">
-                    <img
+                    <Image
                       src={cert.qrCodeImage}
                       alt="Verification QR"
-                      className="w-12 h-12 border border-gray-200 rounded p-0.5"
+                      width={48}
+                      height={48}
+                      unoptimized
+                      className="border border-gray-200 rounded p-0.5"
                     />
                     <div className="text-[10px] text-gray-400 leading-tight">
                       <span className="font-bold text-emerald-600">✓ Digital Verifiable</span>
@@ -176,11 +184,15 @@ export default function CertificateDetailClient({
                 <div className="flex flex-col items-center text-center">
                   <div className="h-16 flex items-end justify-center mb-1">
                     {cert.signatures?.secretary?.imageUrl ? (
-                      <img
-                        src={getImageUrl(cert.signatures.secretary.imageUrl)}
-                        alt="Secretary Signature"
-                        className="max-h-14 max-w-[150px] object-contain"
-                      />
+                      <div className="relative h-14 w-[150px]">
+                        <Image
+                          src={getImageUrl(cert.signatures.secretary.imageUrl)}
+                          alt="Secretary Signature"
+                          fill
+                          sizes="150px"
+                          className="object-contain"
+                        />
+                      </div>
                     ) : (
                       <div className="px-3 py-1 bg-emerald-50 text-emerald-700 font-mono text-[11px] rounded border border-emerald-200">
                         ✓ Digitally Signed
@@ -199,11 +211,15 @@ export default function CertificateDetailClient({
                 <div className="flex flex-col items-center text-center">
                   <div className="h-16 flex items-end justify-center mb-1">
                     {cert.signatures?.president?.imageUrl ? (
-                      <img
-                        src={getImageUrl(cert.signatures.president.imageUrl)}
-                        alt="President Signature"
-                        className="max-h-14 max-w-[150px] object-contain"
-                      />
+                      <div className="relative h-14 w-[150px]">
+                        <Image
+                          src={getImageUrl(cert.signatures.president.imageUrl)}
+                          alt="President Signature"
+                          fill
+                          sizes="150px"
+                          className="object-contain"
+                        />
+                      </div>
                     ) : (
                       <div className="px-3 py-1 bg-emerald-50 text-emerald-700 font-mono text-[11px] rounded border border-emerald-200">
                         ✓ Digitally Signed

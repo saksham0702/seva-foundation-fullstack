@@ -1,12 +1,14 @@
 import { Document, Schema, model, Types } from "mongoose";
 
 export interface ICmsSection {
+  _id?: Types.ObjectId | string;
   key: string;
   name?: string;
   title?: string;
   subtitle?: string;
   description?: string;
   image?: string;
+  video?: string;
   items?: Array<Record<string, any>>;
   extra?: Record<string, any>;
 }
@@ -17,6 +19,7 @@ export interface ICmsPage extends Document {
   title?: string;
   subtitle?: string;
   bannerImage?: string;
+  bannerVideo?: string;
   content?: string;
   sections: ICmsSection[];
   settings?: Record<string, any>;
@@ -41,10 +44,11 @@ const CmsSectionSchema = new Schema(
     subtitle: { type: String },
     description: { type: String },
     image: { type: String },
+    video: { type: String },
     items: { type: [Schema.Types.Mixed], default: [] },
     extra: { type: Schema.Types.Mixed, default: {} },
   },
-  { _id: false }
+  { _id: true }
 );
 
 const CmsPageSchema = new Schema<ICmsPage>(
@@ -70,6 +74,10 @@ const CmsPageSchema = new Schema<ICmsPage>(
       default: "",
     },
     bannerImage: {
+      type: String,
+      default: "",
+    },
+    bannerVideo: {
       type: String,
       default: "",
     },

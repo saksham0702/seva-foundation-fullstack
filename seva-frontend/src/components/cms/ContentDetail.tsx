@@ -1,4 +1,6 @@
-import React, { ReactNode } from "react";
+"use client";
+
+import React, { ReactNode, useEffect } from "react";
 import Link from "next/link";
 import {
   ArrowLeft,
@@ -13,6 +15,7 @@ import { getImageUrl, resolveRichTextHtml } from "@/lib/image";
 import { richProseClass } from "@/lib/prose";
 import { ShareButton } from "@/components/cms/ShareButton";
 import { CmsImage } from "@/components/cms/CmsImage";
+import { recordEntityView } from "@/app/api/analytics";
 
 export interface MetaItem {
   icon?: LucideIcon | React.ComponentType<{ size?: number; className?: string }> | React.ReactNode;
@@ -85,6 +88,13 @@ export function ContentDetail({
     ["--accent" as string]: accentColor,
     ["--heading" as string]: headingColor,
   } as React.CSSProperties;
+
+  useEffect(() => {
+    const entityId = item?._id || item?.id;
+    if (entityId && item?.type) {
+      recordEntityView(item.type, entityId);
+    }
+  }, [item?._id, item?.id, item?.type]);
 
   if (isLoading) {
     return (
@@ -171,11 +181,14 @@ export function ContentDetail({
       {/* ── Cover Image — same max-w as content, fixed aspect ratio ── */}
       {item.featuredImage && (
         <section className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 mb-8">
-          <div className="rounded-lg overflow-hidden shadow-xl border border-gray-100 aspect-[16/9] bg-slate-100">
+          <div className="relative rounded-lg overflow-hidden shadow-xl border border-gray-100 aspect-[16/9] bg-slate-100">
             <CmsImage
               src={getImageUrl(item.featuredImage)}
               alt={item.title}
-              className="w-full h-full object-contain"
+              fill
+              sizes="(max-width: 1024px) 100vw, 896px"
+              priority
+              className="object-contain"
             />
           </div>
         </section>
@@ -267,11 +280,13 @@ export function ContentDetail({
                     <CmsImage
                       src={getImageUrl(r.featuredImage)}
                       alt={r.title}
-                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                      fill
+                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                      className="object-cover transition-transform duration-500 group-hover:scale-105"
                       fallbackSrc={getImageUrl(null)}
                     />
                     <span
-                      className="absolute top-4 left-4 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider rounded-full shadow text-white"
+                      className="absolute top-4 left-4 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider rounded-full shadow text-white z-10"
                       style={{ backgroundColor: accentColor }}
                     >
                       {r.category}

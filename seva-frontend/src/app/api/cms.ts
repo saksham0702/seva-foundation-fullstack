@@ -5,12 +5,14 @@ import type { CmsContentType, CmsForm, CmsItem } from "@/types/cms";
 // ── Static Pages CMS ─────────────────────────────────────────────────────────
 
 export interface CmsSection {
+  _id?: string;
   key: string;
   name?: string;
   title?: string;
   subtitle?: string;
   description?: string;
   image?: string;
+  video?: string;
   items?: Array<Record<string, any>>;
   extra?: Record<string, any>;
 }
@@ -22,6 +24,7 @@ export interface CmsPage {
   title?: string;
   subtitle?: string;
   bannerImage?: string;
+  bannerVideo?: string;
   content?: string;
   sections: CmsSection[];
   settings?: Record<string, any>;
@@ -77,6 +80,15 @@ export const uploadCmsImageFile = async (file: File): Promise<string> => {
   const formData = new FormData();
   formData.append("image", file);
   const response = await axiosInstance.post(endpoint.cms.uploadImage, formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+  return response.data?.data?.url || response.data?.url || "";
+};
+
+export const uploadCmsMediaFile = async (file: File): Promise<string> => {
+  const formData = new FormData();
+  formData.append("file", file);
+  const response = await axiosInstance.post(endpoint.cms.uploadMedia, formData, {
     headers: { "Content-Type": "multipart/form-data" },
   });
   return response.data?.data?.url || response.data?.url || "";
@@ -166,6 +178,7 @@ const mapBackendToCmsItem = (backendItem: any, contentType: CmsContentType): Cms
     newsSource: backendItem.newsSource,
     authorName: backendItem.authorName,
     readTime: backendItem.readTime || "3 min read",
+    viewsCount: backendItem.viewsCount || 0,
     createdAt: backendItem.createdAt,
     updatedAt: backendItem.updatedAt,
   };

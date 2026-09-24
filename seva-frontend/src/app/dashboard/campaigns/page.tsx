@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import {
   Plus,
   Users,
@@ -12,6 +13,7 @@ import {
   Pencil,
   Trash2,
   CheckCircle,
+  Eye,
 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getCampaigns, deleteCampaign, toggleCampaignStatus, Campaign, CampaignStatus } from "@/app/api/campaign";
@@ -106,6 +108,8 @@ const AllCampaignsPage = () => {
   const overallPct =
     totalGoal > 0 ? Math.min(100, Math.round((totalRaised / totalGoal) * 100)) : 0;
 
+  const totalViews = campaigns.reduce((s, c) => s + (c.viewsCount || 0), 0);
+
   const stats = [
     { label: "Total Campaigns", value: campaigns.length, icon: TrendingUp },
     { label: "Active Campaigns", value: activeCampaigns, icon: Clock },
@@ -114,7 +118,7 @@ const AllCampaignsPage = () => {
       value: `₹${(totalRaised / 100000).toFixed(1)}L`,
       icon: TrendingUp,
     },
-    { label: "Overall Progress", value: `${overallPct}%`, icon: TrendingUp },
+    { label: "Total Views", value: totalViews.toLocaleString("en-IN"), icon: Eye },
   ];
 
   if (isLoading) {
@@ -243,22 +247,20 @@ const AllCampaignsPage = () => {
                   >
                     {/* Image */}
                     <div className="relative h-52 overflow-hidden bg-panel">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
+                      <Image
                         src={getImageUrl(typeof c.images?.[0] === "string" ? c.images[0] : null)}
                         alt={c.name}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).src = getImageUrl(null);
-                        }}
+                        fill
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                        className="object-cover group-hover:scale-105 transition-transform duration-500"
                       />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-60" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-60 z-10" />
                       <span
-                        className={`absolute top-4 right-4 text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-full shadow-sm backdrop-blur-md ${cfg.className}`}
+                        className={`absolute top-4 right-4 text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-full shadow-sm backdrop-blur-md z-10 ${cfg.className}`}
                       >
                         {cfg.label}
                       </span>
-                      <span className="absolute bottom-4 left-4 text-[10px] font-semibold uppercase tracking-widest text-white bg-black/40 backdrop-blur-md px-3 py-1.5 rounded-full">
+                      <span className="absolute bottom-4 left-4 text-[10px] font-semibold uppercase tracking-widest text-white bg-black/40 backdrop-blur-md px-3 py-1.5 rounded-full z-10">
                         {categoryName}
                       </span>
                     </div>
@@ -266,7 +268,7 @@ const AllCampaignsPage = () => {
                     {/* Content */}
                     <div className="p-6 flex grow flex-col">
                       <Link
-                        href={`/dashboard/campaigns/${c._id}`}
+                        href={`/dashboard/campaigns/${c._id}/overview`}
                         className="text-base font-bold text-text-primary leading-snug line-clamp-2 mb-4 hover:text-blueaccent transition-colors"
                       >
                         {c.name}
@@ -295,9 +297,15 @@ const AllCampaignsPage = () => {
                             style={{ width: `${pct}%` }}
                           />
                         </div>
-                        <div className="flex justify-between text-[10px] font-semibold text-muted uppercase tracking-wider">
+                        <div className="flex justify-between items-center text-[10px] font-semibold text-muted uppercase tracking-wider">
                           <span>Goal: ₹{goal > 0 ? goal.toLocaleString("en-IN") : "0"}</span>
-                          <span>{donors} Donors</span>
+                          <div className="flex items-center gap-1.5">
+                            <span>{donors} Donors</span>
+                            <span>•</span>
+                            <span className="inline-flex items-center gap-0.5 text-blueaccent font-bold lowercase">
+                              <Eye size={11} /> {(c.viewsCount || 0).toLocaleString("en-IN")}
+                            </span>
+                          </div>
                         </div>
                       </div>
 
@@ -319,10 +327,18 @@ const AllCampaignsPage = () => {
                           <option value="paused">Paused</option>
                         </select>
 
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-1.5">
+                          <Link
+                            href={`/dashboard/campaigns/${c._id}/overview`}
+                            className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-bold text-blueaccent hover:bg-blueaccent/10 rounded-lg border border-blueaccent/30 transition-all"
+                            title="View Campaign Overview"
+                          >
+                            <Eye size={13} />
+                            <span>Overview</span>
+                          </Link>
                           <Link
                             href={`/dashboard/campaigns/${c._id}`}
-                            className="p-2 text-muted hover:text-blueaccent rounded-lg border border-border hover:border-blueaccent transition-all"
+                            className="p-1.5 text-muted hover:text-blueaccent rounded-lg border border-border hover:border-blueaccent transition-all"
                             title="Edit Campaign"
                           >
                             <Pencil size={13} />
@@ -334,7 +350,7 @@ const AllCampaignsPage = () => {
                                 deleteMutation.mutate(c._id);
                               }
                             }}
-                            className="p-2 text-muted hover:text-red-500 rounded-lg border border-border hover:border-red-400 transition-all"
+                            className="p-1.5 text-muted hover:text-red-500 rounded-lg border border-border hover:border-red-400 transition-all"
                             title="Delete Campaign"
                           >
                             <Trash2 size={13} />

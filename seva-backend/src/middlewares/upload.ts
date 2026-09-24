@@ -117,8 +117,75 @@ export const uploadEditorImage = createFileUploader("editor");
 export const uploadGalleryImage = createFileUploader("gallery", 60, 3 * 1024 * 1024);
 
 // ── CMS uploader ──
-// Files stored in uploads/cms/YYYY/MM/DD/images/
-export const uploadCmsImage = createFileUploader("cms", 10, 3 * 1024 * 1024);
+// Files stored in uploads/cms/YYYY/MM/DD/images/ (max 5MB)
+export const uploadCmsImage = createFileUploader("cms", 10, 5 * 1024 * 1024);
+
+const ALLOWED_MEDIA_EXT = /jpeg|jpg|png|gif|webp|svg|mp4|webm|mov|ogg|m4v/;
+export function createMediaUploader(
+  moduleName: string,
+  maxFiles = 5,
+  maxFileSize = 50 * 1024 * 1024
+) {
+  const storage = multer.diskStorage({
+    destination: (_req, _file, cb) => {
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, "0");
+      const day = String(now.getDate()).padStart(2, "0");
+
+      const uploadDir = path.join(
+        process.cwd(),
+        "uploads",
+        moduleName,
+        String(year),
+        month,
+        day,
+        "media"
+      );
+
+      fs.mkdirSync(uploadDir, { recursive: true });
+      cb(null, uploadDir);
+    },
+
+    filename: (_req, file, cb) => {
+      cb(null, safeFilename(file.originalname));
+    },
+  });
+
+  const fileFilter = (
+    _req: Express.Request,
+    file: Express.Multer.File,
+    cb: multer.FileFilterCallback
+  ) => {
+    const ext = path.extname(file.originalname).toLowerCase().replace(".", "");
+    const extOk = ALLOWED_MEDIA_EXT.test(ext);
+    const mimeOk =
+      file.mimetype.startsWith("image/") ||
+      file.mimetype.startsWith("video/") ||
+      file.mimetype === "application/octet-stream";
+
+    if (extOk && mimeOk) {
+      cb(null, true);
+    } else {
+      cb(
+        new Error(
+          "Only image files (jpeg, jpg, png, webp, svg) and video files (mp4, webm, mov) are allowed"
+        )
+      );
+    }
+  };
+
+  return multer({
+    storage,
+    fileFilter,
+    limits: {
+      fileSize: maxFileSize,
+      files: maxFiles,
+    },
+  });
+}
+
+export const uploadCmsMedia = createMediaUploader("cms", 5, 50 * 1024 * 1024);
 
 // ── Mail Template image uploader ──
 export const uploadMailTemplateImage = createFileUploader("mail-templates", 10, 2 * 1024 * 1024);

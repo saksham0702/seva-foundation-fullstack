@@ -30,6 +30,10 @@ export interface Donor {
   status: DonorStatus;
   totalPaid?: number;
   donationCount?: number;
+  certificateNo?: string;
+  certificateId?: string;
+  certificateUrl?: string;
+  certificate?: any;
   donations?: Array<{
     _id: string;
     amount: number;
@@ -39,6 +43,8 @@ export interface Donor {
     frequency?: string;
     paymentStatus: string;
     receiptNumber?: string;
+    certificateNo?: string;
+    certificateUrl?: string;
     createdAt?: string;
   }>;
   createdBy?: string;
@@ -65,6 +71,7 @@ export interface CreateDonorPayload {
   pincode?: string;
   isAnonymous?: boolean;
   amount?: number;
+  status?: DonorStatus;
 }
 
 export interface UpdateDonorPayload {

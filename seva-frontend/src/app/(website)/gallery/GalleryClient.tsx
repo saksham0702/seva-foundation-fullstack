@@ -280,11 +280,13 @@ export default function GalleryClient({
             className="max-w-5xl w-full flex flex-col items-center justify-center"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="relative max-h-[78vh] w-auto overflow-hidden rounded-2xl shadow-2xl">
-              <img
+            <div className="relative h-[70vh] w-[90vw] max-w-4xl overflow-hidden rounded-2xl shadow-2xl">
+              <Image
                 src={getImageUrl(currentLightboxImg.imageUrl)}
                 alt={currentLightboxImg.alt || currentLightboxImg.title || "Gallery photo"}
-                className="max-h-[78vh] max-w-[90vw] object-contain rounded-2xl"
+                fill
+                sizes="(max-width: 1024px) 95vw, 1000px"
+                className="object-contain"
               />
             </div>
 

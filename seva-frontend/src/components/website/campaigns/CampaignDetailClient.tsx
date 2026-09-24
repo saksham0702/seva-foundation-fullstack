@@ -2,6 +2,7 @@
 
 import React, { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import {
   ArrowLeft,
   ArrowRight,
@@ -20,6 +21,7 @@ import {
 import { Campaign, PublicDonor, getCampaignDonors } from "@/app/api/campaign";
 import { Product as APIProduct } from "@/app/api/product";
 import { getImageUrl, resolveRichTextHtml } from "@/lib/image";
+import { recordEntityView } from "@/app/api/analytics";
 import ShareModal from "@/components/shared/ShareModal";
 
 const fmt = (n: number) =>
@@ -208,6 +210,12 @@ export default function CampaignDetailClient({
     Record<number, number>
   >({});
 
+  useEffect(() => {
+    if (c?._id) {
+      recordEntityView("campaign", c._id);
+    }
+  }, [c?._id]);
+
   const getProductImg = (p: { product: string; image?: string }) => {
     if (p.image) return p.image;
     const match = allProducts.find(
@@ -349,13 +357,13 @@ export default function CampaignDetailClient({
 
             <div className="rounded-2xl overflow-hidden bg-gray-100">
               <div className="relative h-72 sm:h-96">
-                <img
+                <Image
                   src={getImageUrl(heroImage)}
                   alt={c.name}
-                  className="w-full h-full object-cover"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).src = getImageUrl(null);
-                  }}
+                  fill
+                  priority
+                  sizes="(max-width: 1024px) 100vw, 65vw"
+                  className="object-cover"
                 />
               </div>
               {images.length > 1 && (
@@ -364,17 +372,16 @@ export default function CampaignDetailClient({
                     <button
                       key={i}
                       onClick={() => setActiveImg(i)}
-                      className={`w-16 h-12 rounded-lg overflow-hidden flex-shrink-0 border-2 transition-all ${
+                      className={`relative w-16 h-12 rounded-lg overflow-hidden flex-shrink-0 border-2 transition-all ${
                         activeImg === i ? "border-[#E8542A]" : "border-transparent"
                       }`}
                     >
-                      <img
+                      <Image
                         src={getImageUrl(img)}
-                        alt=""
-                        className="w-full h-full object-cover"
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).src = getImageUrl(null);
-                        }}
+                        alt={c.name}
+                        fill
+                        sizes="64px"
+                        className="object-cover"
                       />
                     </button>
                   ))}
@@ -436,10 +443,12 @@ export default function CampaignDetailClient({
                       >
                         {imgUrl ? (
                           <div className="w-16 h-16 rounded-xl overflow-hidden border border-gray-200/80 bg-white shrink-0 relative shadow-sm">
-                            <img
+                            <Image
                               src={getImageUrl(imgUrl)}
                               alt={p.product}
-                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                              fill
+                              sizes="64px"
+                              className="object-cover group-hover:scale-105 transition-transform duration-300"
                             />
                           </div>
                         ) : (
@@ -659,11 +668,13 @@ export default function CampaignDetailClient({
                             >
                               <div className="flex items-center gap-2.5 min-w-0 pr-1">
                                 {imgUrl ? (
-                                  <div className="w-11 h-11 rounded-lg overflow-hidden border border-gray-200/80 bg-white shrink-0 shadow-sm">
-                                    <img
+                                  <div className="w-11 h-11 rounded-lg overflow-hidden border border-gray-200/80 bg-white shrink-0 relative shadow-sm">
+                                    <Image
                                       src={getImageUrl(imgUrl)}
                                       alt={p.product}
-                                      className="w-full h-full object-cover"
+                                      fill
+                                      sizes="44px"
+                                      className="object-cover"
                                     />
                                   </div>
                                 ) : (

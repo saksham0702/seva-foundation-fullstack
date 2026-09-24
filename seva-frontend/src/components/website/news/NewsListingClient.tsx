@@ -2,6 +2,7 @@
 
 import React, { useMemo, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import {
   Calendar,
   Globe,
@@ -19,16 +20,14 @@ function NewsCard({ item }: { item: CmsItem }) {
       className="group bg-white rounded-2xl overflow-hidden border border-gray-100 hover:border-[#F5A623]/40 hover:shadow-xl transition-all duration-300 flex flex-col"
     >
       <div className="relative h-48 overflow-hidden bg-slate-100">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
+        <Image
           src={getImageUrl(item.featuredImage)}
           alt={item.title}
-          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-          onError={(e) => {
-            (e.target as HTMLImageElement).src = getImageUrl(null);
-          }}
+          fill
+          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+          className="object-cover transition-transform duration-500 group-hover:scale-105"
         />
-        <div className="absolute top-4 left-4 flex items-center gap-2">
+        <div className="absolute top-4 left-4 flex items-center gap-2 z-10">
           <span className="px-3 py-1 bg-[#0A1A2F] text-[#F5A623] text-[10px] font-bold uppercase tracking-wider rounded-full shadow-md border border-[#F5A623]/30">
             {item.category || "Press"}
           </span>

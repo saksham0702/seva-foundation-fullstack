@@ -75,7 +75,7 @@ const DEFAULT_BLOGS = [
   },
 ];
 
-const getAllBlogs = async (filter: { type?: string; status?: string; search?: string } = {}): Promise<IBlog[]> => {
+const getAllBlogs = async (filter: { type?: string; status?: string; search?: string; limit?: number } = {}): Promise<IBlog[]> => {
   const count = await BlogModel.countDocuments({ isDeleted: false });
   if (count === 0) {
     await BlogModel.insertMany(DEFAULT_BLOGS);
@@ -95,7 +95,26 @@ const getAllBlogs = async (filter: { type?: string; status?: string; search?: st
       { category: { $regex: filter.search, $options: "i" } },
     ];
   }
-  const result = await BlogModel.find(query).sort({ createdAt: -1 });
+  let queryBuilder = BlogModel.find(query).sort({ createdAt: -1 });
+  if (filter.limit && Number(filter.limit) > 0) {
+    queryBuilder = queryBuilder.limit(Number(filter.limit));
+  }
+  const result = await queryBuilder;
+  return result;
+};
+
+const getRecentBlogs = async (limit = 4): Promise<IBlog[]> => {
+  const count = await BlogModel.countDocuments({ isDeleted: false });
+  if (count === 0) {
+    await BlogModel.insertMany(DEFAULT_BLOGS);
+  }
+
+  const result = await BlogModel.find({
+    isDeleted: false,
+    status: "published",
+  })
+    .sort({ createdAt: -1 })
+    .limit(limit);
   return result;
 };
 
@@ -168,6 +187,7 @@ const getBlogOptions = async (type?: string) => {
 export const BlogService = {
   createBlog,
   getAllBlogs,
+  getRecentBlogs,
   getBlogById,
   updateBlog,
   deleteBlog,

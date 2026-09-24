@@ -19,6 +19,7 @@ export default function HeroSection({ data }: HeroProps) {
     data?.subtitle ||
     "\u201cA promise made in the streets of Dehradun, now echoing across India: No soul shall be forgotten, no hunger shall go unanswered.\u201d";
   const bannerImage = getImageUrl(data?.bannerImage);
+  const bannerVideo = getImageUrl(data?.bannerVideo);
 
   const words = title.split(" ");
   const lastWord = words.pop();
@@ -26,20 +27,31 @@ export default function HeroSection({ data }: HeroProps) {
 
   return (
     <section className="relative w-full h-[480px] lg:h-[520px] flex items-center justify-center overflow-hidden">
-      {/* Background */}
+      {/* Background Media */}
       <div className="absolute inset-0 bg-[#0B1120]">
-        {bannerImage ? (
+        {bannerVideo ? (
+          <video
+            src={bannerVideo}
+            autoPlay
+            loop
+            muted
+            playsInline
+            className="w-full h-full object-cover"
+          />
+        ) : bannerImage ? (
           <Image
             src={bannerImage}
             alt={title}
             fill
-            className="object-cover"
             priority
+            sizes="100vw"
+            className="object-cover"
           />
         ) : (
           <div className="absolute inset-0 bg-gradient-to-br from-[#0B1120] via-[#1a3a6b] to-[#E8542A]/20" />
         )}
-        <div className="absolute inset-0 bg-[#0B1120]/75" />
+        {/* Soft, lightened backdrop gradient so media is clear and vibrant */}
+        <div className="absolute inset-0 bg-gradient-to-t from-[#0B1120]/75 via-[#0B1120]/35 to-black/20" />
       </div>
 
       {/* Content */}

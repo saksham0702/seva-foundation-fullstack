@@ -1,11 +1,18 @@
 "use client";
 
 import React, { useState } from "react";
+import Image from "next/image";
 
-interface CmsImageProps extends React.ImgHTMLAttributes<HTMLImageElement> {
+interface CmsImageProps {
   src: string;
   alt: string;
   fallbackSrc?: string;
+  className?: string;
+  fill?: boolean;
+  width?: number;
+  height?: number;
+  priority?: boolean;
+  sizes?: string;
 }
 
 export function CmsImage({
@@ -13,7 +20,11 @@ export function CmsImage({
   alt,
   fallbackSrc,
   className,
-  ...props
+  fill,
+  width = 600,
+  height = 400,
+  priority,
+  sizes,
 }: CmsImageProps) {
   const [imgSrc, setImgSrc] = useState(src);
   const [hasError, setHasError] = useState(false);
@@ -22,11 +33,33 @@ export function CmsImage({
     return null;
   }
 
+  if (fill) {
+    return (
+      <Image
+        src={imgSrc}
+        alt={alt}
+        fill
+        sizes={sizes || "(max-width: 768px) 100vw, 50vw"}
+        priority={priority}
+        className={className}
+        onError={() => {
+          if (fallbackSrc && imgSrc !== fallbackSrc) {
+            setImgSrc(fallbackSrc);
+          } else {
+            setHasError(true);
+          }
+        }}
+      />
+    );
+  }
+
   return (
-    // eslint-disable-next-line @next/next/no-img-element
-    <img
+    <Image
       src={imgSrc}
       alt={alt}
+      width={width}
+      height={height}
+      priority={priority}
       className={className}
       onError={() => {
         if (fallbackSrc && imgSrc !== fallbackSrc) {
@@ -35,7 +68,6 @@ export function CmsImage({
           setHasError(true);
         }
       }}
-      {...props}
     />
   );
 }

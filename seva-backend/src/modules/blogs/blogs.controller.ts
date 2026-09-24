@@ -49,16 +49,33 @@ const createBlog = asyncHandler(async (req: Request, res: Response) => {
 });
 
 const getAllBlogs = asyncHandler(async (req: Request, res: Response) => {
-  const { type, status, search } = req.query as {
+  const { type, status, search, limit } = req.query as {
     type?: string;
     status?: string;
     search?: string;
+    limit?: string;
   };
-  const result = await BlogService.getAllBlogs({ type, status, search });
+  const result = await BlogService.getAllBlogs({
+    type,
+    status,
+    search,
+    limit: limit ? parseInt(limit, 10) : undefined,
+  });
   sendResponse(res, {
     statusCode: 200,
     success: true,
     message: "Content fetched successfully",
+    data: result,
+  });
+});
+
+const getRecentBlogs = asyncHandler(async (req: Request, res: Response) => {
+  const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 4;
+  const result = await BlogService.getRecentBlogs(limit);
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "Recent content fetched successfully",
     data: result,
   });
 });
@@ -159,6 +176,7 @@ const getBlogOptions = asyncHandler(async (req: Request, res: Response) => {
 export const BlogController = {
   createBlog,
   getAllBlogs,
+  getRecentBlogs,
   getBlogById,
   updateBlog,
   deleteBlog,

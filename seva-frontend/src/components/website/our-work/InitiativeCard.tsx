@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import {
   Share2,
   Heart,
@@ -138,12 +139,13 @@ export default function InitiativeCard({
             <div className="bg-[#F8EFE0] p-3 sm:p-4 rounded-[32px] sm:rounded-[40px] shadow-sm">
               {resolvedImage && !imgError ? (
                 <div className="relative w-full aspect-[4/3] rounded-[24px] sm:rounded-[32px] overflow-hidden bg-slate-100">
-                  <img
+                  <Image
                     src={resolvedImage}
                     alt={altText}
+                    fill
+                    sizes="(max-width: 1024px) 100vw, 40vw"
                     onError={() => setImgError(true)}
-                    className="w-full h-full object-cover object-center transition-transform duration-700 hover:scale-105"
-                    loading="lazy"
+                    className="object-cover object-center transition-transform duration-700 hover:scale-105"
                   />
                 </div>
               ) : (

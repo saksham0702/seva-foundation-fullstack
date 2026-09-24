@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Loader2, AlertCircle, Award, Download } from "lucide-react";
@@ -75,6 +76,12 @@ export default function DonateFlowClient() {
   }, [step, donor?._id, certificate]);
 
   useEffect(() => {
+    if (!campaignSlug) {
+      setCampaign(null);
+      setLoadingCampaign(false);
+      return;
+    }
+
     let cancelled = false;
     (async () => {
       try {
@@ -83,15 +90,11 @@ export default function DonateFlowClient() {
         const campaigns = await getCampaigns();
         if (cancelled) return;
 
-        if (campaignSlug) {
-          const match = (campaigns || []).find((c) => c.slug === campaignSlug);
-          if (match) {
-            setCampaign(match);
-          } else {
-            setCampaign(campaigns?.[0] || null);
-          }
+        const match = (campaigns || []).find((c) => c.slug === campaignSlug);
+        if (match) {
+          setCampaign(match);
         } else {
-          setCampaign(campaigns?.[0] || null);
+          setCampaignError("Campaign not found.");
         }
       } catch {
         if (!cancelled) {
@@ -132,47 +135,51 @@ export default function DonateFlowClient() {
     : null;
 
   return (
-    <div className="bg-[#f9fafb] min-h-screen py-10">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        <Link
-          href={campaign ? `/campaigns/${campaign.slug}` : "/campaigns"}
-          className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-[#1a3a6b] mb-6 transition-colors group"
-        >
-          <ArrowLeft
-            size={16}
-            className="group-hover:-translate-x-0.5 transition-transform"
-          />
-          {campaign ? `Back to ${campaign.name}` : "Back to Campaigns"}
-        </Link>
+    <div className="bg-[#f9fafb] min-h-screen">
+      {/* If a campaign was requested via ?campaign=... */}
+      {campaignSlug && (
+        <div className="py-10 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <Link
+            href={campaign ? `/campaigns/${campaign.slug}` : "/campaigns"}
+            className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-[#1a3a6b] mb-6 transition-colors group"
+          >
+            <ArrowLeft
+              size={16}
+              className="group-hover:-translate-x-0.5 transition-transform"
+            />
+            {campaign ? `Back to ${campaign.name}` : "Back to Campaigns"}
+          </Link>
 
-        {loadingCampaign && (
-          <div className="min-h-[40vh] flex flex-col items-center justify-center gap-3 text-gray-400">
-            <Loader2 className="animate-spin" size={28} />
-            <p className="text-sm">Loading campaign details…</p>
-          </div>
-        )}
+          {loadingCampaign && (
+            <div className="min-h-[40vh] flex flex-col items-center justify-center gap-3 text-gray-400">
+              <Loader2 className="animate-spin" size={28} />
+              <p className="text-sm">Loading campaign details…</p>
+            </div>
+          )}
 
-        {!loadingCampaign && campaignError && (
-          <div className="min-h-[40vh] flex flex-col items-center justify-center gap-3 text-center">
-            <AlertCircle className="text-[#E8542A]" size={32} />
-            <p className="text-[#0f2347] font-semibold text-sm">
-              {campaignError}
-            </p>
-          </div>
-        )}
+          {!loadingCampaign && campaignError && (
+            <div className="min-h-[40vh] flex flex-col items-center justify-center gap-3 text-center">
+              <AlertCircle className="text-[#E8542A]" size={32} />
+              <p className="text-[#0f2347] font-semibold text-sm">
+                {campaignError}
+              </p>
+            </div>
+          )}
 
-        {!loadingCampaign && !campaignError && campaign && (
-          <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
+          {!loadingCampaign && !campaignError && campaign && (
+            <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
             {/* Campaign Header Band */}
             <div className="bg-gradient-to-r from-[#0f2347] to-[#1a3a6b] text-white p-6 sm:p-8">
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div className="flex items-center gap-4">
                   {activeCampaignImage && (
-                    <div className="w-16 h-16 rounded-2xl overflow-hidden flex-shrink-0 bg-white/10 border border-white/20">
-                      <img
+                    <div className="relative w-16 h-16 rounded-2xl overflow-hidden flex-shrink-0 bg-white/10 border border-white/20">
+                      <Image
                         src={activeCampaignImage}
                         alt={campaign.name}
-                        className="w-full h-full object-cover"
+                        fill
+                        sizes="64px"
+                        className="object-cover"
                       />
                     </div>
                   )}
@@ -332,9 +339,10 @@ export default function DonateFlowClient() {
           </div>
         )}
       </div>
+    )}
 
       {/* Direct Initiative Donation Section */}
-      <div className="mt-12">
+      <div className={campaignSlug ? "mt-12" : ""}>
         <InitiativeDonationSection />
       </div>
     </div>

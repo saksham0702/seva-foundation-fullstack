@@ -137,6 +137,7 @@ export const endpoint = {
     deletePage: (slug: string) => `/cms/pages/${slug}`,
     deleteSection: (slug: string, sectionKey: string) => `/cms/pages/${slug}/sections/${sectionKey}`,
     uploadImage: "/cms/upload-image",
+    uploadMedia: "/cms/upload-media",
   },
 
   departments: {
@@ -188,5 +189,9 @@ export const endpoint = {
     getLogs: "/mail-logs",
     getLogById: (id: string) => `/mail-logs/${id}`,
     resendLog: (id: string) => `/mail-logs/${id}/resend`,
+  },
+
+  analytics: {
+    recordView: "/analytics/view",
   },
 };

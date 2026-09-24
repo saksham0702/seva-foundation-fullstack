@@ -763,16 +763,20 @@ function InitiativeDonationsInner() {
                           </span>
                         </div>
 
-                        {d.receiptNumber && (
+                        {((d as any).receiptNumber || (d as any).certificateNo || (activeDonor as any).certificateNo) && (
                           <div className="pt-2 border-t border-slate-200/60 flex items-center justify-between text-[11px]">
                             <span className="text-slate-500">
-                              Receipt: <strong className="text-slate-800 font-mono">{d.receiptNumber}</strong>
+                              {(d as any).certificateNo || (activeDonor as any).certificateNo ? (
+                                <>Cert: <strong className="text-emerald-700 font-mono font-bold">{(d as any).certificateNo || (activeDonor as any).certificateNo}</strong></>
+                              ) : (
+                                <>Receipt: <strong className="text-slate-800 font-mono">{(d as any).receiptNumber}</strong></>
+                              )}
                             </span>
                             <a
-                              href={`/verify/${d.receiptNumber}`}
+                              href={`/verify/${(d as any).certificateNo || (activeDonor as any).certificateNo || (d as any).receiptNumber}`}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="text-[#4C6FFF] hover:underline font-bold"
+                              className="text-emerald-600 hover:underline font-bold"
                             >
                               Certificate →
                             </a>
