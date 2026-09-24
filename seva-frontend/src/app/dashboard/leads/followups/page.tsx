@@ -30,6 +30,7 @@ import {
   FollowUpChannel,
 } from "@/app/api/leads";
 import { Portal } from "@/components/shared/Portal";
+import { useToast } from "@/lib/toast";
 
 const FOLLOWUP_TABS = [
   { key: "due_today", label: "Due Today", icon: PhoneCall },
@@ -50,6 +51,7 @@ function getLocalDatetimeString(date: Date) {
 
 function FollowupTasksInner() {
   const searchParams = useSearchParams();
+  const toast = useToast();
   const initialTab = searchParams.get("tab") || "due_today";
 
   const [activeTab, setActiveTab] = useState<string>(initialTab);
@@ -134,11 +136,12 @@ function FollowupTasksInner() {
         notes: notes.trim(),
         nextFollowUpDate: nextDate || undefined,
       });
+      toast.success("Follow-up log saved successfully");
       setActiveLeadForLog(null);
       fetchLeads();
       fetchStats();
     } catch (err: any) {
-      alert(err?.response?.data?.message || "Failed to log follow-up");
+      toast.error(err?.response?.data?.message || "Failed to log follow-up");
     } finally {
       setSaving(false);
     }

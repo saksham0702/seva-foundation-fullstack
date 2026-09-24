@@ -20,8 +20,8 @@ function CreateWABroadcastContent() {
   const { step } = useWA();
 
   return (
-    <div className="min-h-screen bg-white">
-      <div className="w-full px-4 py-2">
+    <div className="min-h-screen bg-white rounded-2xl border border-slate-200 p-6 sm:p-8">
+      <div className="w-full">
         {/* Header */}
         <div className="mb-4">
           <Link

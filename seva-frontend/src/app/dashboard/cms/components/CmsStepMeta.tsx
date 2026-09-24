@@ -7,9 +7,11 @@ import { useCms } from "../CmsProvider";
 import { CMS_CATEGORIES } from "../cms-data";
 import { getImageUrl } from "@/lib/image";
 import { getCategories, Category } from "@/app/api/category";
+import { useToast } from "@/lib/toast";
 
 export function CmsStepMeta() {
   const { form, set, contentType } = useCms();
+  const toast = useToast();
   const fileRef = useRef<HTMLInputElement>(null);
   const [imageError, setImageError] = useState<string | null>(null);
   const [dbCategories, setDbCategories] = useState<Category[]>([]);
@@ -117,8 +119,9 @@ export function CmsStepMeta() {
                     createCategory({ name: trimmed }).then((newCat) => {
                       setDbCategories((prev) => [newCat, ...prev]);
                       set("category", newCat.name);
+                      toast.success(`Category "${newCat.name}" created`);
                     }).catch((err) => {
-                      alert(err?.response?.data?.message || "Failed to create category");
+                      toast.error(err?.response?.data?.message || "Failed to create category");
                     });
                   });
                 }

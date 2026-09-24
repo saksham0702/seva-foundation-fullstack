@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
+import Link from "next/link";
 import {
   RefreshCw,
   CheckCircle,
@@ -17,6 +18,8 @@ import {
   RotateCcw,
   X,
   Lock,
+  Mail,
+  MessageCircle,
 } from "lucide-react";
 import axiosInstance from "@/app/api";
 import { endpoint } from "@/app/api/endpoints";
@@ -228,6 +231,28 @@ export default function MailTemplatesPage() {
 
   return (
     <div className="w-full max-w-7xl mx-auto px-2 sm:px-4 py-4 sm:py-6">
+      {/* Tab Switcher: Email Templates vs WhatsApp Templates */}
+      <div className="flex items-center gap-3 p-1.5 bg-white/10 rounded-2xl backdrop-blur-sm border border-white/15 w-fit mb-6 shadow-sm">
+        <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white text-navy font-bold text-xs shadow-md">
+          <Mail size={15} className="text-[#E8542A]" />
+          <span>Email Templates</span>
+          <span className="ml-1 px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-700 text-[10px] font-extrabold">
+            {templates.length}
+          </span>
+        </div>
+
+        <Link
+          href="/dashboard/marketing/whatsapp?tab=templates"
+          className="flex items-center gap-2 px-4 py-2 rounded-xl text-white/80 hover:text-white hover:bg-white/10 font-semibold text-xs transition-all"
+        >
+          <MessageCircle size={15} className="text-[#25D366]" />
+          <span>WhatsApp Templates</span>
+          <span className="ml-1 px-1.5 py-0.5 rounded-full bg-white/15 text-white text-[10px] font-extrabold">
+            Active
+          </span>
+        </Link>
+      </div>
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>

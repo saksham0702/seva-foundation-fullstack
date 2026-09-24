@@ -2,9 +2,11 @@ import { useState, useEffect } from "react";
 import { Field, inputCls } from "@/components/dashboard/field/Field";
 import { useBlog } from "../../BlogProvider";
 import { getCategories, Category } from "@/app/api/category";
+import { useToast } from "@/lib/toast";
 
 export function StepMeta() {
   const { form, set } = useBlog();
+  const toast = useToast();
   const [categories, setCategories] = useState<Category[]>([]);
 
   useEffect(() => {
@@ -72,8 +74,9 @@ export function StepMeta() {
                   createCategory({ name: trimmed }).then((newCat) => {
                     setCategories((prev) => [newCat, ...prev]);
                     set("category", newCat.name);
+                    toast.success(`Category "${newCat.name}" created`);
                   }).catch((err) => {
-                    alert(err?.response?.data?.message || "Failed to create category");
+                    toast.error(err?.response?.data?.message || "Failed to create category");
                   });
                 });
               }

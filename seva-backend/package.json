@@ -21,8 +21,11 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@hapi/boom": "^10.0.1",
     "@types/cookie-parser": "^1.4.10",
     "@types/nodemailer": "^8.0.2",
+    "@whiskeysockets/baileys": "^7.0.0-rc14",
+    "axios": "^1.20.0",
     "bcrypt": "^6.0.0",
     "bcryptjs": "^3.0.3",
     "cookie-parser": "^1.4.7",
@@ -35,8 +38,10 @@
     "nodemailer": "^10.0.10",
     "nodemon": "^3.1.14",
     "pdfkit": "^0.19.1",
+    "pino": "^10.3.1",
     "qrcode": "^1.5.4",
     "razorpay": "^2.9.8",
+    "xlsx": "^0.18.5",
     "zod": "^4.4.3"
   },
   "devDependencies": {

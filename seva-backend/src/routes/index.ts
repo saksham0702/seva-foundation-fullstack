@@ -19,6 +19,7 @@ import { MailConfigRoutes } from "../modules/mail/mailconfig.routes";
 import { MailTemplateRoutes } from "../modules/mail/mailtemplates.routes";
 import { MailLogRoutes } from "../modules/mail/maillogs.routes";
 import { AnalyticsRoutes } from "../modules/analytics/analytics.routes";
+import { MarketingRoutes } from "../modules/marketing/marketing.routes";
 
 const router = express.Router();
 
@@ -114,6 +115,14 @@ const moduleRoutes = [
   {
     path: "/mail-logs",
     route: MailLogRoutes,
+  },
+  {
+    path: "/marketing",
+    route: MarketingRoutes,
+  },
+  {
+    path: "/whatsapp",
+    route: MarketingRoutes,
   },
 ];
 
