@@ -1,14 +1,15 @@
 import { Document, Types, Schema, model } from "mongoose";
 
-export type FormType = "volunteer" | "corporate" | "career";
+export type FormType = "volunteer" | "individual" | "corporate" | "career" | "support";
 
 export interface IVolunteerCategory extends Document {
   formType: FormType;
   title: string;
   slug: string;
-  description: string;
-  icon: string; // URL to uploaded .svg file
-  color: string; // hex color, e.g. "#E8542A"
+  description?: string;
+  icon?: string; // URL to uploaded .svg file (for volunteer/individual roles)
+  color?: string; // hex color, e.g. "#E8542A"
+  badge?: string; // e.g. "MULTIPLE LOCATIONS • FULL-TIME"
   isActive: boolean;
   createdBy: Types.ObjectId;
   updatedBy: Types.ObjectId;
@@ -21,7 +22,7 @@ const VolunteerCategorySchema = new Schema<IVolunteerCategory>(
   {
     formType: {
       type: String,
-      enum: ["volunteer", "corporate", "career"],
+      enum: ["volunteer", "individual", "corporate", "career", "support"],
       default: "volunteer",
       required: true,
       index: true,
@@ -34,22 +35,24 @@ const VolunteerCategorySchema = new Schema<IVolunteerCategory>(
     slug: {
       type: String,
       required: true,
-      unique: true,
       lowercase: true,
       trim: true,
     },
     description: {
       type: String,
-      required: true,
+      default: "",
     },
     icon: {
       type: String,
-      required: true, // URL of the uploaded SVG
+      default: "",
     },
     color: {
       type: String,
-      required: true,
-      match: [/^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/, "color must be a valid hex code"],
+      default: "#1a3a6b",
+    },
+    badge: {
+      type: String,
+      default: "",
     },
     isActive: {
       type: Boolean,

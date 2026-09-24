@@ -19,9 +19,11 @@ const createVolunteerApplication = async (
       to: result.email,
       templateKey: "VOLUNTEER_APPLICATION_RECEIVED",
       variables: {
-        name: result.name || "Applicant",
-        availability: result.availability || "Not specified",
-        category: String((result.category as any)?.title || "General"),
+        name: result.name || result.contactPerson || "Applicant",
+        companyName: result.companyName || "",
+        availability: result.availability || "Flexible",
+        category: result.selectedAreaTitle || String((result.category as any)?.title || "General Application"),
+        position: result.positionAppliedFor || "",
       },
       relatedToModel: "VolunteerApplication",
       relatedToId: String(result._id),
@@ -42,7 +44,7 @@ const getAllVolunteerApplications = async (filters: {
   if (filters.formType) query.formType = filters.formType;
 
   const result = await VolunteerApplicationModel.find(query)
-    .populate("category", "title color icon slug formType")
+    .populate("category", "title color icon slug formType badge")
     .sort({ createdAt: -1 });
   return result;
 };
@@ -53,7 +55,7 @@ const getVolunteerApplicationById = async (
   const result = await VolunteerApplicationModel.findOne({
     _id: id,
     isDeleted: false,
-  }).populate("category", "title color icon slug formType");
+  }).populate("category", "title color icon slug formType badge");
   return result;
 };
 

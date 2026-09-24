@@ -263,9 +263,16 @@ function CmsImageField({
 const CMS_PAGES_META = [
   {
     slug: "header-footer",
-    name: "Header & Footer Global",
+    name: "Header Navigation & Topbar",
     path: "/",
-    description: "Contact phone, email, address, social media links, Darpan ID, and registration notice",
+    description: "Topbar emergency phone, helpline, topbar socials, announcement notice",
+    icon: Sparkles,
+  },
+  {
+    slug: "footer-settings",
+    name: "Footer & Legal Compliance",
+    path: "/",
+    description: "Registered office address, CIN, Darpan ID, 80G/12A status, primary contact email, footer socials",
     icon: Sparkles,
   },
   {
@@ -290,6 +297,13 @@ const CMS_PAGES_META = [
     icon: HeartHandshake,
   },
   {
+    slug: "terms",
+    name: "Terms & Conditions",
+    path: "/terms",
+    description: "Website usage terms, donation compliance, and legal terms of service",
+    icon: FileText,
+  },
+  {
     slug: "privacy",
     name: "Privacy Policy",
     path: "/privacy",
@@ -297,10 +311,10 @@ const CMS_PAGES_META = [
     icon: FileText,
   },
   {
-    slug: "terms",
-    name: "Terms & Conditions",
-    path: "/terms",
-    description: "Website usage terms, donation compliance, and legal terms of service",
+    slug: "refund-policy",
+    name: "Refund & Cancellation Policy",
+    path: "/refund-policy",
+    description: "Donation refund conditions, request procedures, and dispute resolution guidelines",
     icon: FileText,
   },
 ];
@@ -524,7 +538,7 @@ export default function CmsDashboardPage() {
             ) : (
               <form onSubmit={handleSave} className="space-y-6">
                 {/* 1. Header & Banner Card */}
-                {activeSlug !== "header-footer" && (
+                {activeSlug !== "header-footer" && activeSlug !== "footer-settings" && (
                   <div className="bg-white dark:bg-panel rounded-2xl border border-gray-100 dark:border-border p-6 shadow-sm">
                     <h3 className="text-sm font-bold text-[#0f2347] dark:text-text-primary mb-4 pb-3 border-b border-gray-100 dark:border-border flex items-center gap-2">
                       <ImageIcon size={16} className="text-[#E8542A]" />
@@ -1127,18 +1141,18 @@ export default function CmsDashboardPage() {
                   </div>
                 )}
 
-                {/* 3. Header & Footer Global Settings */}
+                {/* 3. Header Global Settings */}
                 {activeSlug === "header-footer" && (
                   <div className="bg-white dark:bg-panel rounded-2xl border border-gray-100 dark:border-border p-6 shadow-sm space-y-6">
                     <h3 className="text-sm font-bold text-[#0f2347] dark:text-text-primary pb-3 border-b border-gray-100 dark:border-border flex items-center gap-2">
                       <Sparkles size={16} className="text-[#E8542A]" />
-                      Global Contact & Legal Information
+                      Header Navigation & Topbar Information
                     </h3>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
                         <label className="block text-xs font-semibold text-gray-600 dark:text-muted mb-1.5">
-                          Helpline Phone Number
+                          Header Topbar Helpline Phone
                         </label>
                         <input
                           type="text"
@@ -1159,7 +1173,7 @@ export default function CmsDashboardPage() {
 
                       <div>
                         <label className="block text-xs font-semibold text-gray-600 dark:text-muted mb-1.5">
-                          Official Email Address
+                          Header Official Contact Email
                         </label>
                         <input
                           type="email"
@@ -1178,6 +1192,121 @@ export default function CmsDashboardPage() {
                         />
                       </div>
                     </div>
+
+                    {/* Social Media Links for Header */}
+                    <div className="pt-4 border-t border-gray-100 dark:border-border space-y-3">
+                      <h4 className="text-xs font-bold text-[#0f2347] dark:text-text-primary uppercase tracking-wider flex items-center gap-1.5">
+                        <Share2 size={14} className="text-[#E8542A]" />
+                        Header Social Media Links
+                      </h4>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-xs font-semibold text-gray-600 dark:text-muted mb-1">
+                            Facebook Page URL
+                          </label>
+                          <input
+                            type="text"
+                            value={formData.settings?.socialLinks?.facebook || ""}
+                            onChange={(e) =>
+                              setFormData({
+                                ...formData,
+                                settings: {
+                                  ...formData.settings,
+                                  socialLinks: {
+                                    ...formData.settings?.socialLinks,
+                                    facebook: e.target.value,
+                                  },
+                                },
+                              })
+                            }
+                            placeholder="https://facebook.com/..."
+                            className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-border bg-gray-50 dark:bg-bg text-xs text-[#0f2347] dark:text-text-primary focus:outline-none"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-xs font-semibold text-gray-600 dark:text-muted mb-1">
+                            Twitter / X Profile URL
+                          </label>
+                          <input
+                            type="text"
+                            value={formData.settings?.socialLinks?.twitter || ""}
+                            onChange={(e) =>
+                              setFormData({
+                                ...formData,
+                                settings: {
+                                  ...formData.settings,
+                                  socialLinks: {
+                                    ...formData.settings?.socialLinks,
+                                    twitter: e.target.value,
+                                  },
+                                },
+                              })
+                            }
+                            placeholder="https://twitter.com/..."
+                            className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-border bg-gray-50 dark:bg-bg text-xs text-[#0f2347] dark:text-text-primary focus:outline-none"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-xs font-semibold text-gray-600 dark:text-muted mb-1">
+                            Instagram Profile URL
+                          </label>
+                          <input
+                            type="text"
+                            value={formData.settings?.socialLinks?.instagram || ""}
+                            onChange={(e) =>
+                              setFormData({
+                                ...formData,
+                                settings: {
+                                  ...formData.settings,
+                                  socialLinks: {
+                                    ...formData.settings?.socialLinks,
+                                    instagram: e.target.value,
+                                  },
+                                },
+                              })
+                            }
+                            placeholder="https://instagram.com/..."
+                            className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-border bg-gray-50 dark:bg-bg text-xs text-[#0f2347] dark:text-text-primary focus:outline-none"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-xs font-semibold text-gray-600 dark:text-muted mb-1">
+                            YouTube Channel URL
+                          </label>
+                          <input
+                            type="text"
+                            value={formData.settings?.socialLinks?.youtube || ""}
+                            onChange={(e) =>
+                              setFormData({
+                                ...formData,
+                                settings: {
+                                  ...formData.settings,
+                                  socialLinks: {
+                                    ...formData.settings?.socialLinks,
+                                    youtube: e.target.value,
+                                  },
+                                },
+                              })
+                            }
+                            placeholder="https://youtube.com/..."
+                            className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-border bg-gray-50 dark:bg-bg text-xs text-[#0f2347] dark:text-text-primary focus:outline-none"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* 4. Footer & Legal Compliance Global Settings */}
+                {activeSlug === "footer-settings" && (
+                  <div className="bg-white dark:bg-panel rounded-2xl border border-gray-100 dark:border-border p-6 shadow-sm space-y-6">
+                    <h3 className="text-sm font-bold text-[#0f2347] dark:text-text-primary pb-3 border-b border-gray-100 dark:border-border flex items-center gap-2">
+                      <Sparkles size={16} className="text-[#E8542A]" />
+                      Footer & Legal Compliance Information
+                    </h3>
 
                     <div>
                       <label className="block text-xs font-semibold text-gray-600 dark:text-muted mb-1.5">
@@ -1198,6 +1327,50 @@ export default function CmsDashboardPage() {
                         placeholder="20, Sahastradhara Road, Upper Adhoiwala, Dehradun, UK – 248001"
                         className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-border bg-gray-50 dark:bg-bg text-sm text-[#0f2347] dark:text-text-primary focus:outline-none"
                       />
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-xs font-semibold text-gray-600 dark:text-muted mb-1.5">
+                          Footer Contact Phone / Helpline
+                        </label>
+                        <input
+                          type="text"
+                          value={formData.settings?.phone || ""}
+                          onChange={(e) =>
+                            setFormData({
+                              ...formData,
+                              settings: {
+                                ...formData.settings,
+                                phone: e.target.value,
+                              },
+                            })
+                          }
+                          placeholder="+91 94565 17577"
+                          className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-border bg-gray-50 dark:bg-bg text-sm text-[#0f2347] dark:text-text-primary focus:outline-none"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-semibold text-gray-600 dark:text-muted mb-1.5">
+                          Footer Official Inquiries Email
+                        </label>
+                        <input
+                          type="email"
+                          value={formData.settings?.email || ""}
+                          onChange={(e) =>
+                            setFormData({
+                              ...formData,
+                              settings: {
+                                ...formData.settings,
+                                email: e.target.value,
+                              },
+                            })
+                          }
+                          placeholder="info@sevaindiafoundation.org"
+                          className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-border bg-gray-50 dark:bg-bg text-sm text-[#0f2347] dark:text-text-primary focus:outline-none"
+                        />
+                      </div>
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
@@ -1265,7 +1438,7 @@ export default function CmsDashboardPage() {
                       </div>
                     </div>
 
-                    {/* Social Media Links */}
+                    {/* Social Media Links for Footer */}
                     <div className="pt-4 border-t border-gray-100 dark:border-border space-y-3">
                       <h4 className="text-xs font-bold text-[#0f2347] dark:text-text-primary uppercase tracking-wider flex items-center gap-1.5">
                         <Share2 size={14} className="text-[#E8542A]" />
@@ -1372,26 +1545,28 @@ export default function CmsDashboardPage() {
                   </div>
                 )}
 
-                {/* 4. Privacy & Terms Rich Content */}
-                {(activeSlug === "privacy" || activeSlug === "terms") && (
+                {/* 5. Legal Policies Rich Content (Terms, Privacy, Refund Policy) */}
+                {(activeSlug === "privacy" ||
+                  activeSlug === "terms" ||
+                  activeSlug === "refund-policy") && (
                   <div className="bg-white dark:bg-panel rounded-2xl border border-gray-100 dark:border-border p-6 shadow-sm space-y-4">
                     <h3 className="text-sm font-bold text-[#0f2347] dark:text-text-primary pb-3 border-b border-gray-100 dark:border-border flex items-center gap-2">
                       <FileText size={16} className="text-[#E8542A]" />
-                      Legal Policy Content (HTML / Text)
+                      Legal Policy Document Content (HTML / Markdown / Text)
                     </h3>
 
                     <div>
                       <label className="block text-xs font-semibold text-gray-600 dark:text-muted mb-1.5">
-                        Full Document Text
+                        Full Document Text &amp; Clauses
                       </label>
                       <textarea
-                        rows={10}
+                        rows={16}
                         value={formData.content || ""}
                         onChange={(e) =>
                           setFormData({ ...formData, content: e.target.value })
                         }
-                        placeholder="Enter the full policy clauses and disclosures..."
-                        className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-border bg-gray-50 dark:bg-bg text-sm text-[#0f2347] dark:text-text-primary focus:outline-none font-mono"
+                        placeholder="Enter the full policy clauses, headings, and legal disclosures..."
+                        className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-border bg-gray-50 dark:bg-bg text-sm text-[#0f2347] dark:text-text-primary focus:outline-none font-mono leading-relaxed"
                       />
                     </div>
                   </div>

@@ -30,8 +30,9 @@ import { DeleteConfirmModal } from "./components/DeleteConfirmModal";
 
 const FORM_TYPES: { id: FormType; label: string }[] = [
   { id: "volunteer", label: "Volunteers" },
-  { id: "corporate", label: "Corporate" },
-  { id: "career", label: "Careers" },
+  { id: "corporate", label: "Corporate & CSR" },
+  { id: "career", label: "Careers & Jobs" },
+  { id: "support", label: "Ways to Give / Support" },
 ];
 
 export default function VolunteersDashboardPage() {
@@ -92,14 +93,21 @@ export default function VolunteersDashboardPage() {
 
   // ── Filtered Applications ───────────────────────────────────────
   const filteredApplications = useMemo(() => {
+    const q = searchQuery.toLowerCase().trim();
     return applications.filter((app) => {
       const matchesSearch =
-        searchQuery === "" ||
-        app.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        app.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        app.city.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        q === "" ||
+        app.name?.toLowerCase().includes(q) ||
+        app.email?.toLowerCase().includes(q) ||
+        app.phone?.toLowerCase().includes(q) ||
+        app.city?.toLowerCase().includes(q) ||
+        app.companyName?.toLowerCase().includes(q) ||
+        app.contactPerson?.toLowerCase().includes(q) ||
+        app.positionAppliedFor?.toLowerCase().includes(q) ||
+        app.selectedAreaTitle?.toLowerCase().includes(q) ||
+        app.industry?.toLowerCase().includes(q) ||
         (typeof app.category === "object" &&
-          app.category?.title?.toLowerCase().includes(searchQuery.toLowerCase()));
+          app.category?.title?.toLowerCase().includes(q));
 
       const matchesStatus =
         statusFilter === "all" || app.status === statusFilter;

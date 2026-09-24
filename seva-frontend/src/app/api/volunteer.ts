@@ -1,14 +1,15 @@
 import axiosInstance from "./index";
 import { endpoint } from "./endpoints";
 
-export type FormType = "volunteer" | "corporate" | "career";
+export type FormType = "volunteer" | "corporate" | "career" | "support";
 
 export type Availability =
   | "weekends"
   | "weekdays"
   | "both"
   | "flexible"
-  | "fulltime";
+  | "fulltime"
+  | "parttime";
 
 export type ApplicationStatus =
   | "pending"
@@ -24,6 +25,7 @@ export interface VolunteerCategory {
   description: string;
   icon: string;
   color: string;
+  badge?: string;
   isActive: boolean;
   createdBy?: string;
   updatedBy?: string;
@@ -35,6 +37,7 @@ export interface VolunteerCategoryOption {
   _id: string;
   title: string;
   formType?: FormType;
+  badge?: string;
 }
 
 export interface VolunteerApplication {
@@ -43,9 +46,34 @@ export interface VolunteerApplication {
   name: string;
   email: string;
   phone: string;
-  city: string;
-  category: string | VolunteerCategory;
-  availability: Availability;
+  city?: string;
+  category?: string | VolunteerCategory;
+  selectedAreaTitle?: string;
+
+  // Volunteer specific
+  availability?: Availability;
+  skills?: string;
+  previousExperience?: string;
+  reason?: string;
+
+  // Corporate specific
+  companyName?: string;
+  contactPerson?: string;
+  industry?: string;
+  partnershipType?: string;
+  csrFocusAreas?: string;
+  partnershipGoals?: string;
+
+  // Career specific
+  positionAppliedFor?: string;
+  currentLocation?: string;
+  resumeUrl?: string;
+  coverLetter?: string;
+
+  // Support specific
+  supportType?: string;
+  address?: string;
+
   message?: string;
   status: ApplicationStatus;
   reviewedBy?: string | { _id: string; name: string };

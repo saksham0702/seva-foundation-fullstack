@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 
 /* ------------------------------------------------------------------ */
 /*  TYPES                                                              */
@@ -36,11 +36,10 @@ export const DEFAULT_OUR_WORK_ITEMS: NavChild[] = [
 ];
 
 export const DEFAULT_GET_INVOLVED_ITEMS: NavChild[] = [
-  { label: "INDIVIDUAL", href: "/get-involved" },
-  { label: "CORPORATE", href: "/get-involved?tab=corporate" },
-  { label: "VOLUNTEER", href: "/get-involved?tab=volunteer" },
-  { label: "CAREERS", href: "/get-involved?tab=careers" },
-  { label: "TRANSPARENCY", href: "/about" },
+  { label: "VOLUNTEER APPLICATION", href: "/get-involved?tab=volunteer" },
+  { label: "CORPORATE & CSR", href: "/get-involved?tab=corporate" },
+  { label: "CAREERS & JOBS", href: "/get-involved?tab=career" },
+  { label: "WAYS TO GIVE", href: "/get-involved?tab=support" },
   { label: "VERIFY CERTIFICATE", href: "/verify" },
   { label: "DONOR PORTAL", href: "/donations" },
 ];
@@ -124,6 +123,38 @@ const Header = () => {
   const [cmsSettings, setCmsSettings] = useState<any>(null);
   const [ourWorkItems, setOurWorkItems] = useState<NavChild[]>(DEFAULT_OUR_WORK_ITEMS);
   const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  // Determine if any link (parent or child) is actively selected
+  const isLinkActive = (targetHref: string): boolean => {
+    if (!targetHref) return false;
+    if (targetHref === "/") return pathname === "/";
+
+    const [targetPath, targetQuery] = targetHref.split("?");
+    
+    // Check if target has query params (e.g. ?tab=corporate)
+    if (targetQuery) {
+      if (pathname !== targetPath) return false;
+      const targetParams = new URLSearchParams(targetQuery);
+      for (const [key, val] of targetParams.entries()) {
+        const currentVal = searchParams?.get(key);
+        if (currentVal !== val) return false;
+      }
+      return true;
+    }
+
+    // Target has no query params
+    if (pathname === targetPath) {
+      // If user is on /get-involved but has ?tab=... and targetHref is base /get-involved without tab
+      if (targetPath === "/get-involved" && searchParams && (searchParams.get("tab") || searchParams.get("type"))) {
+        return false;
+      }
+      return true;
+    }
+
+    // Check subpath
+    return targetPath !== "/" && pathname.startsWith(targetPath + "/");
+  };
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 8);
@@ -279,19 +310,20 @@ const Header = () => {
             {/* --- Desktop nav --- */}
             <nav className="hidden lg:flex items-center gap-0.5">
               {navLinks.map((link) => {
-                const isActive =
-                  pathname === link.href ||
-                  (link.href !== "/" && pathname.startsWith(link.href));
+                const isParentActive =
+                  isLinkActive(link.href) ||
+                  (link.children && link.children.some((child) => isLinkActive(child.href)));
                 const hasChildren = !!link.children?.length;
 
                 return (
                   <div key={link.href} className="relative group">
                     <Link
                       href={link.href}
-                      className={`flex items-center gap-0.5 px-2.5 py-2 text-[13.5px] font-semibold uppercase tracking-wide transition-colors whitespace-nowrap ${isActive
+                      className={`flex items-center gap-0.5 px-2.5 py-2 text-[13.5px] font-semibold uppercase tracking-wide transition-colors whitespace-nowrap ${
+                        isParentActive
                           ? "text-[#F5A623]"
                           : "text-slate-700 hover:text-[#F5A623]"
-                        }`}
+                      }`}
                     >
                       {link.label}
                       {hasChildren && (
@@ -312,29 +344,35 @@ const Header = () => {
                     </Link>
 
                     {/* Active-state underline */}
-                    {isActive && (
+                    {isParentActive && (
                       <span className="absolute bottom-0 left-2.5 right-2.5 h-[2px] bg-[#F5A623] rounded-full" />
                     )}
 
                     {/* Dropdown panel */}
                     {hasChildren && (
                       <div className="absolute left-0 top-full pt-2 hidden group-hover:block z-50">
-                        <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden min-w-[230px] animate-in fade-in slide-in-from-top-1 duration-150">
+                        <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden min-w-[240px] animate-in fade-in slide-in-from-top-1 duration-150">
                           <div className="h-1 bg-gradient-to-r from-[#F5A623] to-[#e8542a]" />
                           <div className="py-2">
-                            {link.children!.map((child, ci) => {
-                              const isChildActive = pathname === child.href;
+                            {link.children!.map((child) => {
+                              const isChildActive = isLinkActive(child.href);
                               return (
                                 <Link
                                   key={child.href}
                                   href={child.href}
-                                  className={`flex items-center gap-2.5 px-4 py-2.5 text-[13px] font-semibold uppercase tracking-wider transition-all group/item ${isChildActive
-                                      ? "text-[#F5A623] bg-orange-50"
+                                  className={`flex items-center gap-2.5 px-4 py-2.5 text-[13px] font-semibold uppercase tracking-wider transition-all group/item ${
+                                    isChildActive
+                                      ? "text-[#F5A623] bg-orange-50 font-bold"
                                       : "text-slate-700 hover:text-[#F5A623] hover:bg-orange-50/60"
-                                    }`}
+                                  }`}
                                 >
-                                  <span className={`w-1 h-1 rounded-full shrink-0 transition-colors ${isChildActive ? "bg-[#F5A623]" : "bg-slate-300 group-hover/item:bg-[#F5A623]"
-                                    }`} />
+                                  <span
+                                    className={`w-1.5 h-1.5 rounded-full shrink-0 transition-colors ${
+                                      isChildActive
+                                        ? "bg-[#F5A623] ring-2 ring-orange-200"
+                                        : "bg-slate-300 group-hover/item:bg-[#F5A623]"
+                                    }`}
+                                  />
                                   {child.label}
                                 </Link>
                               );
@@ -398,9 +436,9 @@ const Header = () => {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
             <div className="space-y-0">
               {navLinks.map((link) => {
-                const isActive =
-                  pathname === link.href ||
-                  (link.href !== "/" && pathname.startsWith(link.href));
+                const isParentActive =
+                  isLinkActive(link.href) ||
+                  (link.children && link.children.some((child) => isLinkActive(child.href)));
                 const hasChildren = !!link.children?.length;
                 const isDropdownOpen = openMobileDropdown === link.href;
 
@@ -413,8 +451,9 @@ const Header = () => {
                       <Link
                         href={link.href}
                         onClick={() => setMenuOpen(false)}
-                        className={`flex-1 block py-3 text-[13px] font-semibold uppercase tracking-wide ${isActive ? "text-[#F5A623]" : "text-slate-700"
-                          }`}
+                        className={`flex-1 block py-3 text-[13px] font-semibold uppercase tracking-wide transition-colors ${
+                          isParentActive ? "text-[#F5A623] font-bold" : "text-slate-700 hover:text-[#F5A623]"
+                        }`}
                       >
                         {link.label}
                       </Link>
@@ -429,8 +468,9 @@ const Header = () => {
                           className="p-3 text-slate-400"
                         >
                           <svg
-                            className={`w-4 h-4 transition-transform ${isDropdownOpen ? "rotate-180" : ""
-                              }`}
+                            className={`w-4 h-4 transition-transform ${
+                              isDropdownOpen ? "rotate-180 text-[#F5A623]" : ""
+                            }`}
                             fill="none"
                             viewBox="0 0 24 24"
                             stroke="currentColor"
@@ -448,16 +488,30 @@ const Header = () => {
 
                     {hasChildren && isDropdownOpen && (
                       <div className="pl-4 pb-2 space-y-1">
-                        {link.children!.map((child) => (
-                          <Link
-                            key={child.href}
-                            href={child.href}
-                            onClick={() => setMenuOpen(false)}
-                            className="block py-2 text-[12px] font-semibold uppercase tracking-wider text-slate-700 hover:text-[#F5A623]"
-                          >
-                            {child.label}
-                          </Link>
-                        ))}
+                        {link.children!.map((child) => {
+                          const isChildActive = isLinkActive(child.href);
+                          return (
+                            <Link
+                              key={child.href}
+                              href={child.href}
+                              onClick={() => setMenuOpen(false)}
+                              className={`flex items-center gap-2 py-2 text-[12px] font-semibold uppercase tracking-wider transition-colors ${
+                                isChildActive
+                                  ? "text-[#F5A623] font-bold"
+                                  : "text-slate-600 hover:text-[#F5A623]"
+                              }`}
+                            >
+                              <span
+                                className={`w-1.5 h-1.5 rounded-full shrink-0 transition-colors ${
+                                  isChildActive
+                                    ? "bg-[#F5A623]"
+                                    : "bg-slate-300"
+                                }`}
+                              />
+                              {child.label}
+                            </Link>
+                          );
+                        })}
                       </div>
                     )}
                   </div>

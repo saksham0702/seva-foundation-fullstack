@@ -12,16 +12,16 @@ import { subscribeNewsletter } from "@/app/api/leads";
 const quickLinks = [
   { label: "About Us", href: "/about" },
   { label: "Our Work", href: "/our-work" },
+  { label: "Campaigns", href: "/campaigns" },
+  { label: "Get Involved", href: "/get-involved" },
   { label: "Gallery", href: "/gallery" },
-  { label: "Volunteer", href: "/get-involved/volunteer" },
-  { label: "Transparency", href: "/transparency" },
 ];
 
 const legalLinks = [
   { label: "Terms & Conditions", href: "/terms" },
   { label: "Privacy Policy", href: "/privacy" },
   { label: "Refund Policy", href: "/refund-policy" },
-  { label: "Annual Reports", href: "/annual-reports" },
+  { label: "Verify Certificate", href: "/verify" },
 ];
 
 const socialLinks = [

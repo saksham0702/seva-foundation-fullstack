@@ -25,7 +25,14 @@ export class MarketingService {
    */
   private static cleanPhone(phone?: string): string {
     if (!phone) return "";
-    const digits = phone.replace(/\D/g, "");
+    let digits = phone.replace(/\D/g, "");
+    if (!digits) return "";
+    // If it's 10 digits (e.g. 9876543210), automatically add India country code '91'
+    if (digits.length === 10) {
+      digits = `91${digits}`;
+    } else if (digits.length === 11 && digits.startsWith("0")) {
+      digits = `91${digits.substring(1)}`;
+    }
     if (digits.length < 10) return "";
     return digits;
   }
@@ -297,26 +304,25 @@ export class MarketingService {
   public static generateSampleExcelBuffer(): Buffer {
     const sampleData = [
       {
-        Name: "Rajesh Sharma",
-        Phone: "9876543210",
-        Amount: "1000",
-        Campaign: "Clean Water Initiative",
+        Name: "Saksham Sharma",
+        "Mobile Number": "+919876543210",
       },
       {
-        Name: "Pooja Verma",
-        Phone: "9123456780",
-        Amount: "2500",
-        Campaign: "Girl Child Education",
+        Name: "Priya Verma",
+        "Mobile Number": "+919123456789",
       },
       {
         Name: "Amitabh Sen",
-        Phone: "9988776655",
-        Amount: "5000",
-        Campaign: "Kerala Relief Fund",
+        "Mobile Number": "+919988776655",
+      },
+      {
+        Name: "Rohan Gupta",
+        "Mobile Number": "9811223344",
       },
     ];
 
     const worksheet = XLSX.utils.json_to_sheet(sampleData);
+    worksheet["!cols"] = [{ wch: 25 }, { wch: 20 }];
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Recipients");
     return XLSX.write(workbook, { type: "buffer", bookType: "xlsx" });

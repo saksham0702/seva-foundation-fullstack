@@ -13,11 +13,17 @@ import {
   PhoneCall,
   CheckCircle2,
   XCircle,
+  Building2,
+  Briefcase,
+  FileText,
+  ExternalLink,
+  Gift,
 } from "lucide-react";
 import {
   VolunteerApplication,
   VolunteerCategory,
   ApplicationStatus,
+  FormType,
 } from "@/app/api/volunteer";
 
 const STATUS_CONFIG: Record<
@@ -68,6 +74,7 @@ interface ApplicationsTableProps {
   onUpdateStatus: (id: string, status: ApplicationStatus) => void;
   onViewDetails: (app: VolunteerApplication) => void;
   onDeleteRequest: (app: VolunteerApplication) => void;
+  activeFormType?: FormType;
 }
 
 export const ApplicationsTable: React.FC<ApplicationsTableProps> = ({
@@ -84,6 +91,7 @@ export const ApplicationsTable: React.FC<ApplicationsTableProps> = ({
   onUpdateStatus,
   onViewDetails,
   onDeleteRequest,
+  activeFormType = "volunteer",
 }) => {
   return (
     <div>
@@ -96,7 +104,15 @@ export const ApplicationsTable: React.FC<ApplicationsTableProps> = ({
           />
           <input
             type="text"
-            placeholder="Search by name, email, city or role..."
+            placeholder={
+              activeFormType === "corporate"
+                ? "Search by company, contact person, email, or industry..."
+                : activeFormType === "career"
+                ? "Search by candidate, position, email, or location..."
+                : activeFormType === "support"
+                ? "Search by donor name, email, support type, or program..."
+                : "Search by name, email, phone, city or role..."
+            }
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
             className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-black/10 focus:border-black transition-all placeholder:text-slate-400"
@@ -128,7 +144,15 @@ export const ApplicationsTable: React.FC<ApplicationsTableProps> = ({
               onChange={(e) => onCategoryFilterChange(e.target.value)}
               className="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 focus:outline-none focus:border-black"
             >
-              <option value="all">All Roles</option>
+              <option value="all">
+                {activeFormType === "corporate"
+                  ? "All Initiatives"
+                  : activeFormType === "career"
+                  ? "All Positions"
+                  : activeFormType === "support"
+                  ? "All Giving Programs"
+                  : "All Roles"}
+              </option>
               {categories.map((c) => (
                 <option key={c._id} value={c._id}>
                   {c.title}
@@ -145,21 +169,29 @@ export const ApplicationsTable: React.FC<ApplicationsTableProps> = ({
           <div className="py-24 flex flex-col items-center justify-center gap-3">
             <Loader2 size={30} className="animate-spin text-slate-400" />
             <p className="text-xs font-semibold text-slate-500">
-              Loading volunteer applications...
+              Loading {activeFormType} submissions...
             </p>
           </div>
         ) : applications.length === 0 ? (
           <div className="py-20 text-center px-4">
             <div className="w-11 h-11 rounded-full bg-slate-100 flex items-center justify-center mx-auto mb-2.5 text-slate-400">
-              <Users size={18} />
+              {activeFormType === "corporate" ? (
+                <Building2 size={18} />
+              ) : activeFormType === "career" ? (
+                <Briefcase size={18} />
+              ) : activeFormType === "support" ? (
+                <Gift size={18} />
+              ) : (
+                <Users size={18} />
+              )}
             </div>
             <h3 className="text-sm font-bold text-slate-800 mb-1">
-              No applications found
+              No submissions found
             </h3>
             <p className="text-xs text-slate-500 max-w-xs mx-auto">
               {searchQuery || statusFilter !== "all" || categoryFilter !== "all"
                 ? "Try adjusting your search terms or filter criteria."
-                : "New volunteer submissions from the website will appear right here."}
+                : `New ${activeFormType} submissions from the website will appear right here.`}
             </p>
           </div>
         ) : (
@@ -167,10 +199,36 @@ export const ApplicationsTable: React.FC<ApplicationsTableProps> = ({
             <table className="w-full text-left text-xs sm:text-sm">
               <thead>
                 <tr className="bg-slate-50/80 border-b border-slate-200 text-[10.5px] font-bold text-slate-500 uppercase tracking-wider">
-                  <th className="py-3 px-4 sm:px-5">Applicant</th>
-                  <th className="py-3 px-4 sm:px-5">Role Applied</th>
-                  <th className="py-3 px-4 sm:px-5">Location</th>
-                  <th className="py-3 px-4 sm:px-5">Availability</th>
+                  {/* DYNAMIC TABLE HEADERS */}
+                  {activeFormType === "corporate" ? (
+                    <>
+                      <th className="py-3 px-4 sm:px-5">Company &amp; Contact</th>
+                      <th className="py-3 px-4 sm:px-5">Industry</th>
+                      <th className="py-3 px-4 sm:px-5">Partnership Type</th>
+                      <th className="py-3 px-4 sm:px-5">Selected Project</th>
+                    </>
+                  ) : activeFormType === "career" ? (
+                    <>
+                      <th className="py-3 px-4 sm:px-5">Candidate</th>
+                      <th className="py-3 px-4 sm:px-5">Position Applied</th>
+                      <th className="py-3 px-4 sm:px-5">Location</th>
+                      <th className="py-3 px-4 sm:px-5">Resume</th>
+                    </>
+                  ) : activeFormType === "support" ? (
+                    <>
+                      <th className="py-3 px-4 sm:px-5">Contributor / Donor</th>
+                      <th className="py-3 px-4 sm:px-5">Support Type</th>
+                      <th className="py-3 px-4 sm:px-5">Program</th>
+                      <th className="py-3 px-4 sm:px-5">Address</th>
+                    </>
+                  ) : (
+                    <>
+                      <th className="py-3 px-4 sm:px-5">Volunteer</th>
+                      <th className="py-3 px-4 sm:px-5">Role Applied</th>
+                      <th className="py-3 px-4 sm:px-5">Location</th>
+                      <th className="py-3 px-4 sm:px-5">Availability</th>
+                    </>
+                  )}
                   <th className="py-3 px-4 sm:px-5">Date</th>
                   <th className="py-3 px-4 sm:px-5">Status</th>
                   <th className="py-3 px-4 sm:px-5 text-right">Actions</th>
@@ -182,9 +240,10 @@ export const ApplicationsTable: React.FC<ApplicationsTableProps> = ({
                     STATUS_CONFIG[app.status] || STATUS_CONFIG.pending;
 
                   const categoryTitle =
-                    typeof app.category === "object"
+                    app.selectedAreaTitle ||
+                    (typeof app.category === "object"
                       ? app.category?.title || "Role"
-                      : "General";
+                      : "General");
                   const categoryColor =
                     typeof app.category === "object"
                       ? app.category?.color || "#E8542A"
@@ -195,54 +254,161 @@ export const ApplicationsTable: React.FC<ApplicationsTableProps> = ({
                       key={app._id}
                       className="hover:bg-slate-50/50 transition-colors group"
                     >
-                      {/* Applicant Info */}
-                      <td className="py-3.5 px-4 sm:px-5">
-                        <div>
-                          <p className="font-bold text-slate-900 text-xs sm:text-sm">
-                            {app.name}
-                          </p>
-                          <div className="flex flex-wrap items-center gap-2.5 text-[11px] text-slate-500 mt-0.5">
-                            <span className="flex items-center gap-1">
-                              <Mail size={11} /> {app.email}
+                      {/* DYNAMIC CELL 1 & 2 & 3 & 4 */}
+                      {activeFormType === "corporate" ? (
+                        <>
+                          <td className="py-3.5 px-4 sm:px-5">
+                            <div>
+                              <p className="font-bold text-slate-900 text-xs sm:text-sm flex items-center gap-1.5">
+                                <Building2 size={13} className="text-[#4169E1]" />
+                                {app.companyName || app.name}
+                              </p>
+                              <div className="flex flex-wrap items-center gap-2 text-[11px] text-slate-500 mt-0.5">
+                                {app.contactPerson && (
+                                  <span className="font-semibold text-slate-700">
+                                    Attn: {app.contactPerson}
+                                  </span>
+                                )}
+                                <span className="flex items-center gap-1">
+                                  <Mail size={11} /> {app.email}
+                                </span>
+                                <span className="flex items-center gap-1">
+                                  <Phone size={11} /> {app.phone}
+                                </span>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="py-3.5 px-4 sm:px-5 text-xs text-slate-600 font-medium">
+                            {app.industry || "—"}
+                          </td>
+                          <td className="py-3.5 px-4 sm:px-5">
+                            <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200/80">
+                              {app.partnershipType || "CSR Projects"}
                             </span>
-                            <span className="flex items-center gap-1">
-                              <Phone size={11} /> {app.phone}
+                          </td>
+                          <td className="py-3.5 px-4 sm:px-5 text-xs font-bold text-slate-800">
+                            {categoryTitle}
+                          </td>
+                        </>
+                      ) : activeFormType === "career" ? (
+                        <>
+                          <td className="py-3.5 px-4 sm:px-5">
+                            <div>
+                              <p className="font-bold text-slate-900 text-xs sm:text-sm">
+                                {app.name}
+                              </p>
+                              <div className="flex flex-wrap items-center gap-2 text-[11px] text-slate-500 mt-0.5">
+                                <span className="flex items-center gap-1">
+                                  <Mail size={11} /> {app.email}
+                                </span>
+                                <span className="flex items-center gap-1">
+                                  <Phone size={11} /> {app.phone}
+                                </span>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="py-3.5 px-4 sm:px-5">
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-200/80">
+                              <Briefcase size={12} />
+                              {app.positionAppliedFor || categoryTitle}
                             </span>
-                          </div>
-                        </div>
-                      </td>
-
-                      {/* Role Badge */}
-                      <td className="py-3.5 px-4 sm:px-5">
-                        <span
-                          className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold"
-                          style={{
-                            backgroundColor: categoryColor + "15",
-                            color: categoryColor,
-                          }}
-                        >
-                          <span
-                            className="w-1.5 h-1.5 rounded-full"
-                            style={{ backgroundColor: categoryColor }}
-                          />
-                          {categoryTitle}
-                        </span>
-                      </td>
-
-                      {/* Location */}
-                      <td className="py-3.5 px-4 sm:px-5 text-xs text-slate-600 font-medium">
-                        <span className="flex items-center gap-1">
-                          <MapPin size={12} className="text-slate-400" />
-                          {app.city || "—"}
-                        </span>
-                      </td>
-
-                      {/* Availability */}
-                      <td className="py-3.5 px-4 sm:px-5 text-xs text-slate-600 font-medium">
-                        <span className="capitalize px-2 py-0.5 bg-slate-100 rounded-md text-[11px] font-semibold text-slate-700">
-                          {app.availability || "Flexible"}
-                        </span>
-                      </td>
+                          </td>
+                          <td className="py-3.5 px-4 sm:px-5 text-xs text-slate-600 font-medium">
+                            <span className="flex items-center gap-1">
+                              <MapPin size={12} className="text-slate-400" />
+                              {app.currentLocation || app.city || "—"}
+                            </span>
+                          </td>
+                          <td className="py-3.5 px-4 sm:px-5">
+                            {app.resumeUrl ? (
+                              <a
+                                href={app.resumeUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-1 px-2.5 py-1 bg-slate-100 hover:bg-[#4169E1] hover:text-white rounded-lg text-xs font-bold text-slate-700 transition-colors"
+                              >
+                                <ExternalLink size={12} />
+                                View Resume
+                              </a>
+                            ) : (
+                              <span className="text-xs text-slate-400">—</span>
+                            )}
+                          </td>
+                        </>
+                      ) : activeFormType === "support" ? (
+                        <>
+                          <td className="py-3.5 px-4 sm:px-5">
+                            <div>
+                              <p className="font-bold text-slate-900 text-xs sm:text-sm">
+                                {app.name}
+                              </p>
+                              <div className="flex flex-wrap items-center gap-2 text-[11px] text-slate-500 mt-0.5">
+                                <span className="flex items-center gap-1">
+                                  <Mail size={11} /> {app.email}
+                                </span>
+                                <span className="flex items-center gap-1">
+                                  <Phone size={11} /> {app.phone}
+                                </span>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="py-3.5 px-4 sm:px-5">
+                            <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                              {app.supportType || "Donation"}
+                            </span>
+                          </td>
+                          <td className="py-3.5 px-4 sm:px-5 text-xs font-bold text-slate-800">
+                            {categoryTitle}
+                          </td>
+                          <td className="py-3.5 px-4 sm:px-5 text-xs text-slate-600 max-w-xs truncate">
+                            {app.address || "—"}
+                          </td>
+                        </>
+                      ) : (
+                        <>
+                          <td className="py-3.5 px-4 sm:px-5">
+                            <div>
+                              <p className="font-bold text-slate-900 text-xs sm:text-sm">
+                                {app.name}
+                              </p>
+                              <div className="flex flex-wrap items-center gap-2 text-[11px] text-slate-500 mt-0.5">
+                                <span className="flex items-center gap-1">
+                                  <Mail size={11} /> {app.email}
+                                </span>
+                                <span className="flex items-center gap-1">
+                                  <Phone size={11} /> {app.phone}
+                                </span>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="py-3.5 px-4 sm:px-5">
+                            <span
+                              className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold"
+                              style={{
+                                backgroundColor: categoryColor + "15",
+                                color: categoryColor,
+                              }}
+                            >
+                              <span
+                                className="w-1.5 h-1.5 rounded-full"
+                                style={{ backgroundColor: categoryColor }}
+                              />
+                              {categoryTitle}
+                            </span>
+                          </td>
+                          <td className="py-3.5 px-4 sm:px-5 text-xs text-slate-600 font-medium">
+                            <span className="flex items-center gap-1">
+                              <MapPin size={12} className="text-slate-400" />
+                              {app.city || "—"}
+                            </span>
+                          </td>
+                          <td className="py-3.5 px-4 sm:px-5 text-xs text-slate-600 font-medium">
+                            <span className="capitalize px-2 py-0.5 bg-slate-100 rounded-md text-[11px] font-semibold text-slate-700">
+                              {app.availability || "Flexible"}
+                            </span>
+                          </td>
+                        </>
+                      )}
 
                       {/* Date */}
                       <td className="py-3.5 px-4 sm:px-5 text-xs text-slate-500 font-medium whitespace-nowrap">
@@ -283,20 +449,22 @@ export const ApplicationsTable: React.FC<ApplicationsTableProps> = ({
 
                       {/* Actions */}
                       <td className="py-3.5 px-4 sm:px-5 text-right">
-                        <div className="flex items-center justify-end gap-1">
+                        <div className="flex items-center justify-end gap-1.5">
                           <button
+                            type="button"
                             onClick={() => onViewDetails(app)}
-                            title="View Details"
-                            className="p-1.5 text-slate-400 hover:text-black hover:bg-slate-100 rounded-lg transition-colors"
+                            className="p-1.5 text-slate-500 hover:text-black hover:bg-slate-100 rounded-lg transition-colors"
+                            title="View Full Application"
                           >
-                            <Eye size={14} />
+                            <Eye size={15} />
                           </button>
                           <button
+                            type="button"
                             onClick={() => onDeleteRequest(app)}
-                            title="Delete Applicant"
                             className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
+                            title="Delete Submission"
                           >
-                            <Trash2 size={14} />
+                            <Trash2 size={15} />
                           </button>
                         </div>
                       </td>

@@ -387,15 +387,15 @@ export function StepWAAudience() {
             <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div>
                 <p className="text-xs font-bold text-slate-800">
-                  Need the Excel Format?
+                  Need the Excel Format? (Name & Mobile Number only)
                 </p>
                 <p className="text-[11px] text-slate-500 mt-0.5">
-                  Download our pre-formatted spreadsheet with Name, Phone, Amount, and Campaign columns.
+                  Spreadsheet only requires <strong className="text-slate-700">Name</strong> and <strong className="text-slate-700">Mobile Number</strong>. Country code (<strong className="text-slate-700">+91</strong>) is automatically formatted if you enter 10 digits or with +91.
                 </p>
               </div>
               <a
                 href={whatsappAPI.getSampleExcelUrl()}
-                download
+                download="sample_broadcast_contacts.xlsx"
                 className="flex items-center gap-2 bg-white hover:bg-slate-100 text-black border border-slate-200 text-xs font-bold px-4 py-2.5 rounded-xl transition-all shrink-0 shadow-sm"
               >
                 <Download size={14} />

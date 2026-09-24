@@ -44,6 +44,7 @@ export default function CampaignDetailPage({
   const [searchFilter, setSearchFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [actionLoading, setActionLoading] = useState(false);
+  const [recipientPage, setRecipientPage] = useState(1);
 
   async function loadCampaign() {
     try {
@@ -165,8 +166,6 @@ export default function CampaignDetailPage({
   const failed = campaign.stats?.failed || 0;
   const pending = Math.max(0, total - (sent + failed));
   const progress = Math.min(100, Math.round(((sent + failed) / total) * 100));
-
-  const [recipientPage, setRecipientPage] = useState(1);
   const recipientLimit = 15;
 
   const filteredRecipients = (campaign.recipients || []).filter((r) => {
