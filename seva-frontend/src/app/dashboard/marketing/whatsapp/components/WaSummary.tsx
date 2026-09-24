@@ -49,11 +49,11 @@ export function WASummary() {
             </div>
           </div>
 
-          {/* Chat Canvas */}
-          <div className="p-3 min-h-[220px] max-h-[340px] overflow-y-auto flex flex-col justify-end">
-            <div className="bg-white rounded-2xl rounded-tl-none p-3 shadow-sm border border-slate-200/60 max-w-[92%] self-start space-y-2">
+          {/* Chat Canvas (Scrollable) */}
+          <div className="p-3 h-[320px] max-h-[420px] overflow-y-auto space-y-2 scrollbar-thin scrollbar-thumb-slate-300 scrollbar-track-transparent">
+            <div className="bg-white rounded-2xl rounded-tl-none p-3 shadow-sm border border-slate-200/60 max-w-[94%] self-start space-y-2">
               {draft.mediaType === "image" && (
-                <div className="w-full h-28 bg-slate-100 rounded-xl flex flex-col items-center justify-center border border-slate-200 overflow-hidden">
+                <div className="w-full h-32 bg-slate-100 rounded-xl flex flex-col items-center justify-center border border-slate-200 overflow-hidden">
                   {draft.mediaUrl ? (
                     <img
                       src={draft.mediaUrl}

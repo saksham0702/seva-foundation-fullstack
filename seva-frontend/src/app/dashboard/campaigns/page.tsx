@@ -310,7 +310,7 @@ const AllCampaignsPage = () => {
                       </div>
 
                       {/* Status switch + Action buttons */}
-                      <div className="flex items-center justify-between pt-4 mt-4 border-t border-border gap-2">
+                      <div className="flex flex-wrap items-center justify-between pt-4 mt-4 border-t border-border gap-2">
                         <select
                           value={cStatus}
                           onChange={(e) =>
@@ -319,7 +319,7 @@ const AllCampaignsPage = () => {
                               status: e.target.value as CampaignStatus,
                             })
                           }
-                          className="text-xs font-semibold py-1.5 px-2.5 rounded-lg border border-border bg-panel text-text-primary focus:outline-none"
+                          className="text-xs font-semibold py-1.5 px-2.5 rounded-lg border border-border bg-panel text-text-primary focus:outline-none shrink-0"
                         >
                           <option value="active">Active</option>
                           <option value="draft">Draft</option>
@@ -327,10 +327,10 @@ const AllCampaignsPage = () => {
                           <option value="paused">Paused</option>
                         </select>
 
-                        <div className="flex items-center gap-1.5">
+                        <div className="flex items-center gap-1.5 shrink-0 ml-auto">
                           <Link
                             href={`/dashboard/campaigns/${c._id}/overview`}
-                            className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-bold text-blueaccent hover:bg-blueaccent/10 rounded-lg border border-blueaccent/30 transition-all"
+                            className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-bold text-blueaccent hover:bg-blueaccent/10 rounded-lg border border-blueaccent/30 transition-all shrink-0"
                             title="View Campaign Overview"
                           >
                             <Eye size={13} />
@@ -338,10 +338,10 @@ const AllCampaignsPage = () => {
                           </Link>
                           <Link
                             href={`/dashboard/campaigns/${c._id}`}
-                            className="p-1.5 text-muted hover:text-blueaccent rounded-lg border border-border hover:border-blueaccent transition-all"
+                            className="p-1.5 text-muted hover:text-blueaccent hover:bg-blueaccent/10 rounded-lg border border-border hover:border-blueaccent transition-all shrink-0"
                             title="Edit Campaign"
                           >
-                            <Pencil size={13} />
+                            <Pencil size={14} />
                           </Link>
                           <button
                             type="button"
@@ -350,10 +350,10 @@ const AllCampaignsPage = () => {
                                 deleteMutation.mutate(c._id);
                               }
                             }}
-                            className="p-1.5 text-muted hover:text-red-500 rounded-lg border border-border hover:border-red-400 transition-all"
+                            className="p-1.5 text-muted hover:text-red-500 hover:bg-red-500/10 rounded-lg border border-border hover:border-red-400 transition-all shrink-0"
                             title="Delete Campaign"
                           >
-                            <Trash2 size={13} />
+                            <Trash2 size={14} />
                           </button>
                         </div>
                       </div>

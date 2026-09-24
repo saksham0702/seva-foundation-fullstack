@@ -1,6 +1,7 @@
 export const endpoint = {
   upload: {
     editor: "/upload/editor",
+    mailLogo: "/upload/mail-logo",
   },
 
   auth: {

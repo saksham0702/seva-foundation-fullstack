@@ -259,9 +259,8 @@ const Header = () => {
       {/*  SECTION 2 — MAIN HEADER (logo / nav / actions)                */}
       {/* ============================================================ */}
       <div
-        className={`border-b transition-shadow duration-300 ${
-          scrolled ? "border-gray-200 shadow-sm" : "border-gray-100"
-        }`}
+        className={`border-b transition-shadow duration-300 ${scrolled ? "border-gray-200 shadow-sm" : "border-gray-100"
+          }`}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-20 gap-6">
@@ -270,12 +269,11 @@ const Header = () => {
               <Image
                 src="/assets/seva-logo.png"
                 alt="Seva India Foundation"
-                width={500}
-                height={500}
-                className="object-cover h-20 w-50"
+                width={260}
+                height={70}
+                className="object-contain h-14 w-auto max-h-16"
                 priority
               />
-         
             </Link>
 
             {/* --- Desktop nav --- */}
@@ -290,11 +288,10 @@ const Header = () => {
                   <div key={link.href} className="relative group">
                     <Link
                       href={link.href}
-                      className={`flex items-center gap-0.5 px-2.5 py-2 text-[13.5px] font-semibold uppercase tracking-wide transition-colors whitespace-nowrap ${
-                        isActive
+                      className={`flex items-center gap-0.5 px-2.5 py-2 text-[13.5px] font-semibold uppercase tracking-wide transition-colors whitespace-nowrap ${isActive
                           ? "text-[#F5A623]"
                           : "text-slate-700 hover:text-[#F5A623]"
-                      }`}
+                        }`}
                     >
                       {link.label}
                       {hasChildren && (
@@ -331,15 +328,13 @@ const Header = () => {
                                 <Link
                                   key={child.href}
                                   href={child.href}
-                                  className={`flex items-center gap-2.5 px-4 py-2.5 text-[13px] font-semibold uppercase tracking-wider transition-all group/item ${
-                                    isChildActive
+                                  className={`flex items-center gap-2.5 px-4 py-2.5 text-[13px] font-semibold uppercase tracking-wider transition-all group/item ${isChildActive
                                       ? "text-[#F5A623] bg-orange-50"
                                       : "text-slate-700 hover:text-[#F5A623] hover:bg-orange-50/60"
-                                  }`}
+                                    }`}
                                 >
-                                  <span className={`w-1 h-1 rounded-full shrink-0 transition-colors ${
-                                    isChildActive ? "bg-[#F5A623]" : "bg-slate-300 group-hover/item:bg-[#F5A623]"
-                                  }`} />
+                                  <span className={`w-1 h-1 rounded-full shrink-0 transition-colors ${isChildActive ? "bg-[#F5A623]" : "bg-slate-300 group-hover/item:bg-[#F5A623]"
+                                    }`} />
                                   {child.label}
                                 </Link>
                               );
@@ -418,9 +413,8 @@ const Header = () => {
                       <Link
                         href={link.href}
                         onClick={() => setMenuOpen(false)}
-                        className={`flex-1 block py-3 text-[13px] font-semibold uppercase tracking-wide ${
-                          isActive ? "text-[#F5A623]" : "text-slate-700"
-                        }`}
+                        className={`flex-1 block py-3 text-[13px] font-semibold uppercase tracking-wide ${isActive ? "text-[#F5A623]" : "text-slate-700"
+                          }`}
                       >
                         {link.label}
                       </Link>
@@ -435,9 +429,8 @@ const Header = () => {
                           className="p-3 text-slate-400"
                         >
                           <svg
-                            className={`w-4 h-4 transition-transform ${
-                              isDropdownOpen ? "rotate-180" : ""
-                            }`}
+                            className={`w-4 h-4 transition-transform ${isDropdownOpen ? "rotate-180" : ""
+                              }`}
                             fill="none"
                             viewBox="0 0 24 24"
                             stroke="currentColor"

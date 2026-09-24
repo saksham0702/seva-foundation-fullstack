@@ -284,8 +284,7 @@ export const whatsappAPI = {
   },
 
   getSampleExcelUrl: (): string => {
-    const baseURL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
-    return `${baseURL}/api/marketing/sample-excel`;
+    return "/sample_broadcast_contacts.xlsx";
   },
 
   getLogs: async (params?: {

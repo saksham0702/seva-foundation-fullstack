@@ -72,7 +72,12 @@ const sendTemplatedMail = async (
     return { sent: false, logId: String(log._id) };
   }
 
-  const { subject, html } = MailTemplateService.renderTemplate(template, input.variables);
+  const activeConf = await MailConfigService.getActiveMailConfig();
+  const mergedInputVariables = {
+    ...(activeConf?.logoUrl ? { logoUrl: activeConf.logoUrl } : {}),
+    ...input.variables,
+  };
+  const { subject, html } = MailTemplateService.renderTemplate(template, mergedInputVariables);
 
   const log = await MailLogModel.create({
     to: input.to,

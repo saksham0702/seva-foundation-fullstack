@@ -14,6 +14,7 @@ export interface IMailConfig extends Document {
   fromName: string;
   fromEmail: string;
   replyTo?: string;
+  logoUrl?: string;
   isActive: boolean; // only one config should be active at a time
   createdBy: Types.ObjectId;
   updatedBy: Types.ObjectId;
@@ -109,6 +110,10 @@ const MailConfigSchema = new Schema<IMailConfig>(
       trim: true,
     },
     replyTo: {
+      type: String,
+      trim: true,
+    },
+    logoUrl: {
       type: String,
       trim: true,
     },

@@ -53,6 +53,11 @@ const updateMailTemplate = async (
 const deleteMailTemplate = async (
   id: string
 ): Promise<IMailTemplate | null> => {
+  const existing = await MailTemplateModel.findById(id);
+  if (!existing) return null;
+  if (!existing.isDynamicCampaign) {
+    throw new Error("System trigger email templates are protected and cannot be deleted.");
+  }
   return MailTemplateModel.findByIdAndUpdate(
     id,
     { isDeleted: true },
@@ -88,18 +93,34 @@ const renderTemplate = (
   variables: Record<string, string | number>
 ): { subject: string; html: string } => {
   const siteUrl = process.env.FRONTEND_URL || "http://187.126.112.144:3000";
+  const defaultLogo = `${siteUrl}/assets/seva-logo.png`;
+  const logoUrl = String(variables.logoUrl || defaultLogo);
+
   const mergedVariables: Record<string, string | number> = {
     siteUrl,
-    logoUrl: "",
+    logoUrl,
     loginUrl: process.env.CLIENT_LOGIN_URL || `${siteUrl}/login`,
     currentYear: new Date().getFullYear(),
     ...variables,
   };
+
   let html = renderString(template.htmlContent, mergedVariables);
-  // Hide / remove logo image tag for now to avoid broken image boxes in email clients
-  html = html.replace(/<img[^>]*alt=["']Seva Foundation["'][^>]*\/?>/gi, "");
-  html = html.replace(/<img[^>]*src=["']\{\{logoUrl\}\}["'][^>]*\/?>/gi, "");
-  html = html.replace(/<img[^>]*src=["'][^"']*seva-logo[^"']*["'][^>]*\/?>/gi, "");
+
+  // Render official logo banner in top header if logoUrl is provided
+  if (logoUrl) {
+    const logoImgTag = `<div style="text-align: center; margin-bottom: 22px;">
+      <div style="display: inline-block; background-color: #ffffff; padding: 12px 28px; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.22); border: 1px solid rgba(255,255,255,0.95);">
+        <img src="${logoUrl}" alt="Seva Foundation" style="max-height: 120px; max-width: 280px; height: auto; width: auto; display: block; margin: 0 auto; object-fit: contain; border: 0; outline: none;" />
+      </div>
+    </div>`;
+    if (html.includes("<!-- SEVA_LOGO_PLACEHOLDER -->")) {
+      html = html.replace("<!-- SEVA_LOGO_PLACEHOLDER -->", logoImgTag);
+    } else if (html.includes("SEVA FOUNDATION") && !html.includes("<img")) {
+      html = html.replace(/(<h1[^>]*>SEVA)/i, `${logoImgTag}$1`);
+    } else if (html.includes("SEVA INDIA FOUNDATION") && !html.includes("<img")) {
+      html = html.replace(/(<h1[^>]*>SEVA INDIA)/i, `${logoImgTag}$1`);
+    }
+  }
 
   return {
     subject: renderString(template.subject, mergedVariables),

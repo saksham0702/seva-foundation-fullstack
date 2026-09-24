@@ -30,13 +30,14 @@ export type MailTemplateCategory =
   | "GENERAL";
 
 export interface IMailTemplate extends Document {
-  key: MailTemplateKey;
+  key: string;
   name: string; // human-readable, e.g. "New User Credentials"
-  category: MailTemplateCategory;
+  category: string;
   subject: string; // supports {{placeholders}}
   htmlContent: string; // full HTML body, supports {{placeholders}}
   images: string[]; // uploaded via uploadMailTemplateImage, used inside htmlContent
   availableVariables: string[]; // documentation list, e.g. ["name","email","password"]
+  isDynamicCampaign?: boolean; // true for custom user-created marketing campaigns
   isActive: boolean;
   createdBy: Types.ObjectId;
   updatedBy: Types.ObjectId;
@@ -50,21 +51,7 @@ const MailTemplateSchema = new Schema<IMailTemplate>(
     key: {
       type: String,
       required: true,
-      unique: true,
-      enum: [
-        "USER_CREDENTIALS",
-        "USER_UPDATED",
-        "USER_PASSWORD_CHANGED",
-        "DONOR_DONATION_RECEIVED",
-        "DONOR_PAYMENT_CONFIRMED",
-        "CAMPAIGN_DONATION_RECEIPT",
-        "VOLUNTEER_APPLICATION_RECEIVED",
-        "VOLUNTEER_APPLICATION_STATUS_UPDATE",
-        "CERTIFICATE_GENERATED",
-        "CORPORATE_PARTNERSHIP_INQUIRY",
-        "CONTACT_FORM_SUBMISSION",
-        "CUSTOM",
-      ],
+      trim: true,
     },
     name: {
       type: String,
@@ -74,15 +61,7 @@ const MailTemplateSchema = new Schema<IMailTemplate>(
     category: {
       type: String,
       required: true,
-      enum: [
-        "AUTH",
-        "DONOR",
-        "VOLUNTEER",
-        "CAMPAIGN",
-        "CERTIFICATE",
-        "PARTNERSHIP",
-        "GENERAL",
-      ],
+      default: "CAMPAIGN",
     },
     subject: {
       type: String,
@@ -98,7 +77,11 @@ const MailTemplateSchema = new Schema<IMailTemplate>(
     },
     availableVariables: {
       type: [String],
-      default: [],
+      default: ["name", "email", "amount", "campaign", "date"],
+    },
+    isDynamicCampaign: {
+      type: Boolean,
+      default: false,
     },
     isActive: {
       type: Boolean,

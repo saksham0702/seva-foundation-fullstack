@@ -428,7 +428,17 @@ export class MarketingService {
   // ── 4. Templates CRUD ──────────────────────────────────────────────────────
 
   public static async getAllTemplates() {
-    return await WhatsAppTemplateModel.find().sort({ createdAt: -1 });
+    let result = await WhatsAppTemplateModel.find().sort({ createdAt: -1 });
+    if (result.length === 0) {
+      try {
+        const { seedWhatsAppDefaults } = await import("./whatsapp.seed");
+        await seedWhatsAppDefaults();
+        result = await WhatsAppTemplateModel.find().sort({ createdAt: -1 });
+      } catch (e) {
+        console.error("[MarketingService] Auto-seed WhatsApp templates failed:", e);
+      }
+    }
+    return result;
   }
 
   public static async getTemplateById(id: string) {

@@ -1,5 +1,9 @@
 import express from "express";
-import { uploadEditorImage, uploadProductImage } from "../../middlewares/upload";
+import {
+  uploadEditorImage,
+  uploadProductImage,
+  uploadMailBrandingImage,
+} from "../../middlewares/upload";
 import { uploadEditorImageHandler } from "./upload.controller";
 import { authMiddleware } from "../../middlewares/auth/auth.middleware";
 
@@ -18,6 +22,14 @@ router.post(
   "/product",
   authMiddleware,
   uploadProductImage.single("image"),
+  uploadEditorImageHandler
+);
+
+// POST /api/upload/mail-logo
+router.post(
+  "/mail-logo",
+  authMiddleware,
+  uploadMailBrandingImage.single("image"),
   uploadEditorImageHandler
 );
 

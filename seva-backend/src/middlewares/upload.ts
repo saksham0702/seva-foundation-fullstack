@@ -120,6 +120,10 @@ export const uploadGalleryImage = createFileUploader("gallery", 60, 3 * 1024 * 1
 // Files stored in uploads/cms/YYYY/MM/DD/images/ (max 5MB)
 export const uploadCmsImage = createFileUploader("cms", 10, 5 * 1024 * 1024);
 
+// ── Mail branding / logo uploader ──
+// Files stored in uploads/mail/YYYY/MM/DD/images/ (max 5MB)
+export const uploadMailBrandingImage = createFileUploader("mail", 5, 5 * 1024 * 1024);
+
 const ALLOWED_MEDIA_EXT = /jpeg|jpg|png|gif|webp|svg|mp4|webm|mov|ogg|m4v/;
 export function createMediaUploader(
   moduleName: string,

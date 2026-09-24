@@ -249,8 +249,6 @@ export default function WAMarketingPage() {
   }
 
   async function handleBaileysDisconnect() {
-    if (!confirm("Are you sure you want to disconnect this WhatsApp session?"))
-      return;
     try {
       setRefreshing(true);
       await whatsappAPI.disconnectBaileys();
@@ -363,7 +361,6 @@ export default function WAMarketingPage() {
   }
 
   async function handleDeleteCampaign(id: string) {
-    if (!confirm("Are you sure you want to delete this campaign?")) return;
     try {
       await whatsappAPI.deleteCampaign(id);
       toast.success("Campaign deleted successfully");
@@ -1250,9 +1247,12 @@ export default function WAMarketingPage() {
                         </span>
                         <button
                           onClick={async () => {
-                            if (confirm("Delete this template?")) {
+                            try {
                               await whatsappAPI.deleteTemplate(tpl._id!);
+                              toast.success("Template deleted successfully");
                               await loadAllData();
+                            } catch (err: any) {
+                              toast.error(err?.message || "Failed to delete template");
                             }
                           }}
                           className="text-red-500 hover:text-red-700 font-bold"

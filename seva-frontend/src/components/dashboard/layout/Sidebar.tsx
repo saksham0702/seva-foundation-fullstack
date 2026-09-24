@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
@@ -120,10 +120,8 @@ const NAV_CONFIG: NavSection[] = [
         permission: "marketing",
         children: [
           { label: "WhatsApp Marketing", href: "/dashboard/marketing/whatsapp" },
-          { label: "WhatsApp Templates", href: "/dashboard/marketing/whatsapp?tab=templates" },
-          { label: "New Broadcast Campaign", href: "/dashboard/marketing/whatsapp/create" },
-          { label: "Email Marketing & Logs", href: "/dashboard/marketing/email" },
-          { label: "Email Templates", href: "/dashboard/marketing/email/templates" },
+          { label: "Email Marketing", href: "/dashboard/marketing/email" },
+          { label: "Outreach Templates", href: "/dashboard/marketing/templates" },
         ],
       },
       {
@@ -189,24 +187,35 @@ const NAV_CONFIG: NavSection[] = [
   },
 ];
 
+// Helper to determine if a route or its subpath is active
+function isRouteActive(pathname: string, targetHref?: string): boolean {
+  if (!targetHref) return false;
+  const cleanTarget = targetHref.split("?")[0].replace(/\/$/, "");
+  const cleanPath = pathname.split("?")[0].replace(/\/$/, "");
+  if (cleanTarget === "/dashboard") {
+    return cleanPath === "/dashboard";
+  }
+  return cleanPath === cleanTarget || cleanPath.startsWith(cleanTarget + "/");
+}
+
 // ── Grandchild (level 3) ─────────────────────────────────────────
 function GrandchildItem({ item }: { item: NavChild }) {
   const pathname = usePathname();
-  const isActive = pathname === item.href;
+  const isActive = isRouteActive(pathname, item.href);
   return (
     <Link
       href={item.href!}
       className={cn(
         "flex items-center gap-2 pl-4 pr-3 py-1.5 rounded-md text-[11.5px] font-medium transition-all duration-200",
         isActive
-          ? "text-gold bg-white/[0.06]"
+          ? "text-gold bg-white/[0.08] font-bold"
           : "text-white/50 hover:text-white hover:bg-white/[0.04]"
       )}
     >
       <span
         className={cn(
-          "w-1 h-1 rounded-full bg-current transition-all duration-300",
-          isActive ? "opacity-100 scale-125" : "opacity-40"
+          "w-1.5 h-1.5 rounded-full bg-current transition-all duration-300",
+          isActive ? "opacity-100 scale-125 bg-gold" : "opacity-40"
         )}
       />
       {item.label}
@@ -217,11 +226,16 @@ function GrandchildItem({ item }: { item: NavChild }) {
 // ── Child (level 2) ──────────────────────────────────────────────
 function ChildItem({ item }: { item: NavChild }) {
   const pathname = usePathname();
-  const isActive = pathname === item.href;
+  const isActive = isRouteActive(pathname, item.href);
   const hasGrandchildren = item.children && item.children.length > 0;
   const isParentActive =
-    hasGrandchildren && item.children!.some((g) => pathname === g.href);
+    hasGrandchildren &&
+    item.children!.some((g) => isRouteActive(pathname, g.href));
   const [open, setOpen] = useState(isParentActive);
+
+  useEffect(() => {
+    if (isParentActive) setOpen(true);
+  }, [isParentActive]);
 
   if (hasGrandchildren) {
     return (
@@ -231,19 +245,20 @@ function ChildItem({ item }: { item: NavChild }) {
           className={cn(
             "w-full flex items-center justify-between pl-3 pr-3 py-2 rounded-md text-xs font-medium transition-all duration-200",
             isParentActive
-              ? "text-gold"
+              ? "text-gold bg-white/[0.06] font-bold"
               : "text-white/60 hover:text-white hover:bg-white/[0.04]"
           )}
         >
           <span>{item.label}</span>
-          {open ? (
-            <ChevronDown className="w-3 h-3 opacity-60" />
-          ) : (
-            <ChevronRight className="w-3 h-3 opacity-60" />
-          )}
+          <ChevronDown
+            className={cn(
+              "w-3 h-3 opacity-60 transition-transform duration-300",
+              open && "rotate-180"
+            )}
+          />
         </button>
         {open && (
-          <div className="ml-3 mt-1 space-y-1 border-l border-white/10 pl-2">
+          <div className="ml-3 mt-1 space-y-1 border-l border-white/10 pl-2 animate-in fade-in slide-in-from-top-1 duration-200">
             {item.children!.map((g) => (
               <GrandchildItem key={g.href} item={g} />
             ))}
@@ -276,14 +291,14 @@ function ChildItem({ item }: { item: NavChild }) {
       className={cn(
         "flex items-center gap-2 pl-3 pr-3 py-2 rounded-md text-xs font-medium transition-all duration-200",
         isActive
-          ? "text-gold bg-white/[0.06] font-semibold"
+          ? "text-gold bg-white/[0.08] font-bold shadow-sm"
           : "text-white/60 hover:text-white hover:bg-white/[0.04]"
       )}
     >
       <span
         className={cn(
           "w-1.5 h-1.5 rounded-full transition-all duration-300",
-          isActive ? "bg-gold scale-110" : "bg-white/20"
+          isActive ? "bg-gold scale-125" : "bg-white/20"
         )}
       />
       {item.label}
@@ -297,15 +312,24 @@ function NavItemRow({ item }: { item: NavItem }) {
   const Icon = item.icon;
   const hasChildren = item.children && item.children.length > 0;
 
-  const isDirectActive = item.href && pathname === item.href;
+  const isDirectActive = isRouteActive(pathname, item.href);
   const isParentActive =
     hasChildren &&
     item.children!.some(
-      (c) => pathname === c.href || c.children?.some((g) => pathname === g.href)
+      (c) =>
+        isRouteActive(pathname, c.href) ||
+        c.children?.some((g) => isRouteActive(pathname, g.href))
     );
   const isActive = isDirectActive || isParentActive;
 
-  const [open, setOpen] = useState(!!isParentActive);
+  const [open, setOpen] = useState(isParentActive);
+
+  // Auto-expand section when navigated into a child
+  useEffect(() => {
+    if (isParentActive) {
+      setOpen(true);
+    }
+  }, [isParentActive]);
 
   if (hasChildren) {
     return (
@@ -314,12 +338,19 @@ function NavItemRow({ item }: { item: NavItem }) {
           onClick={() => setOpen((o) => !o)}
           className={cn(
             "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-300 group",
-            isActive
+            isParentActive && open
+              ? "bg-white/[0.08] text-white border-l-[3px] border-gold font-bold shadow-inner"
+              : isParentActive && !open
               ? "bg-gold text-navy shadow-lg shadow-gold/20 font-bold"
               : "text-white/85 hover:bg-white/[0.05] hover:text-white"
           )}
         >
-          <Icon className="w-4 h-4 flex-shrink-0" />
+          <Icon
+            className={cn(
+              "w-4 h-4 flex-shrink-0 transition-colors duration-200",
+              isParentActive ? "text-gold" : "text-white/70 group-hover:text-white"
+            )}
+          />
           <span className="flex-1 text-left">{item.label}</span>
           <ChevronDown
             className={cn(
@@ -329,7 +360,7 @@ function NavItemRow({ item }: { item: NavItem }) {
           />
         </button>
         {open && (
-          <div className="mt-1 ml-5 space-y-1 border-l border-white/10 pl-3">
+          <div className="mt-1 ml-5 space-y-1 border-l border-white/10 pl-3 animate-in fade-in slide-in-from-top-1 duration-200">
             {item.children!.map((child) => (
               <ChildItem key={child.href ?? child.label} item={child} />
             ))}
@@ -371,21 +402,22 @@ export default function Sidebar() {
   return (
     <aside className="w-64 bg-navy text-white flex flex-col h-screen flex-shrink-0 border-r border-white/5 z-50">
       {/* Logo */}
-      <div className="flex items-center gap-3 px-6 h-20 flex-shrink-0 border-b border-white/5">
-        <div className="relative w-9 h-9 flex-shrink-0">
+      <div className="flex items-center gap-3.5 px-6 h-20 flex-shrink-0 border-b border-white/5">
+        <div className="w-11 h-11 rounded-xl bg-white p-1.5 shadow-md flex items-center justify-center flex-shrink-0 border border-white/20">
           <Image
             src="/assets/seva-logo.png"
             alt="SEVA Foundation"
-            fill
-            className="object-contain brightness-0 invert opacity-90"
+            width={42}
+            height={42}
+            className="object-contain max-h-full max-w-full"
             priority
           />
         </div>
         <div className="min-w-0">
-          <p className="font-serif font-bold text-[15px] leading-tight tracking-wide truncate">
+          <p className="font-serif font-bold text-[15px] leading-tight tracking-wide truncate text-white">
             SEVA CONSOLE
           </p>
-          <p className="text-[10px] font-semibold text-gold/80 uppercase tracking-[0.2em]">
+          <p className="text-[10px] font-semibold text-gold/90 uppercase tracking-[0.2em]">
             System Node V2.0.5
           </p>
         </div>
