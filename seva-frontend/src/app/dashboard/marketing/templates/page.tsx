@@ -92,8 +92,6 @@ function renderPreviewHtml(html: string): string {
     rendered = rendered.replace(reg, val);
   }
   rendered = rendered.replace(/\{\{\s*([\w.]+)\s*\}\}/g, "[$1]");
-  rendered = rendered.replace(/<img[^>]*alt=["']Seva Foundation["'][^>]*\/?>/gi, "");
-  rendered = rendered.replace(/<img[^>]*src=["'][^"']*logo[^"']*["'][^>]*\/?>/gi, "");
   return rendered;
 }
 

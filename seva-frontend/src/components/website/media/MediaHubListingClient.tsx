@@ -387,7 +387,7 @@ export default function MediaHubListingClient({
     <>
       {/* ── Tabs & Filter Bar ── */}
       <section className="border-b border-gray-100 bg-gray-50/70 py-6 sticky top-0 z-20 backdrop-blur-md">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-5">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-5">
           {/* Top Row: Type Tabs & Search */}
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             {/* Content Tabs */}
@@ -508,7 +508,7 @@ export default function MediaHubListingClient({
 
       {/* ── Content Grid Display ── */}
       <section className="py-12 bg-white min-h-[60vh]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Fallback alert if cross content is found */}
           {hasOnlyCrossContent && (
             <div className="mb-8 p-4 bg-amber-50 border border-amber-200 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-amber-900">

@@ -93,12 +93,13 @@ export function buildProfessionalEmailTemplate({
           </tr>
           <!-- Header with Navy Background -->
           <tr>
-            <td style="background-color: #0f2347; padding: 32px 40px 28px; text-align: center;">
+            <td style="background-color: #0A1A2F; padding: 32px 36px 28px; text-align: center;">
               <table width="100%" border="0" cellpadding="0" cellspacing="0">
                 <tr>
                   <td align="center">
-                    <h1 style="margin: 0; color: #ffffff; font-size: 24px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase;">SEVA FOUNDATION</h1>
-                    <p style="margin: 6px 0 0; color: #E8542A; font-size: 11px; font-weight: 700; letter-spacing: 2.5px; text-transform: uppercase;">Serving Humanity • Empowering Lives</p>
+                    <!-- SEVA_LOGO_PLACEHOLDER -->
+                    <h1 style="margin: 0; color: #ffffff; font-size: 22px; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase;">SEVA INDIA FOUNDATION</h1>
+                    <p style="margin: 6px 0 0; color: #F5A623; font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase;">Serving Humanity • Empowering Lives</p>
                   </td>
                 </tr>
               </table>

@@ -15,52 +15,21 @@ interface PageProps {
   }>;
 }
 
+import { getServerGalleryPaginated } from "@/lib/server-api";
+
 export default async function GalleryPage({ searchParams }: PageProps) {
   const resolvedParams = await searchParams;
   const page = Math.max(1, Number(resolvedParams?.page) || 1);
 
-  const apiUrl =
-    process.env.NEXT_PUBLIC_API_URL?.trim() || "http://backend:5000/api";
-
-  let initialImages: GalleryItem[] = [];
-  let initialMeta: GalleryMeta = {
-    page,
-    limit: 50,
-    total: 0,
-    totalPage: 1,
-  };
-  let backendMessage: string = "";
-
-  try {
-    const url = new URL(`${apiUrl}/gallery`);
-    url.searchParams.set("page", String(page));
-    url.searchParams.set("limit", "50");
-
-    const res = await fetch(url.toString(), {
-      cache: "no-store",
-    });
-
-    if (res.ok) {
-      const data = await res.json();
-      initialImages = data?.data || [];
-      if (data?.meta) {
-        initialMeta = data.meta;
-      }
-      backendMessage = data?.message || "";
-    } else {
-      backendMessage = "No images found in gallery";
-    }
-  } catch (error) {
-    console.error("Error SSR fetching gallery images:", error);
-    backendMessage = "Failed to load gallery images from server";
-  }
+  const { data: initialImages, meta: initialMeta, message: backendMessage } =
+    await getServerGalleryPaginated(page, 20);
 
   return (
     <React.Suspense fallback={<div className="min-h-screen py-24 text-center text-slate-400">Loading gallery...</div>}>
       <GalleryClient
         initialImages={initialImages}
         initialMeta={initialMeta}
-        backendMessage={backendMessage}
+        backendMessage={backendMessage || ""}
         initialPage={page}
       />
     </React.Suspense>

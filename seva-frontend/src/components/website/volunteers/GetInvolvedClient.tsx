@@ -198,8 +198,18 @@ export default function GetInvolvedClient({
     }
   }, [urlType]);
 
+  const maxPhoneDigits = countryCode === "+91" ? 10 : 12;
+
+  const handleCountryCodeChange = (newCode: string) => {
+    setCountryCode(newCode);
+    const maxDigits = newCode === "+91" ? 10 : 12;
+    if (phoneNumber.length > maxDigits) {
+      setPhoneNumber(phoneNumber.slice(0, maxDigits));
+    }
+  };
+
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const onlyDigits = e.target.value.replace(/\D/g, "").slice(0, 15);
+    const onlyDigits = e.target.value.replace(/\D/g, "").slice(0, maxPhoneDigits);
     setPhoneNumber(onlyDigits);
   };
 
@@ -216,8 +226,13 @@ export default function GetInvolvedClient({
     e.preventDefault();
     setErrorMessage(null);
 
-    if (!phoneNumber || phoneNumber.trim().length < 6) {
-      setErrorMessage("Please enter a valid phone number (at least 6 digits).");
+    const minDigits = countryCode === "+91" ? 10 : 7;
+    if (!phoneNumber || phoneNumber.trim().length < minDigits) {
+      setErrorMessage(
+        countryCode === "+91"
+          ? "Please enter a valid 10-digit mobile number."
+          : "Please enter a valid phone number (at least 7 digits)."
+      );
       return;
     }
 
@@ -286,64 +301,6 @@ export default function GetInvolvedClient({
       {/* ── Selection Part & Interactive Forms ── */}
       <section id="select-and-apply" className="py-16 sm:py-24 bg-white scroll-mt-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          
-          {/* Main Form Type Navigation Tabs */}
-          <div className="flex justify-center mb-12">
-            <div className="inline-flex flex-wrap p-1.5 bg-slate-100/90 rounded-2xl border border-slate-200 shadow-xs gap-1.5">
-              <button
-                type="button"
-                onClick={() => handleTabChange("corporate")}
-                className={`flex items-center gap-2 px-5 py-3 rounded-xl text-xs sm:text-sm font-bold transition-all ${
-                  activeFormType === "corporate"
-                    ? "bg-white text-[#0f2347] shadow-md ring-1 ring-slate-200"
-                    : "text-slate-600 hover:text-[#0f2347]"
-                }`}
-              >
-                <Building2 size={16} className={activeFormType === "corporate" ? "text-[#4169E1]" : ""} />
-                <span>Corporate & CSR</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleTabChange("volunteer")}
-                className={`flex items-center gap-2 px-5 py-3 rounded-xl text-xs sm:text-sm font-bold transition-all ${
-                  activeFormType === "volunteer"
-                    ? "bg-white text-[#0f2347] shadow-md ring-1 ring-slate-200"
-                    : "text-slate-600 hover:text-[#0f2347]"
-                }`}
-              >
-                <HandHeart size={16} className={activeFormType === "volunteer" ? "text-[#E8542A]" : ""} />
-                <span>Volunteer Application</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleTabChange("career")}
-                className={`flex items-center gap-2 px-5 py-3 rounded-xl text-xs sm:text-sm font-bold transition-all ${
-                  activeFormType === "career"
-                    ? "bg-white text-[#0f2347] shadow-md ring-1 ring-slate-200"
-                    : "text-slate-600 hover:text-[#0f2347]"
-                }`}
-              >
-                <Briefcase size={16} className={activeFormType === "career" ? "text-[#4169E1]" : ""} />
-                <span>Careers & Jobs</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleTabChange("support")}
-                className={`flex items-center gap-2 px-5 py-3 rounded-xl text-xs sm:text-sm font-bold transition-all ${
-                  activeFormType === "support"
-                    ? "bg-white text-[#0f2347] shadow-md ring-1 ring-slate-200"
-                    : "text-slate-600 hover:text-[#0f2347]"
-                }`}
-              >
-                <Gift size={16} className={activeFormType === "support" ? "text-[#F5A623]" : ""} />
-                <span>Ways to Give</span>
-              </button>
-            </div>
-          </div>
-
           <div className="grid lg:grid-cols-12 gap-10 lg:gap-14 items-start">
             
             {/* ======================================================== */}
@@ -831,14 +788,19 @@ export default function GetInvolvedClient({
                           </div>
 
                           <div>
-                            <label className="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1.5">
-                              PHONE NUMBER
-                            </label>
-                            <div className="flex gap-2">
+                            <div className="flex items-center justify-between mb-1.5">
+                              <label className="block text-[11px] font-bold text-slate-600 uppercase tracking-wider">
+                                PHONE NUMBER
+                              </label>
+                              <span className="text-[10px] text-slate-400 font-medium">
+                                {countryCode === "+91" ? "10 digits" : "Max 12 digits"}
+                              </span>
+                            </div>
+                            <div className="flex gap-2 max-w-[280px]">
                               <select
                                 value={countryCode}
-                                onChange={(e) => setCountryCode(e.target.value)}
-                                className="px-2.5 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:border-[#4169E1]"
+                                onChange={(e) => handleCountryCodeChange(e.target.value)}
+                                className="w-24 shrink-0 px-2 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:border-[#4169E1]"
                               >
                                 {COUNTRY_CODES.map((c) => (
                                   <option key={c.code} value={c.code}>
@@ -849,10 +811,12 @@ export default function GetInvolvedClient({
                               <input
                                 type="tel"
                                 required
+                                inputMode="numeric"
+                                maxLength={maxPhoneDigits}
                                 value={phoneNumber}
                                 onChange={handlePhoneChange}
-                                placeholder="98765 43210"
-                                className="flex-1 px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#4169E1]/20 focus:border-[#4169E1] transition-all"
+                                placeholder="9876543210"
+                                className="flex-1 min-w-0 px-3.5 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#4169E1]/20 focus:border-[#4169E1] transition-all font-mono"
                               />
                             </div>
                           </div>
@@ -969,14 +933,19 @@ export default function GetInvolvedClient({
 
                         <div className="grid sm:grid-cols-2 gap-4">
                           <div>
-                            <label className="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1.5">
-                              PHONE NUMBER
-                            </label>
-                            <div className="flex gap-2">
+                            <div className="flex items-center justify-between mb-1.5">
+                              <label className="block text-[11px] font-bold text-slate-600 uppercase tracking-wider">
+                                PHONE NUMBER
+                              </label>
+                              <span className="text-[10px] text-slate-400 font-medium">
+                                {countryCode === "+91" ? "10 digits" : "Max 12 digits"}
+                              </span>
+                            </div>
+                            <div className="flex gap-2 max-w-[280px]">
                               <select
                                 value={countryCode}
-                                onChange={(e) => setCountryCode(e.target.value)}
-                                className="px-2.5 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:border-[#E8542A]"
+                                onChange={(e) => handleCountryCodeChange(e.target.value)}
+                                className="w-24 shrink-0 px-2 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:border-[#E8542A]"
                               >
                                 {COUNTRY_CODES.map((c) => (
                                   <option key={c.code} value={c.code}>
@@ -987,10 +956,12 @@ export default function GetInvolvedClient({
                               <input
                                 type="tel"
                                 required
+                                inputMode="numeric"
+                                maxLength={maxPhoneDigits}
                                 value={phoneNumber}
                                 onChange={handlePhoneChange}
-                                placeholder="98765 43210"
-                                className="flex-1 px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#E8542A]/20 focus:border-[#E8542A] transition-all"
+                                placeholder="9876543210"
+                                className="flex-1 min-w-0 px-3.5 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#E8542A]/20 focus:border-[#E8542A] transition-all font-mono"
                               />
                             </div>
                           </div>
@@ -1111,14 +1082,19 @@ export default function GetInvolvedClient({
 
                         <div className="grid sm:grid-cols-2 gap-4">
                           <div>
-                            <label className="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1.5">
-                              PHONE NUMBER
-                            </label>
-                            <div className="flex gap-2">
+                            <div className="flex items-center justify-between mb-1.5">
+                              <label className="block text-[11px] font-bold text-slate-600 uppercase tracking-wider">
+                                PHONE NUMBER
+                              </label>
+                              <span className="text-[10px] text-slate-400 font-medium">
+                                {countryCode === "+91" ? "10 digits" : "Max 12 digits"}
+                              </span>
+                            </div>
+                            <div className="flex gap-2 max-w-[280px]">
                               <select
                                 value={countryCode}
-                                onChange={(e) => setCountryCode(e.target.value)}
-                                className="px-2.5 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:border-[#F5A623]"
+                                onChange={(e) => handleCountryCodeChange(e.target.value)}
+                                className="w-24 shrink-0 px-2 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:border-[#F5A623]"
                               >
                                 {COUNTRY_CODES.map((c) => (
                                   <option key={c.code} value={c.code}>
@@ -1129,10 +1105,12 @@ export default function GetInvolvedClient({
                               <input
                                 type="tel"
                                 required
+                                inputMode="numeric"
+                                maxLength={maxPhoneDigits}
                                 value={phoneNumber}
                                 onChange={handlePhoneChange}
-                                placeholder="98765 43210"
-                                className="flex-1 px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#F5A623]/20 focus:border-[#F5A623] transition-all"
+                                placeholder="9876543210"
+                                className="flex-1 min-w-0 px-3.5 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#F5A623]/20 focus:border-[#F5A623] transition-all font-mono"
                               />
                             </div>
                           </div>
@@ -1248,14 +1226,19 @@ export default function GetInvolvedClient({
 
                         <div className="grid sm:grid-cols-2 gap-4">
                           <div>
-                            <label className="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1.5">
-                              PHONE NUMBER
-                            </label>
-                            <div className="flex gap-2">
+                            <div className="flex items-center justify-between mb-1.5">
+                              <label className="block text-[11px] font-bold text-slate-600 uppercase tracking-wider">
+                                PHONE NUMBER
+                              </label>
+                              <span className="text-[10px] text-slate-400 font-medium">
+                                {countryCode === "+91" ? "10 digits" : "Max 12 digits"}
+                              </span>
+                            </div>
+                            <div className="flex gap-2 max-w-[280px]">
                               <select
                                 value={countryCode}
-                                onChange={(e) => setCountryCode(e.target.value)}
-                                className="px-2.5 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:border-[#F5A623]"
+                                onChange={(e) => handleCountryCodeChange(e.target.value)}
+                                className="w-24 shrink-0 px-2 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:border-[#F5A623]"
                               >
                                 {COUNTRY_CODES.map((c) => (
                                   <option key={c.code} value={c.code}>
@@ -1266,10 +1249,12 @@ export default function GetInvolvedClient({
                               <input
                                 type="tel"
                                 required
+                                inputMode="numeric"
+                                maxLength={maxPhoneDigits}
                                 value={phoneNumber}
                                 onChange={handlePhoneChange}
-                                placeholder="98765 43210"
-                                className="flex-1 px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#F5A623]/20 focus:border-[#F5A623] transition-all"
+                                placeholder="9876543210"
+                                className="flex-1 min-w-0 px-3.5 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#F5A623]/20 focus:border-[#F5A623] transition-all font-mono"
                               />
                             </div>
                           </div>

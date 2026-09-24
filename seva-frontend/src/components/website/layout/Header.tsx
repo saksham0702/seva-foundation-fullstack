@@ -131,7 +131,7 @@ const HeaderContent = () => {
     if (targetHref === "/") return pathname === "/";
 
     const [targetPath, targetQuery] = targetHref.split("?");
-    
+
     // Check if target has query params (e.g. ?tab=corporate)
     if (targetQuery) {
       if (pathname !== targetPath) return false;
@@ -300,9 +300,9 @@ const HeaderContent = () => {
               <Image
                 src="/assets/seva-logo.png"
                 alt="Seva India Foundation"
-                width={260}
-                height={70}
-                className="object-contain h-14 w-auto max-h-16"
+                width={500}
+                height={500}
+                className="object-cover h-25 w-50 "
                 priority
               />
             </Link>
@@ -319,11 +319,10 @@ const HeaderContent = () => {
                   <div key={link.href} className="relative group">
                     <Link
                       href={link.href}
-                      className={`flex items-center gap-0.5 px-2.5 py-2 text-[13.5px] font-semibold uppercase tracking-wide transition-colors whitespace-nowrap ${
-                        isParentActive
-                          ? "text-[#F5A623]"
-                          : "text-slate-700 hover:text-[#F5A623]"
-                      }`}
+                      className={`flex items-center gap-0.5 px-2.5 py-2 text-[13.5px] font-semibold uppercase tracking-wide transition-colors whitespace-nowrap ${isParentActive
+                        ? "text-[#F5A623]"
+                        : "text-slate-700 hover:text-[#F5A623]"
+                        }`}
                     >
                       {link.label}
                       {hasChildren && (
@@ -360,18 +359,16 @@ const HeaderContent = () => {
                                 <Link
                                   key={child.href}
                                   href={child.href}
-                                  className={`flex items-center gap-2.5 px-4 py-2.5 text-[13px] font-semibold uppercase tracking-wider transition-all group/item ${
-                                    isChildActive
-                                      ? "text-[#F5A623] bg-orange-50 font-bold"
-                                      : "text-slate-700 hover:text-[#F5A623] hover:bg-orange-50/60"
-                                  }`}
+                                  className={`flex items-center gap-2.5 px-4 py-2.5 text-[13px] font-semibold uppercase tracking-wider transition-all group/item ${isChildActive
+                                    ? "text-[#F5A623] bg-orange-50 font-bold"
+                                    : "text-slate-700 hover:text-[#F5A623] hover:bg-orange-50/60"
+                                    }`}
                                 >
                                   <span
-                                    className={`w-1.5 h-1.5 rounded-full shrink-0 transition-colors ${
-                                      isChildActive
-                                        ? "bg-[#F5A623] ring-2 ring-orange-200"
-                                        : "bg-slate-300 group-hover/item:bg-[#F5A623]"
-                                    }`}
+                                    className={`w-1.5 h-1.5 rounded-full shrink-0 transition-colors ${isChildActive
+                                      ? "bg-[#F5A623] ring-2 ring-orange-200"
+                                      : "bg-slate-300 group-hover/item:bg-[#F5A623]"
+                                      }`}
                                   />
                                   {child.label}
                                 </Link>
@@ -451,9 +448,8 @@ const HeaderContent = () => {
                       <Link
                         href={link.href}
                         onClick={() => setMenuOpen(false)}
-                        className={`flex-1 block py-3 text-[13px] font-semibold uppercase tracking-wide transition-colors ${
-                          isParentActive ? "text-[#F5A623] font-bold" : "text-slate-700 hover:text-[#F5A623]"
-                        }`}
+                        className={`flex-1 block py-3 text-[13px] font-semibold uppercase tracking-wide transition-colors ${isParentActive ? "text-[#F5A623] font-bold" : "text-slate-700 hover:text-[#F5A623]"
+                          }`}
                       >
                         {link.label}
                       </Link>
@@ -468,9 +464,8 @@ const HeaderContent = () => {
                           className="p-3 text-slate-400"
                         >
                           <svg
-                            className={`w-4 h-4 transition-transform ${
-                              isDropdownOpen ? "rotate-180 text-[#F5A623]" : ""
-                            }`}
+                            className={`w-4 h-4 transition-transform ${isDropdownOpen ? "rotate-180 text-[#F5A623]" : ""
+                              }`}
                             fill="none"
                             viewBox="0 0 24 24"
                             stroke="currentColor"
@@ -495,18 +490,16 @@ const HeaderContent = () => {
                               key={child.href}
                               href={child.href}
                               onClick={() => setMenuOpen(false)}
-                              className={`flex items-center gap-2 py-2 text-[12px] font-semibold uppercase tracking-wider transition-colors ${
-                                isChildActive
-                                  ? "text-[#F5A623] font-bold"
-                                  : "text-slate-600 hover:text-[#F5A623]"
-                              }`}
+                              className={`flex items-center gap-2 py-2 text-[12px] font-semibold uppercase tracking-wider transition-colors ${isChildActive
+                                ? "text-[#F5A623] font-bold"
+                                : "text-slate-600 hover:text-[#F5A623]"
+                                }`}
                             >
                               <span
-                                className={`w-1.5 h-1.5 rounded-full shrink-0 transition-colors ${
-                                  isChildActive
-                                    ? "bg-[#F5A623]"
-                                    : "bg-slate-300"
-                                }`}
+                                className={`w-1.5 h-1.5 rounded-full shrink-0 transition-colors ${isChildActive
+                                  ? "bg-[#F5A623]"
+                                  : "bg-slate-300"
+                                  }`}
                               />
                               {child.label}
                             </Link>

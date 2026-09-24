@@ -18,7 +18,24 @@ export const metadata: Metadata = constructMetadata({
   ],
 });
 
-export default function DonationsPage() {
+import { getServerCampaigns } from "@/lib/server-api";
+
+interface DonationsPageProps {
+  searchParams?: Promise<{
+    campaign?: string;
+    amount?: string;
+  }>;
+}
+
+export default async function DonationsPage({ searchParams }: DonationsPageProps) {
+  const resolvedParams = searchParams ? await searchParams : {};
+  const campaignSlug = resolvedParams?.campaign || "";
+
+  const campaigns = await getServerCampaigns();
+  const initialCampaign = campaignSlug
+    ? campaigns.find((c) => c.slug === campaignSlug) || null
+    : null;
+
   return (
     <Suspense
       fallback={
@@ -28,7 +45,10 @@ export default function DonationsPage() {
         </div>
       }
     >
-      <DonateFlowClient />
+      <DonateFlowClient
+        initialCampaigns={campaigns}
+        initialCampaign={initialCampaign}
+      />
     </Suspense>
   );
 }

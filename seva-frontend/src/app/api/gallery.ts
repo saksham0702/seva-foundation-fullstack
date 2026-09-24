@@ -47,7 +47,7 @@ export const getPublicGallery = async (
   const response = await axiosInstance.get(endpoint.gallery.getPublic, {
     params: {
       page: params?.page || 1,
-      limit: params?.limit || 50,
+      limit: params?.limit || 20,
       category: params?.category,
     },
   });
@@ -56,7 +56,7 @@ export const getPublicGallery = async (
     data: response.data?.data || [],
     meta: response.data?.meta || {
       page: 1,
-      limit: 50,
+      limit: 20,
       total: response.data?.data?.length || 0,
       totalPage: 1,
     },
@@ -70,7 +70,7 @@ export const getAdminGallery = async (
   const response = await axiosInstance.get(endpoint.gallery.getAdmin, {
     params: {
       page: params?.page || 1,
-      limit: params?.limit || 50,
+      limit: params?.limit || 20,
       status: params?.status === "all" ? undefined : params?.status,
       search: params?.search,
       category: params?.category,
@@ -81,7 +81,7 @@ export const getAdminGallery = async (
     data: response.data?.data || [],
     meta: response.data?.meta || {
       page: 1,
-      limit: 50,
+      limit: 20,
       total: response.data?.data?.length || 0,
       totalPage: 1,
     },

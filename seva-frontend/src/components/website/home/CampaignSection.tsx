@@ -10,10 +10,30 @@ import { toCampaignCardData } from "@/lib/campaign-stats";
 
 const FEATURED_COUNT = 3;
 
-export default function CampaignsSection() {
-  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+export default function CampaignsSection({
+  initialCampaigns,
+}: {
+  initialCampaigns?: Campaign[];
+}) {
+  const initialFiltered = initialCampaigns
+    ? initialCampaigns
+        .filter(
+          (c) =>
+            !c.isDeleted &&
+            c.status !== "completed" &&
+            (c.status === "active" || !c.status)
+        )
+        .sort((a, b) => {
+          const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+          const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+          return dateB - dateA;
+        })
+        .slice(0, FEATURED_COUNT)
+    : [];
+
+  const [campaigns, setCampaigns] = useState<Campaign[]>(initialFiltered);
   const [donations, setDonations] = useState<Donation[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(initialFiltered.length === 0);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {

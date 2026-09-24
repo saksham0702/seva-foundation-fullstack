@@ -122,17 +122,17 @@ export function ContentDetail({
     <div className="min-h-screen bg-white" style={cssVars}>
       <ViewTracker entityType={item.type} entityId={item._id || item.id} />
       {/* ── Header ── */}
-      <section className="pb-10 pt-5">
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section className="pb-8 pt-6">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <Link
             href={backHref}
-            className="inline-flex items-center gap-2 text-sm font-bold transition-colors mb-8 hover:opacity-70"
+            className="inline-flex items-center gap-2 text-sm font-bold transition-colors mb-6 hover:opacity-70"
             style={{ color: headingColor }}
           >
             <ArrowLeft size={16} />
             {backLabel}
           </Link>
-          <div className="flex flex-wrap items-center gap-3 mb-6">
+          <div className="flex flex-wrap items-center gap-3 mb-4">
             <span
               className={`px-3.5 py-1.5 text-[10px] font-bold uppercase tracking-wider rounded-full shadow-sm ${badgeClassName}`}
             >
@@ -160,7 +160,7 @@ export function ContentDetail({
           </div>
 
           <h1
-            className="text-3xl sm:text-4xl lg:text-5xl font-bold leading-tight"
+            className="text-3xl sm:text-4xl lg:text-5xl font-bold leading-tight tracking-tight max-w-5xl"
             style={{ color: headingColor }}
           >
             {item.title}
@@ -170,15 +170,15 @@ export function ContentDetail({
         </div>
       </section>
 
-      {/* ── Cover Image — same max-w as content, fixed aspect ratio ── */}
+      {/* ── Cover Image — max-w-6xl, fixed aspect ratio ── */}
       {item.featuredImage && (
-        <section className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 mb-8">
-          <div className="relative rounded-lg overflow-hidden shadow-xl border border-gray-100 aspect-[16/9] bg-slate-100">
+        <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 mb-8">
+          <div className="relative rounded-2xl overflow-hidden shadow-xl border border-gray-100 aspect-[16/9] bg-slate-100">
             <CmsImage
               src={getImageUrl(item.featuredImage)}
               alt={item.title}
               fill
-              sizes="(max-width: 1024px) 100vw, 896px"
+              sizes="(max-width: 1152px) 100vw, 1152px"
               priority
               className="object-contain"
             />
@@ -187,17 +187,17 @@ export function ContentDetail({
       )}
 
       {/* ── Body ── */}
-      <section className="pb-5">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section className="pb-8">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           {item.excerpt && (
-            <p className="text-lg text-gray-700 font-medium leading-relaxed mb-10 pb-8 border-b border-gray-100">
+            <p className="text-lg text-gray-700 font-medium leading-relaxed mb-8 pb-6 border-b border-gray-100 max-w-5xl">
               {item.excerpt}
             </p>
           )}
 
           {item.content ? (
             <div
-              className={richProseClass()}
+              className={`${richProseClass()} max-w-5xl`}
               dangerouslySetInnerHTML={{ __html: resolveRichTextHtml(item.content) }}
             />
           ) : (
@@ -206,14 +206,14 @@ export function ContentDetail({
 
           {/* FAQs */}
           {item.faqs && item.faqs.length > 0 && (
-            <div className="mt-5 pt-5 border-t border-gray-100">
+            <div className="mt-8 pt-8 border-t border-gray-100">
               <div className="flex items-center gap-2 mb-6">
                 <HelpCircle style={{ color: accentColor }} size={20} />
                 <h2 className="text-2xl font-bold" style={{ color: headingColor }}>
                   {faqTitle}
                 </h2>
               </div>
-              <div className="space-y-4">
+              <div className="space-y-4 max-w-5xl">
                 {item.faqs.map((faq, i) => (
                   <div key={i} className="bg-[#f8f9fc] border border-gray-100 rounded-2xl p-6">
                     <h3 className="text-base font-bold mb-2" style={{ color: headingColor }}>
@@ -226,7 +226,7 @@ export function ContentDetail({
             </div>
           )}
 
-          {ctaSlot && <div className="mt-14">{ctaSlot}</div>}
+          {ctaSlot && <div className="mt-14 max-w-5xl">{ctaSlot}</div>}
 
           {/* Footer share */}
           <div className="flex flex-wrap items-center justify-between gap-4 mt-12 pt-8 border-t border-gray-100">

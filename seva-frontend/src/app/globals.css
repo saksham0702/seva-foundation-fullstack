@@ -247,3 +247,28 @@
 .ProseMirror a:hover {
   color: #1d4ed8 !important;
 }
+
+/* ── Subtle Website Page Entrance Animation (Donation / NGO standard) ── */
+@keyframes subtleFadeUp {
+  0% {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.website-page-transition {
+  animation: subtleFadeUp 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
+  will-change: opacity, transform;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .website-page-transition {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}

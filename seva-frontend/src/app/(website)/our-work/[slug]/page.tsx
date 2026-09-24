@@ -1,5 +1,5 @@
 import React from "react";
-import { getCmsPageBySlug } from "@/app/api/cms";
+import { getServerCmsPage } from "@/lib/server-api";
 import { InitiativeData } from "@/components/website/our-work/InitiativeCard";
 import {
   DEFAULT_INITIATIVES,
@@ -25,7 +25,7 @@ export async function generateMetadata({ params }: SingleInitiativePageProps) {
 
   let initiative: InitiativeData | null = null;
   try {
-    const page = await getCmsPageBySlug("our-work");
+    const page = await getServerCmsPage("our-work");
     if (page?.sections && page.sections.length > 0) {
       initiative = findInitiativeBySlug(page.sections as InitiativeData[], slug);
     }
@@ -64,7 +64,7 @@ export default async function SingleInitiativePage({
   let allInitiatives: InitiativeData[] = DEFAULT_INITIATIVES;
 
   try {
-    const page = await getCmsPageBySlug("our-work");
+    const page = await getServerCmsPage("our-work");
     if (page?.sections && page.sections.length > 0) {
       allInitiatives = page.sections as InitiativeData[];
       initiative = findInitiativeBySlug(allInitiatives, slug);

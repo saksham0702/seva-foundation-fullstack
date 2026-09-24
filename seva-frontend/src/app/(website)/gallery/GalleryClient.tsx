@@ -11,7 +11,7 @@ import {
   ChevronRight,
   Sparkles,
 } from "lucide-react";
-import { GalleryItem, GalleryMeta } from "@/app/api/gallery";
+import { GalleryItem, GalleryMeta, getPublicGallery } from "@/app/api/gallery";
 import { getImageUrl } from "@/lib/image";
 import { Portal } from "@/components/shared/Portal";
 
@@ -31,13 +31,40 @@ export default function GalleryClient({
   const router = useRouter();
   const searchParams = useSearchParams();
 
+  const [images, setImages] = useState<GalleryItem[]>(initialImages);
+  const [meta, setMeta] = useState<GalleryMeta>(initialMeta);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
 
-  // Navigate pagination
-  const handlePageChange = (newPage: number) => {
-    const params = new URLSearchParams(searchParams.toString());
-    params.set("page", String(newPage));
-    router.push(`/gallery?${params.toString()}`);
+  // Sync if SSR props change
+  useEffect(() => {
+    setImages(initialImages);
+    setMeta(initialMeta);
+  }, [initialImages, initialMeta]);
+
+  // Load more images (appends 20 more)
+  const handleShowMore = async () => {
+    if (isLoadingMore || images.length >= meta.total) return;
+    setIsLoadingMore(true);
+    setLoadError(null);
+    try {
+      const nextPage = (meta.page || 1) + 1;
+      const res = await getPublicGallery({ page: nextPage, limit: 20 });
+      if (res.data && res.data.length > 0) {
+        setImages((prev) => {
+          const existingIds = new Set(prev.map((img) => img._id));
+          const newUnique = res.data.filter((img) => !existingIds.has(img._id));
+          return [...prev, ...newUnique];
+        });
+        setMeta(res.meta);
+      }
+    } catch (err: any) {
+      console.error("Failed to load more photos:", err);
+      setLoadError("Failed to load more photos. Please try again.");
+    } finally {
+      setIsLoadingMore(false);
+    }
   };
 
   // Keyboard navigation for Lightbox
@@ -47,22 +74,22 @@ export default function GalleryClient({
       if (e.key === "Escape") setLightboxIndex(null);
       if (e.key === "ArrowLeft") {
         setLightboxIndex((prev) =>
-          prev !== null && prev > 0 ? prev - 1 : initialImages.length - 1
+          prev !== null && prev > 0 ? prev - 1 : images.length - 1
         );
       }
       if (e.key === "ArrowRight") {
         setLightboxIndex((prev) =>
-          prev !== null && prev < initialImages.length - 1 ? prev + 1 : 0
+          prev !== null && prev < images.length - 1 ? prev + 1 : 0
         );
       }
     };
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [lightboxIndex, initialImages.length]);
+  }, [lightboxIndex, images.length]);
 
   const currentLightboxImg =
-    lightboxIndex !== null ? initialImages[lightboxIndex] : null;
+    lightboxIndex !== null ? images[lightboxIndex] : null;
 
   return (
     <div className="min-h-screen bg-white text-slate-900">
@@ -95,12 +122,12 @@ export default function GalleryClient({
               Gallery
             </h2>
             <p className="text-xs text-slate-600 mt-1">
-              Showing {initialImages.length} of {initialMeta.total} photos
+              Showing {images.length} of {meta.total} photos
             </p>
           </div>
 
           {/* ── Images Grid ── */}
-          {initialImages.length === 0 ? (
+          {images.length === 0 ? (
             <div className="bg-white rounded-3xl border border-gray-200/80 p-12 sm:p-16 text-center max-w-xl mx-auto shadow-sm my-8">
               <div className="w-16 h-16 rounded-2xl bg-orange-50 text-[#E8542A] mx-auto mb-5 flex items-center justify-center">
                 <Images size={32} />
@@ -114,7 +141,7 @@ export default function GalleryClient({
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
-              {initialImages.map((img, idx) => {
+              {images.map((img, idx) => {
                 const resolvedUrl = getImageUrl(img.imageUrl);
 
                 return (
@@ -159,68 +186,43 @@ export default function GalleryClient({
             </div>
           )}
 
-          {/* ── Pagination ── */}
-          {initialMeta.totalPage > 1 && (
-            <div className="mt-12 flex flex-col sm:flex-row items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-gray-100 shadow-sm">
-              <p className="text-xs text-slate-600 font-medium">
-                Showing Page <span className="font-bold text-[#0f2347]">{initialMeta.page}</span> of{" "}
-                <span className="font-bold text-[#0f2347]">{initialMeta.totalPage}</span> ({initialMeta.total} total photos)
-              </p>
-
-              <div className="flex items-center gap-2">
+          {/* ── Show More Button & Progress ── */}
+          {meta.total > 0 && (
+            <div className="mt-12 flex flex-col items-center justify-center gap-3">
+              {images.length < meta.total ? (
                 <button
-                  onClick={() => handlePageChange(initialMeta.page - 1)}
-                  disabled={initialMeta.page <= 1}
-                  className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold rounded-xl bg-white border border-slate-200 hover:bg-slate-50 text-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                  type="button"
+                  onClick={handleShowMore}
+                  disabled={isLoadingMore}
+                  className="inline-flex items-center gap-2.5 px-8 py-3.5 rounded-full bg-[#0f2347] hover:bg-[#1a386e] text-white font-semibold text-sm shadow-md hover:shadow-xl transition-all duration-300 disabled:opacity-60 cursor-pointer active:scale-95 group"
                 >
-                  <ChevronLeft size={16} />
-                  Previous
-                </button>
-
-                {Array.from({ length: initialMeta.totalPage }).map((_, idx) => {
-                  const pageNum = idx + 1;
-                  if (
-                    pageNum === 1 ||
-                    pageNum === initialMeta.totalPage ||
-                    Math.abs(pageNum - initialMeta.page) <= 1
-                  ) {
-                    return (
-                      <button
-                        key={pageNum}
-                        onClick={() => handlePageChange(pageNum)}
-                        className={`w-9 h-9 rounded-xl text-xs font-bold transition-all ${
-                          initialMeta.page === pageNum
-                            ? "bg-[#0f2347] text-white shadow-md shadow-blue-950/20"
-                            : "bg-white border border-slate-200 hover:bg-slate-50 text-slate-800"
-                        }`}
-                      >
-                        {pageNum}
-                      </button>
-                    );
-                  }
-                  if (
-                    (pageNum === 2 && initialMeta.page > 3) ||
-                    (pageNum === initialMeta.totalPage - 1 &&
-                      initialMeta.page < initialMeta.totalPage - 2)
-                  ) {
-                    return (
-                      <span key={pageNum} className="text-xs text-slate-400 px-1">
-                        ...
+                  {isLoadingMore ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      <span>Loading more photos...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>Show More Photos</span>
+                      <span className="text-xs bg-white/15 px-2 py-0.5 rounded-full text-orange-200">
+                        +{Math.min(20, meta.total - images.length)}
                       </span>
-                    );
-                  }
-                  return null;
-                })}
-
-                <button
-                  onClick={() => handlePageChange(initialMeta.page + 1)}
-                  disabled={initialMeta.page >= initialMeta.totalPage}
-                  className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold rounded-xl bg-white border border-slate-200 hover:bg-slate-50 text-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                >
-                  Next
-                  <ChevronRight size={16} />
+                    </>
+                  )}
                 </button>
-              </div>
+              ) : (
+                <div className="text-center text-xs text-slate-500 py-2 px-5 rounded-full bg-slate-100 border border-slate-200 font-medium">
+                  ✓ All {meta.total} photos displayed
+                </div>
+              )}
+
+              {loadError && (
+                <p className="text-xs text-red-500 font-medium mt-1">{loadError}</p>
+              )}
+
+              <p className="text-xs text-slate-500 font-medium">
+                Showing {images.length} of {meta.total} photos
+              </p>
             </div>
           )}
         </div>
@@ -242,14 +244,14 @@ export default function GalleryClient({
           </button>
 
           {/* Prev button */}
-          {initialImages.length > 1 && (
+          {images.length > 1 && (
             <button
               onClick={(e) => {
                 e.stopPropagation();
                 setLightboxIndex((prev) =>
                   prev !== null && prev > 0
                     ? prev - 1
-                    : initialImages.length - 1
+                    : images.length - 1
                 );
               }}
               className="absolute left-4 sm:left-8 top-1/2 -translate-y-1/2 p-3 rounded-full bg-white/10 hover:bg-white/25 text-white transition-colors z-20"
@@ -259,12 +261,12 @@ export default function GalleryClient({
           )}
 
           {/* Next button */}
-          {initialImages.length > 1 && (
+          {images.length > 1 && (
             <button
               onClick={(e) => {
                 e.stopPropagation();
                 setLightboxIndex((prev) =>
-                  prev !== null && prev < initialImages.length - 1
+                  prev !== null && prev < images.length - 1
                     ? prev + 1
                     : 0
                 );
@@ -293,7 +295,7 @@ export default function GalleryClient({
             {/* Caption & Metadata Bar */}
             <div className="mt-4 text-center text-white max-w-2xl px-4">
               <div className="text-xs text-gray-400 mb-1">
-                {lightboxIndex! + 1} of {initialImages.length}
+                {lightboxIndex! + 1} of {images.length}
               </div>
 
               {currentLightboxImg.title && (

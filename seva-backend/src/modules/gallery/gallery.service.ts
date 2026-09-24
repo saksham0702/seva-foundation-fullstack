@@ -38,7 +38,7 @@ const createGalleryImages = async (
 
 const getPublicGallery = async (query: PaginationParams) => {
   const page = Math.max(1, Number(query.page) || 1);
-  const limit = Math.max(1, Math.min(100, Number(query.limit) || 50));
+  const limit = Math.max(1, Math.min(100, Number(query.limit) || 20));
   const skip = (page - 1) * limit;
 
   const filter: any = {
@@ -74,7 +74,7 @@ const getPublicGallery = async (query: PaginationParams) => {
 
 const getAllGalleryAdmin = async (query: PaginationParams) => {
   const page = Math.max(1, Number(query.page) || 1);
-  const limit = Math.max(1, Math.min(100, Number(query.limit) || 50));
+  const limit = Math.max(1, Math.min(100, Number(query.limit) || 20));
   const skip = (page - 1) * limit;
 
   const filter: any = {

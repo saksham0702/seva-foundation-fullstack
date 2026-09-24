@@ -24,13 +24,27 @@ import { getImageUrl } from "@/lib/image";
 
 type Step = "donor" | "payment" | "success" | "failed";
 
-export default function DonateFlowClient() {
+export default function DonateFlowClient({
+  initialCampaigns,
+  initialCampaign,
+}: {
+  initialCampaigns?: Campaign[];
+  initialCampaign?: Campaign | null;
+} = {}) {
   const searchParams = useSearchParams();
   const campaignSlug = searchParams.get("campaign") || "";
   const amountParam = Number(searchParams.get("amount") || 0);
 
-  const [campaign, setCampaign] = useState<Campaign | null>(null);
-  const [loadingCampaign, setLoadingCampaign] = useState(true);
+  const matchedInitial =
+    initialCampaign ||
+    (campaignSlug && initialCampaigns
+      ? initialCampaigns.find((c) => c.slug === campaignSlug) || null
+      : null);
+
+  const [campaign, setCampaign] = useState<Campaign | null>(matchedInitial);
+  const [loadingCampaign, setLoadingCampaign] = useState(
+    !matchedInitial && !!campaignSlug && !initialCampaigns
+  );
   const [campaignError, setCampaignError] = useState<string | null>(null);
 
   const [step, setStep] = useState<Step>("donor");

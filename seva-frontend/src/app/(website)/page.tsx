@@ -10,6 +10,7 @@ import {
   getServerCmsPage,
   getServerRecentBlogs,
   getServerGalleryImages,
+  getServerCampaigns,
 } from "@/lib/server-api";
 import { InitiativeData } from "@/components/website/our-work/InitiativeCard";
 
@@ -23,10 +24,11 @@ export const metadata = constructMetadata({
 export default async function LandingPage() {
   const orgSchema = getOrganizationSchema();
 
-  const [ourWorkCms, galleryImages, recentStories] = await Promise.all([
+  const [ourWorkCms, galleryImages, recentStories, campaigns] = await Promise.all([
     getServerCmsPage("our-work"),
     getServerGalleryImages(6),
     getServerRecentBlogs(3),
+    getServerCampaigns(),
   ]);
 
   const initiatives = (ourWorkCms?.sections as InitiativeData[]) || [];
@@ -35,7 +37,7 @@ export default async function LandingPage() {
     <>
       <JsonLd data={orgSchema} />
       <HeroSection />
-      <CampaignsSection />
+      <CampaignsSection initialCampaigns={campaigns} />
       <InitiativesHomeSection initiatives={initiatives} />
       <GalleryHomeSection images={galleryImages} />
       <RecentStoriesHomeSection items={recentStories} />

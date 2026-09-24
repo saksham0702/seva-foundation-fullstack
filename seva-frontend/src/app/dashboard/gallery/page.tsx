@@ -38,8 +38,9 @@ export default function GalleryDashboardPage() {
   // ── States ──
   const [images, setImages] = useState<GalleryItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [page, setPage] = useState(1);
-  const [limit] = useState(50); // 50 items per page
+  const [limit] = useState(20); // 20 items per page/batch
   const [total, setTotal] = useState(0);
   const [totalPage, setTotalPage] = useState(1);
 
@@ -74,40 +75,58 @@ export default function GalleryDashboardPage() {
   const [togglingId, setTogglingId] = useState<string | null>(null);
 
   // ── Load Gallery Items ──
-  const fetchGallery = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      const res = await getAdminGallery({
-        page,
-        limit,
-        status: statusFilter,
-        search: activeSearch || undefined,
-      });
-      setImages(res.data);
-      setTotal(res.meta.total);
-      setTotalPage(res.meta.totalPage);
-    } catch (err: any) {
-      toast.error(err?.response?.data?.message || "Failed to load gallery images");
-    } finally {
-      setIsLoading(false);
-    }
-  }, [page, limit, statusFilter, activeSearch, toast]);
+  const fetchGallery = useCallback(
+    async (targetPage: number = 1, append: boolean = false) => {
+      if (append) {
+        setIsLoadingMore(true);
+      } else {
+        setIsLoading(true);
+      }
+
+      try {
+        const res = await getAdminGallery({
+          page: targetPage,
+          limit,
+          status: statusFilter,
+          search: activeSearch || undefined,
+        });
+
+        if (append) {
+          setImages((prev) => {
+            const existingIds = new Set(prev.map((item) => item._id));
+            const newItems = res.data.filter((item) => !existingIds.has(item._id));
+            return [...prev, ...newItems];
+          });
+        } else {
+          setImages(res.data);
+        }
+
+        setPage(targetPage);
+        setTotal(res.meta.total);
+        setTotalPage(res.meta.totalPage);
+      } catch (err: any) {
+        toast.error(err?.response?.data?.message || "Failed to load gallery images");
+      } finally {
+        setIsLoading(false);
+        setIsLoadingMore(false);
+      }
+    },
+    [limit, statusFilter, activeSearch, toast]
+  );
 
   useEffect(() => {
-    fetchGallery();
+    fetchGallery(1, false);
   }, [fetchGallery]);
 
   // ── Search submit ──
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setPage(1);
     setActiveSearch(searchQuery);
   };
 
   const handleClearSearch = () => {
     setSearchQuery("");
     setActiveSearch("");
-    setPage(1);
   };
 
   // Format file size
@@ -199,7 +218,7 @@ export default function GalleryDashboardPage() {
       handleClearAllFiles();
       setUploadTitle("");
       setUploadAlt("");
-      fetchGallery();
+      fetchGallery(1, false);
     } catch (err: any) {
       toast.error(err?.response?.data?.message || "Failed to upload images.");
     } finally {
@@ -264,7 +283,7 @@ export default function GalleryDashboardPage() {
       await deleteGalleryImage(deletingItem._id);
       toast.success("Image removed from gallery.");
       setDeletingItem(null);
-      fetchGallery();
+      fetchGallery(page, false);
     } catch (err: any) {
       toast.error(err?.response?.data?.message || "Failed to delete image.");
     } finally {
@@ -287,7 +306,7 @@ export default function GalleryDashboardPage() {
           </div>
 
           <button
-            onClick={fetchGallery}
+            onClick={() => fetchGallery(page, false)}
             className="inline-flex items-center gap-2 px-3.5 py-2 text-xs font-semibold text-white bg-panel hover:bg-white/5 border border-border rounded-xl transition-all shadow-sm self-start sm:self-auto"
           >
             <RefreshCw size={13} className={isLoading ? "animate-spin" : ""} />
@@ -707,67 +726,106 @@ export default function GalleryDashboardPage() {
           </div>
         )}
 
-        {/* ── Pagination ── */}
-        {totalPage > 1 && (
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-panel p-4 rounded-xl border border-border">
-            <p className="text-xs text-muted">
-              Page <span className="font-semibold text-white">{page}</span> of{" "}
-              <span className="font-semibold text-white">{totalPage}</span> ({total} total photos)
-            </p>
+        {/* ── Show More & Pagination Controls ── */}
+        {total > 0 && (
+          <div className="space-y-3 pt-2">
+            {/* Show More Button (Loads next 20 photos and appends to current grid) */}
+            {images.length < total && page < totalPage && (
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-panel p-4 rounded-xl border border-border">
+                <div className="text-xs text-muted text-center sm:text-left">
+                  Showing <span className="font-semibold text-white">{images.length}</span> of{" "}
+                  <span className="font-semibold text-white">{total}</span> photos
+                  <span className="ml-1 text-muted/70">
+                    (Loaded up to Page {page} of {totalPage})
+                  </span>
+                </div>
 
-            <div className="flex items-center gap-1.5">
-              <button
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-                disabled={page === 1}
-                className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded-lg bg-navy/60 hover:bg-navy text-white disabled:opacity-40 disabled:cursor-not-allowed transition-colors border border-border"
-              >
-                <ChevronLeft size={14} />
-                Previous
-              </button>
+                <button
+                  type="button"
+                  onClick={() => fetchGallery(page + 1, true)}
+                  disabled={isLoadingMore}
+                  className="inline-flex items-center gap-2 px-5 py-2.5 bg-gold hover:bg-gold-light text-navy font-bold text-xs rounded-xl shadow-md transition-all disabled:opacity-50 cursor-pointer active:scale-95 self-stretch sm:self-auto justify-center"
+                >
+                  {isLoadingMore ? (
+                    <>
+                      <RefreshCw size={13} className="animate-spin" />
+                      <span>Loading Next 20 Photos...</span>
+                    </>
+                  ) : (
+                    <>
+                      <FolderOpen size={14} />
+                      <span>
+                        Show More (+{Math.min(limit, total - images.length)} Photos)
+                      </span>
+                    </>
+                  )}
+                </button>
+              </div>
+            )}
 
-              {Array.from({ length: totalPage }).map((_, idx) => {
-                const pageNum = idx + 1;
-                if (
-                  pageNum === 1 ||
-                  pageNum === totalPage ||
-                  Math.abs(pageNum - page) <= 1
-                ) {
-                  return (
-                    <button
-                      key={pageNum}
-                      onClick={() => setPage(pageNum)}
-                      className={`w-8 h-8 rounded-lg text-xs font-semibold transition-all ${
-                        page === pageNum
-                          ? "bg-gold text-navy font-bold shadow-sm"
-                          : "bg-navy/60 hover:bg-navy text-white border border-border"
-                      }`}
-                    >
-                      {pageNum}
-                    </button>
-                  );
-                }
-                if (
-                  (pageNum === 2 && page > 3) ||
-                  (pageNum === totalPage - 1 && page < totalPage - 2)
-                ) {
-                  return (
-                    <span key={pageNum} className="text-xs text-muted px-1">
-                      ...
-                    </span>
-                  );
-                }
-                return null;
-              })}
+            {/* Traditional Page Jump Navigation */}
+            {totalPage > 1 && (
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-panel p-4 rounded-xl border border-border">
+                <p className="text-xs text-muted">
+                  Page <span className="font-semibold text-white">{page}</span> of{" "}
+                  <span className="font-semibold text-white">{totalPage}</span> ({total} total photos)
+                </p>
 
-              <button
-                onClick={() => setPage((p) => Math.min(totalPage, p + 1))}
-                disabled={page === totalPage}
-                className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded-lg bg-navy/60 hover:bg-navy text-white disabled:opacity-40 disabled:cursor-not-allowed transition-colors border border-border"
-              >
-                Next
-                <ChevronRight size={14} />
-              </button>
-            </div>
+                <div className="flex items-center gap-1.5">
+                  <button
+                    onClick={() => fetchGallery(Math.max(1, page - 1), false)}
+                    disabled={page === 1}
+                    className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded-lg bg-navy/60 hover:bg-navy text-white disabled:opacity-40 disabled:cursor-not-allowed transition-colors border border-border"
+                  >
+                    <ChevronLeft size={14} />
+                    Previous
+                  </button>
+
+                  {Array.from({ length: totalPage }).map((_, idx) => {
+                    const pageNum = idx + 1;
+                    if (
+                      pageNum === 1 ||
+                      pageNum === totalPage ||
+                      Math.abs(pageNum - page) <= 1
+                    ) {
+                      return (
+                        <button
+                          key={pageNum}
+                          onClick={() => fetchGallery(pageNum, false)}
+                          className={`w-8 h-8 rounded-lg text-xs font-semibold transition-all ${
+                            page === pageNum
+                              ? "bg-gold text-navy font-bold shadow-sm"
+                              : "bg-navy/60 hover:bg-navy text-white border border-border"
+                          }`}
+                        >
+                          {pageNum}
+                        </button>
+                      );
+                    }
+                    if (
+                      (pageNum === 2 && page > 3) ||
+                      (pageNum === totalPage - 1 && page < totalPage - 2)
+                    ) {
+                      return (
+                        <span key={pageNum} className="text-xs text-muted px-1">
+                          ...
+                        </span>
+                      );
+                    }
+                    return null;
+                  })}
+
+                  <button
+                    onClick={() => fetchGallery(Math.min(totalPage, page + 1), false)}
+                    disabled={page === totalPage}
+                    className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded-lg bg-navy/60 hover:bg-navy text-white disabled:opacity-40 disabled:cursor-not-allowed transition-colors border border-border"
+                  >
+                    Next
+                    <ChevronRight size={14} />
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         )}
 

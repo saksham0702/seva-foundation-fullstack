@@ -1051,22 +1051,22 @@ export default function EmailMarketingConsole() {
 
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center bg-slate-50/70 p-5 rounded-2xl border border-slate-200">
                 {/* Visual Header Live Email Rendering Frame */}
-                <div className="lg:col-span-5 bg-[#0f2347] rounded-2xl p-6 text-center shadow-lg relative overflow-hidden border border-slate-800">
-                  <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-[#E8542A] to-[#ff7849]" />
+                <div className="lg:col-span-5 bg-[#0A1A2F] rounded-2xl p-6 text-center shadow-lg relative overflow-hidden border border-slate-800">
+                  <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-[#F5A623] to-[#E8542A]" />
                   <div className="flex justify-center mb-4">
-                    <div className="bg-white px-5 py-2.5 rounded-2xl shadow-md border border-white/90 inline-flex items-center justify-center">
+                    <div className="bg-white px-6 py-3 rounded-2xl shadow-md border border-white/95 inline-flex items-center justify-center">
                       <img
                         src={activeMailConfig?.logoUrl || "/assets/seva-logo.png"}
                         alt="Active Logo"
-                        className="max-h-16 h-14 w-auto max-w-[220px] object-contain"
+                        className="max-h-20 h-16 w-auto max-w-[260px] object-contain"
                       />
                     </div>
                   </div>
                   <h4 className="text-white text-base font-bold tracking-wide">
                     SEVA INDIA FOUNDATION
                   </h4>
-                  <p className="text-[#c99e32] text-[10px] font-bold uppercase tracking-wider mt-1">
-                    Humanitarian & Development Outreach
+                  <p className="text-[#F5A623] text-[10px] font-bold uppercase tracking-wider mt-1">
+                    Serving Humanity • Empowering Lives
                   </p>
                   <span className="inline-block mt-3 px-3 py-1 rounded-full bg-white/10 text-white/90 text-[10px] font-semibold">
                     ✓ Top Header Banner on All Outgoing Emails
@@ -1721,21 +1721,21 @@ export default function EmailMarketingConsole() {
                     }`}
                   >
                     {/* Email Header banner with Organization Logo */}
-                    <div className="bg-[#0f2347] p-8 text-center">
+                    <div className="bg-[#0A1A2F] p-8 text-center relative">
                       <div className="flex justify-center mb-4">
-                        <div className="bg-white px-6 py-3 rounded-2xl shadow-lg border border-white/90 inline-flex items-center justify-center">
+                        <div className="bg-white px-7 py-3.5 rounded-2xl shadow-lg border border-white/95 inline-flex items-center justify-center">
                           <img
                             src={activeMailConfig?.logoUrl || "/assets/seva-logo.png"}
                             alt="Seva Foundation Logo"
-                            className="max-h-16 h-14 w-auto max-w-[240px] object-contain"
+                            className="max-h-20 h-16 sm:h-20 w-auto max-w-[280px] object-contain"
                           />
                         </div>
                       </div>
-                      <h1 className="text-white text-xl font-bold tracking-wide">
+                      <h1 className="text-white text-xl font-bold tracking-wider">
                         SEVA INDIA FOUNDATION
                       </h1>
-                      <p className="text-[#c99e32] text-[11px] font-bold uppercase tracking-wider mt-1">
-                        Humanitarian & Development Outreach
+                      <p className="text-[#F5A623] text-[11px] font-bold uppercase tracking-widest mt-1">
+                        Serving Humanity • Empowering Lives
                       </p>
                     </div>
 
@@ -1972,13 +1972,13 @@ export default function EmailMarketingConsole() {
 
                     <div className="flex flex-col sm:flex-row items-center gap-4">
                       {/* Logo Preview in Dark Navy Header Frame with White Capsule */}
-                      <div className="w-full sm:w-48 h-28 rounded-xl bg-[#0f2347] border border-slate-700 p-3 flex flex-col items-center justify-center shrink-0 shadow-inner relative group">
+                      <div className="w-full sm:w-56 h-32 rounded-xl bg-[#0A1A2F] border border-slate-700 p-3 flex flex-col items-center justify-center shrink-0 shadow-inner relative group">
                         {configForm.logoUrl ? (
-                          <div className="bg-white px-3.5 py-1.5 rounded-xl shadow-sm border border-white/90 inline-flex items-center justify-center max-w-[90%]">
+                          <div className="bg-white px-4 py-2 rounded-xl shadow-sm border border-white/95 inline-flex items-center justify-center max-w-[95%]">
                             <img
                               src={configForm.logoUrl}
                               alt="Brand Logo"
-                              className="max-h-12 h-10 w-auto object-contain"
+                              className="max-h-16 h-14 w-auto object-contain"
                             />
                           </div>
                         ) : (
@@ -1987,7 +1987,7 @@ export default function EmailMarketingConsole() {
                             <span className="text-[10px] font-bold">No Logo Set</span>
                           </div>
                         )}
-                        <span className="absolute bottom-1.5 text-[8px] font-bold uppercase tracking-wider text-[#c99e32]">
+                        <span className="absolute bottom-1.5 text-[8px] font-bold uppercase tracking-wider text-[#F5A623]">
                           Header Preview
                         </span>
                       </div>

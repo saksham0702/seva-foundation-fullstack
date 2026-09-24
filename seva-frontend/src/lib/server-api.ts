@@ -3,7 +3,7 @@ import { CmsItem, CmsPage, CmsContentType } from "@/types/cms";
 import { VolunteerCategory, FormType } from "@/app/api/volunteer";
 import { Certificate } from "@/app/api/certificate";
 import { Product } from "@/app/api/product";
-import { GalleryItem } from "@/app/api/gallery";
+import { GalleryItem, GalleryMeta } from "@/app/api/gallery";
 
 const API_URL =
   process.env.INTERNAL_API_URL ||
@@ -210,4 +210,37 @@ export async function getServerGalleryImages(limit: number = 6): Promise<Gallery
   if (Array.isArray(data?.data)) return data.data;
   return [];
 }
+
+export async function getServerGalleryPaginated(
+  page: number = 1,
+  limit: number = 20
+): Promise<{ data: GalleryItem[]; meta: GalleryMeta; message?: string }> {
+  try {
+    const url = `${API_URL}/gallery?page=${page}&limit=${limit}`;
+    const res = await fetch(url, {
+      next: { revalidate: 60, tags: ["gallery-paginated"] },
+    });
+    if (!res.ok) {
+      return {
+        data: [],
+        meta: { page, limit, total: 0, totalPage: 1 },
+        message: "No images found in gallery",
+      };
+    }
+    const json = await res.json();
+    return {
+      data: json?.data || [],
+      meta: json?.meta || { page, limit, total: (json?.data || []).length, totalPage: 1 },
+      message: json?.message || "",
+    };
+  } catch (err) {
+    console.error("[ServerFetch Error] gallery:", err);
+    return {
+      data: [],
+      meta: { page, limit, total: 0, totalPage: 1 },
+      message: "Failed to load gallery images from server",
+    };
+  }
+}
+
 
