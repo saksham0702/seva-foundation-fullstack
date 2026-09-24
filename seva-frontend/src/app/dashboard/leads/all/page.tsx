@@ -16,6 +16,7 @@ import {
   Trash2,
   ExternalLink,
   ChevronRight,
+  ChevronLeft,
   X,
   Loader2,
   Download,
@@ -89,6 +90,9 @@ function AllLeadsInner() {
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [loading, setLoading] = useState(true);
   const [totalLeads, setTotalLeads] = useState(0);
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(20);
+  const [totalPages, setTotalPages] = useState(1);
 
   // Filters state
   const [activeDonorTab, setActiveDonorTab] = useState<string>(tabFromQuery);
@@ -215,10 +219,23 @@ function AllLeadsInner() {
     }
   }, []);
 
+  // Reset page to 1 when filters change
+  useEffect(() => {
+    setPage(1);
+  }, [
+    search,
+    activeDonorTab,
+    statusFilter,
+    campaignFilter,
+    followUpFilter,
+    computedDateRange,
+    limit,
+  ]);
+
   const fetchLeads = useCallback(async () => {
     setLoading(true);
     try {
-      const query: any = { limit: 100 };
+      const query: any = { page, limit };
       if (search.trim()) query.search = search.trim();
       if (activeDonorTab !== "all") query.donorType = activeDonorTab;
       if (statusFilter !== "ALL") query.status = statusFilter;
@@ -231,6 +248,7 @@ function AllLeadsInner() {
       const res = await getLeads(query);
       setLeads(res.leads);
       setTotalLeads(res.total);
+      setTotalPages(res.totalPages || Math.max(1, Math.ceil(res.total / limit)));
 
       if (initialLeadId) {
         const found = res.leads.find((l) => l._id === initialLeadId);
@@ -245,6 +263,8 @@ function AllLeadsInner() {
       setLoading(false);
     }
   }, [
+    page,
+    limit,
     search,
     activeDonorTab,
     statusFilter,
@@ -892,6 +912,82 @@ function AllLeadsInner() {
                 })}
               </tbody>
             </table>
+          </div>
+        )}
+
+        {/* Pagination Bar */}
+        {totalLeads > 0 && (
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-6 py-4 border-t border-border bg-panel/40">
+            <div className="flex items-center gap-4 text-xs text-muted flex-wrap">
+              <span>
+                Showing <strong className="text-text-primary font-semibold">{(page - 1) * limit + 1}</strong> to{" "}
+                <strong className="text-text-primary font-semibold">{Math.min(page * limit, totalLeads)}</strong> of{" "}
+                <strong className="text-text-primary font-semibold">{totalLeads}</strong> leads
+              </span>
+              <div className="flex items-center gap-1.5">
+                <span className="text-[11px] text-muted">Per page:</span>
+                <select
+                  value={limit}
+                  onChange={(e) => {
+                    setLimit(Number(e.target.value));
+                    setPage(1);
+                  }}
+                  className="bg-bg border border-border rounded-lg px-2 py-1 text-xs text-text-primary focus:outline-none focus:border-[#E8542A]"
+                >
+                  <option value={10}>10</option>
+                  <option value={20}>20</option>
+                  <option value={50}>50</option>
+                  <option value={100}>100</option>
+                </select>
+              </div>
+            </div>
+
+            {totalPages > 1 && (
+              <div className="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  disabled={page === 1}
+                  className="p-1.5 rounded-lg border border-border bg-panel text-text-primary hover:border-[#E8542A] disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                  title="Previous Page"
+                >
+                  <ChevronLeft size={14} />
+                </button>
+
+                {Array.from({ length: totalPages }, (_, i) => i + 1)
+                  .filter((p) => p === 1 || p === totalPages || Math.abs(p - page) <= 2)
+                  .map((p, idx, arr) => {
+                    const prevP = arr[idx - 1];
+                    const isGap = prevP && p - prevP > 1;
+                    return (
+                      <React.Fragment key={p}>
+                        {isGap && <span className="px-1 text-xs text-muted">...</span>}
+                        <button
+                          type="button"
+                          onClick={() => setPage(p)}
+                          className={`min-w-[30px] h-[30px] px-2 rounded-lg text-xs font-bold transition-all ${
+                            page === p
+                              ? "bg-[#E8542A] text-white shadow-xs"
+                              : "border border-border bg-panel text-muted hover:text-text-primary hover:border-[#E8542A]/40"
+                          }`}
+                        >
+                          {p}
+                        </button>
+                      </React.Fragment>
+                    );
+                  })}
+
+                <button
+                  type="button"
+                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={page >= totalPages}
+                  className="p-1.5 rounded-lg border border-border bg-panel text-text-primary hover:border-[#E8542A] disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                  title="Next Page"
+                >
+                  <ChevronRight size={14} />
+                </button>
+              </div>
+            )}
           </div>
         )}
       </div>

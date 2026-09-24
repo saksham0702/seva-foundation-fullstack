@@ -1,6 +1,4 @@
-"use client";
-
-import React, { ReactNode, useEffect } from "react";
+import React, { ReactNode } from "react";
 import Link from "next/link";
 import {
   ArrowLeft,
@@ -15,7 +13,7 @@ import { getImageUrl, resolveRichTextHtml } from "@/lib/image";
 import { richProseClass } from "@/lib/prose";
 import { ShareButton } from "@/components/cms/ShareButton";
 import { CmsImage } from "@/components/cms/CmsImage";
-import { recordEntityView } from "@/app/api/analytics";
+import { ViewTracker } from "./ViewTracker";
 
 export interface MetaItem {
   icon?: LucideIcon | React.ComponentType<{ size?: number; className?: string }> | React.ReactNode;
@@ -89,13 +87,6 @@ export function ContentDetail({
     ["--heading" as string]: headingColor,
   } as React.CSSProperties;
 
-  useEffect(() => {
-    const entityId = item?._id || item?.id;
-    if (entityId && item?.type) {
-      recordEntityView(item.type, entityId);
-    }
-  }, [item?._id, item?.id, item?.type]);
-
   if (isLoading) {
     return (
       <div className="min-h-screen bg-white flex flex-col items-center justify-center py-24 gap-4">
@@ -129,6 +120,7 @@ export function ContentDetail({
 
   return (
     <div className="min-h-screen bg-white" style={cssVars}>
+      <ViewTracker entityType={item.type} entityId={item._id || item.id} />
       {/* ── Header ── */}
       <section className="pb-10 pt-5">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
