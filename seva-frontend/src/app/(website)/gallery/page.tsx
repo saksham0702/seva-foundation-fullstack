@@ -56,11 +56,13 @@ export default async function GalleryPage({ searchParams }: PageProps) {
   }
 
   return (
-    <GalleryClient
-      initialImages={initialImages}
-      initialMeta={initialMeta}
-      backendMessage={backendMessage}
-      initialPage={page}
-    />
+    <React.Suspense fallback={<div className="min-h-screen py-24 text-center text-slate-400">Loading gallery...</div>}>
+      <GalleryClient
+        initialImages={initialImages}
+        initialMeta={initialMeta}
+        backendMessage={backendMessage}
+        initialPage={page}
+      />
+    </React.Suspense>
   );
 }

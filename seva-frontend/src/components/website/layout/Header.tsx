@@ -114,7 +114,7 @@ const socialLinks = [
 /*  COMPONENT                                                          */
 /* ------------------------------------------------------------------ */
 
-const Header = () => {
+const HeaderContent = () => {
   const [menuOpen, setMenuOpen] = useState(false);
   const [openMobileDropdown, setOpenMobileDropdown] = useState<string | null>(
     null
@@ -532,6 +532,14 @@ const Header = () => {
         </div>
       )}
     </header>
+  );
+};
+
+const Header = () => {
+  return (
+    <React.Suspense fallback={<header className="bg-white sticky top-0 z-50 min-h-[80px]" />}>
+      <HeaderContent />
+    </React.Suspense>
   );
 };
 
