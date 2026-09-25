@@ -76,79 +76,38 @@ export const generateCertificatePdf = async (certificate: ICertificate): Promise
     const maxBodyHeight = causeMaxY - bodyY - 20; // 20px breathing room before the cause line
 
     // ── Step 1: measure the body height reliably (plain text, base font size) ──
-    // We deliberately measure BEFORE doing any continued/bold-segment rendering,
-    // because pdfkit's doc.y after a mixed-font continued chain is not trustworthy
-    // for multi-line paragraphs — that unreliable measurement was the root cause
-    // of the cause/program line overlapping the certificate body text.
     let bodyFontSize = 11;
-    let boldFontSize = 12;
     let measuredHeight = doc
       .font("Times-Roman")
       .fontSize(bodyFontSize)
       .heightOfString(bodyText, { width: bodyWidth, align: "center", lineGap: 4 });
 
     // ── Step 2: if the text is too long for the available space, shrink it down ──
-    // (rather than letting it silently collide with whatever comes after it).
     const MIN_FONT_SIZE = 8;
     while (measuredHeight > maxBodyHeight && bodyFontSize > MIN_FONT_SIZE) {
       bodyFontSize -= 1;
-      boldFontSize = bodyFontSize + 1;
       measuredHeight = doc
         .font("Times-Roman")
         .fontSize(bodyFontSize)
         .heightOfString(bodyText, { width: bodyWidth, align: "center", lineGap: 4 });
     }
 
-    const quoteRegex = /(["""]+[^"""]+["""]+|'[^']+'|'[^']+')/g;
-    const matches = Array.from(bodyText.matchAll(quoteRegex));
-
-    if (matches.length > 0) {
-      let currentIndex = 0;
-      const segments: Array<{ text: string; isBold: boolean }> = [];
-
-      for (const m of matches) {
-        const matchIndex = m.index!;
-        if (matchIndex > currentIndex) {
-          segments.push({ text: bodyText.substring(currentIndex, matchIndex), isBold: false });
-        }
-        segments.push({ text: m[0], isBold: true });
-        currentIndex = matchIndex + m[0].length;
-      }
-      if (currentIndex < bodyText.length) {
-        segments.push({ text: bodyText.substring(currentIndex), isBold: false });
-      }
-
-      segments.forEach((seg, sIdx) => {
-        const isLast = sIdx === segments.length - 1;
-        if (seg.isBold) {
-          doc.fontSize(boldFontSize).font("Times-Bold").fillColor("#0B2C6B");
-        } else {
-          doc.fontSize(bodyFontSize).font("Times-Roman").fillColor("#444");
-        }
-        if (sIdx === 0) {
-          doc.text(seg.text, bodyX, bodyY, {
-            width: bodyWidth,
-            align: "center",
-            lineGap: 4,
-            continued: !isLast,
-          });
-        } else {
-          // NOTE: width must be repeated here too, otherwise continued segments
-          // can wrap against the full page width instead of bodyWidth.
-          doc.text(seg.text, { width: bodyWidth, align: "center", continued: !isLast, lineGap: 4 });
-        }
+    // ── Step 3: Render body text ──
+    // NOTE: We render bodyText as a single block. PDFKit does NOT support
+    // inline continued text with align: "center" (it calculates fragment widths
+    // independently and draws them on top of each other, causing text overlaps).
+    doc
+      .fillColor("#444")
+      .fontSize(bodyFontSize)
+      .font("Times-Roman")
+      .text(bodyText, bodyX, bodyY, {
+        width: bodyWidth,
+        align: "center",
+        lineGap: 4,
       });
-    } else {
-      doc
-        .fillColor("#444")
-        .fontSize(bodyFontSize)
-        .font("Times-Roman")
-        .text(bodyText, bodyX, bodyY, { width: bodyWidth, align: "center", lineGap: 4 });
-    }
 
-    // ── Step 3: position the cause/program line using the MEASURED height, ──
-    // not doc.y, so it can never overlap the body text above it.
-    const afterBodyY = bodyY + measuredHeight + 12;
+    // ── Step 4: position the cause/program line using the measured height ──
+    const afterBodyY = bodyY + measuredHeight + 16;
     const causeY = Math.min(afterBodyY, causeMaxY);
 
     const causeText = certificate.projectName
@@ -160,7 +119,7 @@ export const generateCertificatePdf = async (certificate: ICertificate): Promise
         .fillColor("#0B2C6B")
         .fontSize(12)
         .font("Times-Bold")
-        .text(`Cause / Program: "${causeText}"`, 0, causeY, { align: "center" });
+        .text(`Cause / Program: "${causeText}"`, 0, causeY, { width, align: "center" });
     }
 
     // ─── Image resolution helper ─────────────────────────────────────────────────
@@ -270,4 +229,4 @@ export const generateCertificatePdf = async (certificate: ICertificate): Promise
     stream.on("finish", () => resolve(relativePath));
     stream.on("error", reject);
   });
-};
+};  
