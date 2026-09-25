@@ -141,6 +141,9 @@ export default function WAMarketingPage() {
     name: "",
     category: "DONATION" as any,
     body: "",
+    headerType: "NONE" as "NONE" | "TEXT" | "IMAGE" | "DOCUMENT",
+    headerMediaUrl: "",
+    footerText: "",
   });
 
   // Load Campaigns with pagination
@@ -385,7 +388,7 @@ export default function WAMarketingPage() {
     try {
       await whatsappAPI.createTemplate(newTemplate);
       setShowTemplateModal(false);
-      setNewTemplate({ name: "", category: "DONATION", body: "" });
+      setNewTemplate({ name: "", category: "DONATION", body: "", headerType: "NONE", headerMediaUrl: "", footerText: "" });
       toast.success("WhatsApp template created successfully!");
       await loadAllData();
     } catch (err: any) {
@@ -1782,9 +1785,51 @@ export default function WAMarketingPage() {
                 </select>
               </div>
 
+              {/* Header Type */}
               <div>
                 <label className="block text-[11px] font-bold text-slate-700 uppercase mb-1">
-                  Message Content (use `{"{{name}}"}` or `{"{{amount}}"}` for variables)
+                  Header Type
+                </label>
+                <select
+                  value={newTemplate.headerType}
+                  onChange={(e) =>
+                    setNewTemplate({
+                      ...newTemplate,
+                      headerType: e.target.value as any,
+                      headerMediaUrl: "",
+                    })
+                  }
+                  className="w-full bg-white border border-slate-200 rounded-xl px-4 py-2 text-xs font-medium text-black focus:outline-none focus:ring-2 focus:ring-[#25D366]/40"
+                >
+                  <option value="NONE">None (Text only)</option>
+                  <option value="TEXT">Text Header</option>
+                  <option value="IMAGE">Image</option>
+                  <option value="DOCUMENT">Document</option>
+                </select>
+              </div>
+
+              {/* Media URL — only when IMAGE or DOCUMENT */}
+              {(newTemplate.headerType === "IMAGE" || newTemplate.headerType === "DOCUMENT") && (
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-700 uppercase mb-1">
+                    {newTemplate.headerType === "IMAGE" ? "Image URL" : "Document URL"}
+                  </label>
+                  <input
+                    type="text"
+                    placeholder={newTemplate.headerType === "IMAGE" ? "https://example.com/image.jpg" : "https://example.com/file.pdf"}
+                    value={newTemplate.headerMediaUrl}
+                    onChange={(e) =>
+                      setNewTemplate({ ...newTemplate, headerMediaUrl: e.target.value })
+                    }
+                    className="w-full bg-white border border-slate-200 rounded-xl px-4 py-2 text-xs font-mono font-medium text-black focus:outline-none focus:ring-2 focus:ring-[#25D366]/40"
+                  />
+                  <p className="text-[10px] text-slate-400 mt-1">Paste the direct URL of your hosted media file.</p>
+                </div>
+              )}
+
+              <div>
+                <label className="block text-[11px] font-bold text-slate-700 uppercase mb-1">
+                  Message Content (use `{"{{name}}"}`  or `{"{{amount}}"}` for variables)
                 </label>
                 <textarea
                   rows={5}
@@ -1794,6 +1839,22 @@ export default function WAMarketingPage() {
                     setNewTemplate({ ...newTemplate, body: e.target.value })
                   }
                   className="w-full bg-white border border-slate-200 rounded-xl px-4 py-2 text-xs font-sans text-black focus:outline-none focus:ring-2 focus:ring-[#25D366]/40 resize-none"
+                />
+              </div>
+
+              {/* Optional footer */}
+              <div>
+                <label className="block text-[11px] font-bold text-slate-700 uppercase mb-1">
+                  Footer Text <span className="font-normal text-slate-400 normal-case">(optional)</span>
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. Reply STOP to unsubscribe"
+                  value={newTemplate.footerText}
+                  onChange={(e) =>
+                    setNewTemplate({ ...newTemplate, footerText: e.target.value })
+                  }
+                  className="w-full bg-white border border-slate-200 rounded-xl px-4 py-2 text-xs font-medium text-black focus:outline-none focus:ring-2 focus:ring-[#25D366]/40"
                 />
               </div>
             </div>

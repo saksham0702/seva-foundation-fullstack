@@ -1,4 +1,5 @@
 import { IMailTemplate, MailTemplateModel, MailTemplateKey } from "./mailtemplates.model";
+import { seedMailTemplates } from "../../seeds/seedMail";
 
 const createMailTemplate = async (
   payload: Partial<IMailTemplate>
@@ -6,8 +7,6 @@ const createMailTemplate = async (
   const result = await MailTemplateModel.create(payload);
   return result;
 };
-
-import { seedMailTemplates } from "../../seeds/seedMail";
 
 const getAllMailTemplates = async (query: {
   category?: string;
@@ -93,26 +92,40 @@ const renderTemplate = (
   variables: Record<string, string | number>
 ): { subject: string; html: string } => {
   const siteUrl = process.env.FRONTEND_URL || "http://187.126.112.144:3000";
+  // Backend public URL — used to construct absolute image/asset URLs in emails
+  const backendUrl =
+    process.env.BACKEND_PUBLIC_URL ||
+    process.env.API_URL ||
+    "http://187.126.112.144:5000";
   const defaultLogo = `${siteUrl}/assets/seva-logo.png`;
-  const logoUrl = String(variables.logoUrl || defaultLogo);
+
+  // Resolve relative logoUrl to an absolute URL so email clients can fetch it
+  let logoUrl = String(variables.logoUrl || "");
+  if (!logoUrl) {
+    logoUrl = defaultLogo;
+  } else if (logoUrl.startsWith("/")) {
+    logoUrl = `${backendUrl}${logoUrl}`;
+  }
 
   const mergedVariables: Record<string, string | number> = {
     siteUrl,
-    logoUrl,
     loginUrl: process.env.CLIENT_LOGIN_URL || `${siteUrl}/login`,
     currentYear: new Date().getFullYear(),
     ...variables,
+    // Ensure the resolved absolute URL wins over any relative value in variables
+    logoUrl,
   };
 
   let html = renderString(template.htmlContent, mergedVariables);
 
-  // Render official logo banner in top header if logoUrl is provided
+  // Inject logo banner if the template hasn't already included one
   if (logoUrl) {
     const logoImgTag = `<div style="text-align: center; margin-bottom: 22px;">
       <div style="display: inline-block; background-color: #ffffff; padding: 12px 28px; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.22); border: 1px solid rgba(255,255,255,0.95);">
         <img src="${logoUrl}" alt="Seva Foundation" style="max-height: 120px; max-width: 280px; height: auto; width: auto; display: block; margin: 0 auto; object-fit: contain; border: 0; outline: none;" />
       </div>
     </div>`;
+
     if (html.includes("<!-- SEVA_LOGO_PLACEHOLDER -->")) {
       html = html.replace("<!-- SEVA_LOGO_PLACEHOLDER -->", logoImgTag);
     } else if (html.includes("SEVA FOUNDATION") && !html.includes("<img")) {

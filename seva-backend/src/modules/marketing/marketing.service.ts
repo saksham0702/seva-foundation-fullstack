@@ -588,12 +588,31 @@ export class MarketingService {
     const limit = parseInt(query.limit || "50", 10);
     const skip = (page - 1) * limit;
 
+    // Get IDs of deleted campaigns to exclude their logs
+    const deletedCampaignIds = await WhatsAppCampaignModel.distinct("_id", {
+      isDeleted: true,
+    });
+    if (deletedCampaignIds.length > 0) {
+      filter.$and = filter.$and || [];
+      filter.$and.push({
+        $or: [
+          { campaignId: { $exists: false } },
+          { campaignId: null },
+          { campaignId: { $nin: deletedCampaignIds } },
+        ],
+      });
+    }
+
     const [logs, total] = await Promise.all([
       WhatsAppLogModel.find(filter)
         .sort({ sentAt: -1 })
         .skip(skip)
         .limit(limit)
-        .populate("campaignId", "name"),
+        .populate({
+          path: "campaignId",
+          select: "name isDeleted",
+          match: { isDeleted: false },
+        }),
       WhatsAppLogModel.countDocuments(filter),
     ]);
 

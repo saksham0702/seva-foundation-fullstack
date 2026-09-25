@@ -12,8 +12,9 @@ import {
   Award,
   ArrowLeft,
   Share2,
+  Loader2,
 } from "lucide-react";
-import { Certificate } from "@/app/api/certificate";
+import { Certificate, generatePdf } from "@/app/api/certificate";
 import { getImageUrl } from "@/lib/image";
 import ShareModal from "@/components/shared/ShareModal";
 
@@ -40,8 +41,30 @@ export default function CertificateDetailClient({
   errorMessage,
 }: CertificateDetailClientProps) {
   const [shareOpen, setShareOpen] = useState(false);
+  const [pdfUrl, setPdfUrl] = useState<string | null>(cert?.pdfUrl || null);
+  const [generatingPdf, setGeneratingPdf] = useState(false);
 
-  const pdfDownloadUrl = cert?.pdfUrl ? getImageUrl(cert.pdfUrl) : null;
+  const pdfDownloadUrl = pdfUrl ? getImageUrl(pdfUrl) : null;
+
+  const handleDownloadPdf = async () => {
+    if (pdfDownloadUrl) {
+      window.open(pdfDownloadUrl, "_blank");
+      return;
+    }
+    if (!cert?._id) return;
+    setGeneratingPdf(true);
+    try {
+      const updated = await generatePdf(cert._id);
+      if (updated?.pdfUrl) {
+        setPdfUrl(updated.pdfUrl);
+        window.open(getImageUrl(updated.pdfUrl), "_blank");
+      }
+    } catch (err) {
+      console.error("PDF generation failed:", err);
+    } finally {
+      setGeneratingPdf(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-slate-100 py-12 px-4 sm:px-6 lg:px-8">
@@ -249,17 +272,20 @@ export default function CertificateDetailClient({
               </div>
 
               <div className="flex items-center gap-3">
-                {pdfDownloadUrl && (
-                  <a
-                    href={pdfDownloadUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 bg-[#0B2C6B] hover:bg-[#071d47] text-white text-xs font-semibold px-5 py-2.5 rounded-xl shadow-sm transition-all"
-                  >
+                {/* Download / Generate PDF */}
+                <button
+                  onClick={handleDownloadPdf}
+                  disabled={generatingPdf}
+                  className="inline-flex items-center gap-2 bg-[#0B2C6B] hover:bg-[#071d47] disabled:opacity-60 text-white text-xs font-semibold px-5 py-2.5 rounded-xl shadow-sm transition-all"
+                >
+                  {generatingPdf ? (
+                    <Loader2 size={14} className="animate-spin" />
+                  ) : (
                     <Download size={14} />
-                    <span>Download PDF</span>
-                  </a>
-                )}
+                  )}
+                  <span>{generatingPdf ? "Generating…" : "Download Certificate"}</span>
+                </button>
+
                 <button
                   onClick={() => setShareOpen(true)}
                   className="inline-flex items-center gap-1.5 border border-gray-200 hover:border-gray-300 text-gray-700 text-xs font-semibold px-4 py-2.5 rounded-xl transition-all"

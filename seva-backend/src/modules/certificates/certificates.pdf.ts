@@ -29,9 +29,11 @@ export const generateCertificatePdf = async (certificate: ICertificate): Promise
 
     const { width, height } = doc.page;
 
+    // Decorative borders
     doc.lineWidth(3).strokeColor("#0B2C6B").rect(30, 30, width - 60, height - 60).stroke();
     doc.lineWidth(1).strokeColor("#D4A843").rect(45, 45, width - 90, height - 90).stroke();
 
+    // Header
     doc.fillColor("#0B2C6B").fontSize(30).font("Times-Bold").text("SEVA INDIA FOUNDATION", 0, 90, { align: "center" });
 
     doc
@@ -43,24 +45,31 @@ export const generateCertificatePdf = async (certificate: ICertificate): Promise
 
     doc.moveTo(150, 170).lineTo(width - 150, 170).strokeColor("#D4A843").lineWidth(1.5).stroke();
 
+    // Certificate type title
     doc
       .fillColor("#0B2C6B")
       .fontSize(22)
       .font("Times-Bold")
-      .text(certificateTypeLabel(certificate.certificateType), 0, 195, { align: "center" });
+      .text(certificateTypeLabel(certificate.certificateType), 0, 185, { align: "center" });
 
+    // Presented to
     doc
       .fillColor("#333")
       .fontSize(12)
       .font("Times-Italic")
-      .text("This certificate is proudly presented to", 0, 235, { align: "center" });
+      .text("This certificate is proudly presented to", 0, 220, { align: "center" });
 
+    // Recipient name
     const capitalizedRecipient = (certificate.recipientName || "").toUpperCase();
-    doc.fillColor("#111").fontSize(28).font("Times-Bold").text(capitalizedRecipient, 0, 260, { align: "center" });
+    doc.fillColor("#111").fontSize(26).font("Times-Bold").text(capitalizedRecipient, 0, 245, { align: "center" });
 
+    // ─── Body text with bold-quote highlighting ──────────────────────────────────
     const bodyText = certificate.body || "";
-    // Match anything in quotes: "...", “...”, '...', ‘...’
-    const quoteRegex = /(["“][^"“”]+["”]|'[^']+'|‘[^’]+’)/g;
+    const bodyX = 120;
+    const bodyY = 283;
+    const bodyWidth = width - 240;
+
+    const quoteRegex = /(["""]+[^"""]+["""]+|'[^']+'|'[^']+')/g;
     const matches = Array.from(bodyText.matchAll(quoteRegex));
 
     if (matches.length > 0) {
@@ -70,25 +79,15 @@ export const generateCertificatePdf = async (certificate: ICertificate): Promise
       for (const m of matches) {
         const matchIndex = m.index!;
         if (matchIndex > currentIndex) {
-          segments.push({
-            text: bodyText.substring(currentIndex, matchIndex),
-            isBold: false,
-          });
+          segments.push({ text: bodyText.substring(currentIndex, matchIndex), isBold: false });
         }
-        segments.push({
-          text: m[0],
-          isBold: true,
-        });
+        segments.push({ text: m[0], isBold: true });
         currentIndex = matchIndex + m[0].length;
       }
       if (currentIndex < bodyText.length) {
-        segments.push({
-          text: bodyText.substring(currentIndex),
-          isBold: false,
-        });
+        segments.push({ text: bodyText.substring(currentIndex), isBold: false });
       }
 
-      // Render segments with PDFKit continued: true
       segments.forEach((seg, sIdx) => {
         const isLast = sIdx === segments.length - 1;
         if (seg.isBold) {
@@ -96,18 +95,15 @@ export const generateCertificatePdf = async (certificate: ICertificate): Promise
         } else {
           doc.fontSize(11).font("Times-Roman").fillColor("#444");
         }
-
         if (sIdx === 0) {
-          doc.text(seg.text, 120, 305, {
-            width: width - 240,
+          doc.text(seg.text, bodyX, bodyY, {
+            width: bodyWidth,
             align: "center",
             lineGap: 4,
             continued: !isLast,
           });
         } else {
-          doc.text(seg.text, {
-            continued: !isLast,
-          });
+          doc.text(seg.text, { continued: !isLast, lineGap: 4 });
         }
       });
     } else {
@@ -115,8 +111,13 @@ export const generateCertificatePdf = async (certificate: ICertificate): Promise
         .fillColor("#444")
         .fontSize(11)
         .font("Times-Roman")
-        .text(bodyText, 120, 308, { width: width - 240, align: "center", lineGap: 4 });
+        .text(bodyText, bodyX, bodyY, { width: bodyWidth, align: "center", lineGap: 4 });
     }
+
+    // Position cause/program text dynamically after body, with a hard cap before signature zone
+    const afterBodyY = doc.y + 12;
+    // Signature zone starts at height - 100; keep causeText at least 20pt above it
+    const causeY = Math.min(afterBodyY, height - 130);
 
     const causeText = certificate.projectName
       ? `${certificate.programName} — ${certificate.projectName}`
@@ -125,12 +126,12 @@ export const generateCertificatePdf = async (certificate: ICertificate): Promise
     if (causeText) {
       doc
         .fillColor("#0B2C6B")
-        .fontSize(13.5)
+        .fontSize(12)
         .font("Times-Bold")
-        .text(`Cause / Program: "${causeText}"`, 0, 395, { align: "center" });
+        .text(`Cause / Program: "${causeText}"`, 0, causeY, { align: "center" });
     }
 
-    // Helper to resolve an image path or data URI to a Buffer or local file path
+    // ─── Image resolution helper ─────────────────────────────────────────────────
     const resolveImage = (imgSrc?: string): Buffer | string | null => {
       if (!imgSrc) return null;
       try {
@@ -142,7 +143,6 @@ export const generateCertificatePdf = async (certificate: ICertificate): Promise
         const localPath = path.join(process.cwd(), cleaned);
         if (fs.existsSync(localPath)) return localPath;
 
-        // Try inside uploads folder
         const uploadPath = path.join(process.cwd(), "uploads", path.basename(imgSrc));
         if (fs.existsSync(uploadPath)) return uploadPath;
       } catch (err) {
@@ -151,37 +151,41 @@ export const generateCertificatePdf = async (certificate: ICertificate): Promise
       return null;
     };
 
+    // ─── Signature / Seal / QR — anchored to page bottom ────────────────────────
+    const sigY = height - 85;   // horizontal signature line
+    const imgY = sigY - 46;     // signature image zone (above line)
+    const qrY  = height - 160;  // QR code zone
+
+    // QR Code (centre)
     if (certificate.qrCodeImage) {
       try {
         const base64 = certificate.qrCodeImage.split(",")[1];
         const qrBuffer = Buffer.from(base64, "base64");
-        doc.image(qrBuffer, width / 2 - 40, 420, { width: 75, height: 75 });
-        doc.fontSize(7).fillColor("#555").font("Times-Roman").text("Scan to Verify", width / 2 - 40, 498, { width: 75, align: "center" });
+        doc.image(qrBuffer, width / 2 - 35, qrY, { width: 70, height: 70 });
+        doc.fontSize(7).fillColor("#555").font("Times-Roman").text("Scan to Verify", width / 2 - 35, qrY + 72, { width: 70, align: "center" });
       } catch (err) {
         console.warn("QR code render error:", err);
       }
     }
 
-    // Seal / Stamp (if configured)
+    // Seal (left of QR)
     if (certificate.signatures?.seal?.imageUrl) {
       const sealPath = resolveImage(certificate.signatures.seal.imageUrl);
       if (sealPath) {
         try {
-          doc.image(sealPath, width / 2 - 130, 425, { fit: [65, 65], align: "center" });
+          doc.image(sealPath, width / 2 - 120, qrY + 8, { fit: [55, 55], align: "center" });
         } catch (err) {
           console.warn("Seal image render error:", err);
         }
       }
     }
 
-    const sigY = 495;
-
-    // Secretary Signature - positioned close above the signature line
+    // Secretary Signature (left column)
     if (certificate.signatures?.secretary) {
       const secImg = resolveImage(certificate.signatures.secretary.imageUrl);
       if (secImg) {
         try {
-          doc.image(secImg, 130, sigY - 42, { fit: [140, 40], align: "center", valign: "bottom" });
+          doc.image(secImg, 130, imgY, { fit: [140, 40], align: "center", valign: "bottom" });
         } catch (err) {
           console.warn("Secretary signature render error:", err);
         }
@@ -193,12 +197,12 @@ export const generateCertificatePdf = async (certificate: ICertificate): Promise
       doc.fontSize(8).fillColor("#666").font("Times-Roman").text(secLabel, 120, sigY + 16, { width: 160, align: "center" });
     }
 
-    // President Signature - positioned close above the signature line
+    // President Signature (right column)
     if (certificate.signatures?.president) {
       const presImg = resolveImage(certificate.signatures.president.imageUrl);
       if (presImg) {
         try {
-          doc.image(presImg, width - 270, sigY - 42, { fit: [140, 40], align: "center", valign: "bottom" });
+          doc.image(presImg, width - 270, imgY, { fit: [140, 40], align: "center", valign: "bottom" });
         } catch (err) {
           console.warn("President signature render error:", err);
         }
@@ -210,12 +214,13 @@ export const generateCertificatePdf = async (certificate: ICertificate): Promise
       doc.fontSize(8).fillColor("#666").font("Times-Roman").text(presLabel, width - 280, sigY + 16, { width: 160, align: "center" });
     }
 
-    doc.fontSize(8).fillColor("#0B2C6B").font("Times-Bold").text(`Certificate No: ${certificate.certificateNo}`, 60, height - 70);
+    // Footer
+    doc.fontSize(8).fillColor("#0B2C6B").font("Times-Bold").text(`Certificate No: ${certificate.certificateNo}`, 60, height - 55);
     doc
       .fontSize(8)
       .fillColor("#0B2C6B")
       .font("Times-Bold")
-      .text(`Issue Date: ${new Date(certificate.issueDate).toISOString().slice(0, 10)}`, width - 220, height - 70, {
+      .text(`Issue Date: ${new Date(certificate.issueDate).toISOString().slice(0, 10)}`, width - 220, height - 55, {
         width: 160,
         align: "right",
       });
@@ -224,10 +229,10 @@ export const generateCertificatePdf = async (certificate: ICertificate): Promise
       .fontSize(7)
       .fillColor("#777")
       .font("Times-Roman")
-      .text("This certificate has been digitally generated by SEVA INDIA FOUNDATION. No physical signature is required.", 0, height - 55, {
+      .text("This certificate has been digitally generated by SEVA INDIA FOUNDATION. No physical signature is required.", 0, height - 40, {
         align: "center",
       })
-      .text(`Verify online at: ${certificate.verifyUrl}`, 0, height - 43, { align: "center" });
+      .text(`Verify online at: ${certificate.verifyUrl}`, 0, height - 30, { align: "center" });
 
     doc.end();
     stream.on("finish", () => resolve(relativePath));
