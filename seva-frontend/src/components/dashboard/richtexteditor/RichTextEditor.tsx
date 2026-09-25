@@ -36,6 +36,7 @@ interface RichTextEditorProps {
   value: string;
   onChange: (val: string) => void;
   placeholder?: string;
+  hideImageUpload?: boolean;
 }
 
 /* ---------- Resizable image NodeView ---------- */
@@ -136,6 +137,7 @@ export function RichTextEditor({
   value,
   onChange,
   placeholder,
+  hideImageUpload = false,
 }: RichTextEditorProps) {
   const [isUploading, setIsUploading] = useState(false);
   const dropzoneRef = useRef<HTMLDivElement>(null);
@@ -435,28 +437,32 @@ export function RichTextEditor({
           <LinkIcon size={14} />
         </button>
 
-        <button
-          type="button"
-          onClick={insertImageFile}
-          disabled={isUploading}
-          className={btn(false, isUploading)}
-          title="Upload Image"
-        >
-          {isUploading ? (
-            <Loader2 size={14} className="animate-spin" />
-          ) : (
-            <ImageIcon size={14} />
-          )}
-        </button>
+        {!hideImageUpload && (
+          <>
+            <button
+              type="button"
+              onClick={insertImageFile}
+              disabled={isUploading}
+              className={btn(false, isUploading)}
+              title="Upload Image"
+            >
+              {isUploading ? (
+                <Loader2 size={14} className="animate-spin" />
+              ) : (
+                <ImageIcon size={14} />
+              )}
+            </button>
 
-        <button
-          type="button"
-          onClick={insertImageUrl}
-          className={`${btn(false)} text-[10px] font-semibold px-2`}
-          title="Image from URL"
-        >
-          IMG URL
-        </button>
+            <button
+              type="button"
+              onClick={insertImageUrl}
+              className={`${btn(false)} text-[10px] font-semibold px-2`}
+              title="Image from URL"
+            >
+              IMG URL
+            </button>
+          </>
+        )}
       </div>
 
       {/* Editor area with upload overlay */}

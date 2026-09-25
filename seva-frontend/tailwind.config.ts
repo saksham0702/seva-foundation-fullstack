@@ -112,6 +112,16 @@ const config: Config = {
         "2xl": "1rem",
         "3xl": "1.25rem",
       },
+
+      keyframes: {
+        marquee: {
+          "0%": { transform: "translateX(0%)" },
+          "100%": { transform: "translateX(-50%)" },
+        },
+      },
+      animation: {
+        marquee: "marquee 30s linear infinite",
+      },
     },
   },
 

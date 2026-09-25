@@ -48,30 +48,38 @@ export default function Transparency({ section }: { section?: ICmsSection }) {
             </div>
 
             {/* RIGHT: 2x2 Info grid */}
-            <div className="grid grid-cols-2 gap-4">
-              <div className="bg-white/5 border border-white/10 rounded-2xl p-5">
-                <div className="text-[#f5a623] text-[10px] font-bold uppercase tracking-wider mb-1">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="bg-white/5 border border-white/10 rounded-2xl p-5 min-w-0 overflow-hidden hover:bg-white/[0.08] transition-colors">
+                <div className="text-[#f5a623] text-[10px] font-bold uppercase tracking-wider mb-1.5">
                   NGO Darpan ID
                 </div>
-                <div className="text-white font-semibold text-sm">{darpanId}</div>
+                <div className="text-white font-semibold text-xs sm:text-sm font-mono break-all select-all leading-snug">
+                  {darpanId}
+                </div>
               </div>
-              <div className="bg-white/5 border border-white/10 rounded-2xl p-5">
-                <div className="text-[#f5a623] text-[10px] font-bold uppercase tracking-wider mb-1">
+              <div className="bg-white/5 border border-white/10 rounded-2xl p-5 min-w-0 overflow-hidden hover:bg-white/[0.08] transition-colors">
+                <div className="text-[#f5a623] text-[10px] font-bold uppercase tracking-wider mb-1.5">
                   CIN Number
                 </div>
-                <div className="text-white font-semibold text-sm">{cin}</div>
+                <div className="text-white font-semibold text-xs sm:text-sm font-mono break-all select-all leading-snug">
+                  {cin}
+                </div>
               </div>
-              <div className="bg-white/5 border border-white/10 rounded-2xl p-5">
-                <div className="text-[#f5a623] text-[10px] font-bold uppercase tracking-wider mb-1">
+              <div className="bg-white/5 border border-white/10 rounded-2xl p-5 min-w-0 overflow-hidden hover:bg-white/[0.08] transition-colors">
+                <div className="text-[#f5a623] text-[10px] font-bold uppercase tracking-wider mb-1.5">
                   Tax Exemption
                 </div>
-                <div className="text-white font-semibold text-sm">{taxExemption}</div>
+                <div className="text-white font-semibold text-xs sm:text-sm break-words leading-snug">
+                  {taxExemption}
+                </div>
               </div>
-              <div className="bg-white/5 border border-white/10 rounded-2xl p-5">
-                <div className="text-[#f5a623] text-[10px] font-bold uppercase tracking-wider mb-1">
+              <div className="bg-white/5 border border-white/10 rounded-2xl p-5 min-w-0 overflow-hidden hover:bg-white/[0.08] transition-colors">
+                <div className="text-[#f5a623] text-[10px] font-bold uppercase tracking-wider mb-1.5">
                   Legal Status
                 </div>
-                <div className="text-white font-semibold text-sm">{legalStatus}</div>
+                <div className="text-white font-semibold text-xs sm:text-sm break-words leading-snug">
+                  {legalStatus}
+                </div>
               </div>
             </div>
           </div>

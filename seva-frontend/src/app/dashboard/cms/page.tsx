@@ -27,10 +27,22 @@ import {
   Layers,
   Check,
   Video,
+  Award,
+  Shield,
+  ShieldCheck,
+  Eye,
+  Users,
+  Target,
+  Percent,
+  Heart,
+  Lock,
+  Scale,
+  Home as HomeIcon,
 } from "lucide-react";
 import { getCmsPages, getCmsPageBySlug, saveCmsPage, deleteCmsSection, uploadCmsImageFile, uploadCmsMediaFile, CmsPage, CmsSection } from "@/app/api/cms";
 import { getImageUrl } from "@/lib/image";
 import { PermissionGuard } from "@/components/dashboard/PermissionGuard";
+import { RichTextEditor } from "@/components/dashboard/richtexteditor/RichTextEditor";
 
 function CmsVideoField({
   label = "Hero Banner Video",
@@ -157,7 +169,7 @@ function CmsImageField({
   value,
   onChange,
   recommendedDimensions = "1200 × 630 px · Max 5MB",
-  placeholder = "Upload image or enter custom URL...",
+  placeholder = "Upload image file or enter custom URL...",
 }: {
   label: string;
   value: string;
@@ -167,11 +179,10 @@ function CmsImageField({
 }) {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isDragOver, setIsDragOver] = useState(false);
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+  const processFile = async (file: File) => {
     if (!file) return;
-
     if (file.size > 5 * 1024 * 1024) {
       setError("File exceeds 5MB size limit.");
       return;
@@ -191,6 +202,20 @@ function CmsImageField({
     }
   };
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) processFile(file);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file && file.type.startsWith("image/")) {
+      processFile(file);
+    }
+  };
+
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
@@ -202,21 +227,91 @@ function CmsImageField({
         </span>
       </div>
 
+      {/* Upload Zone / Active Preview */}
+      {value ? (
+        <div className="flex items-center gap-3 p-2.5 bg-gray-50 dark:bg-bg/60 rounded-xl border border-gray-200 dark:border-border">
+          <img
+            src={getImageUrl(value)}
+            alt="Preview"
+            className="w-20 h-14 rounded-lg object-cover border border-gray-200 shadow-sm shrink-0 bg-white"
+          />
+          <div className="flex-1 min-w-0">
+            <p className="text-xs font-semibold text-[#0f2347] dark:text-text-primary truncate">
+              {value}
+            </p>
+            <p className="text-[10px] text-emerald-600 font-semibold flex items-center gap-1 mt-0.5">
+              <CheckCircle2 size={11} /> Image Ready &amp; Saved
+            </p>
+          </div>
+          <div className="flex items-center gap-1">
+            <label className="cursor-pointer p-2 text-gray-500 hover:text-[#0f2347] hover:bg-white rounded-lg transition-colors" title="Replace Image">
+              <Upload size={14} />
+              <input
+                type="file"
+                accept="image/*"
+                className="hidden"
+                disabled={uploading}
+                onChange={handleFileChange}
+              />
+            </label>
+            <button
+              type="button"
+              onClick={() => onChange("")}
+              className="p-2 text-gray-400 hover:text-red-500 rounded-lg hover:bg-white transition-colors"
+              title="Remove Image"
+            >
+              <Trash2 size={14} />
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div
+          onDragOver={(e) => {
+            e.preventDefault();
+            setIsDragOver(true);
+          }}
+          onDragLeave={() => setIsDragOver(false)}
+          onDrop={handleDrop}
+          className={`border-2 border-dashed rounded-xl p-4 transition-all text-center ${
+            isDragOver
+              ? "border-[#E8542A] bg-orange-50/50"
+              : "border-gray-200 dark:border-border bg-gray-50/60 dark:bg-bg/40 hover:border-gray-300"
+          }`}
+        >
+          <div className="flex flex-col items-center justify-center gap-2">
+            <div className="w-9 h-9 rounded-full bg-white dark:bg-panel shadow-sm flex items-center justify-center text-[#E8542A]">
+              {uploading ? <Loader2 size={16} className="animate-spin" /> : <Upload size={16} />}
+            </div>
+            <div>
+              <label className="cursor-pointer text-xs font-bold text-[#E8542A] hover:underline inline-flex items-center gap-1">
+                <span>{uploading ? "Uploading image..." : "Click to browse"}</span>
+                <span className="text-gray-500 font-normal">or drag &amp; drop image here</span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  disabled={uploading}
+                  onChange={handleFileChange}
+                />
+              </label>
+              <p className="text-[10px] text-gray-400 mt-0.5">PNG, JPG, WEBP, SVG up to 5MB</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Fallback direct URL input */}
       <div className="flex gap-2">
         <input
           type="text"
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
-          className="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 dark:border-border bg-gray-50 dark:bg-bg text-sm text-[#0f2347] dark:text-text-primary focus:outline-none focus:ring-2 focus:ring-[#1a3a6b]/20"
+          className="flex-1 px-3 py-2 rounded-lg border border-slate-300 bg-white text-xs font-medium text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#0f2347]"
         />
-        <label className="cursor-pointer inline-flex items-center gap-1.5 px-4 py-2.5 bg-white dark:bg-panel border border-gray-200 dark:border-border hover:bg-gray-50 text-xs font-bold rounded-xl text-[#0f2347] dark:text-text-primary shrink-0 transition-colors shadow-sm">
-          {uploading ? (
-            <Loader2 size={14} className="animate-spin text-[#E8542A]" />
-          ) : (
-            <Upload size={14} className="text-[#E8542A]" />
-          )}
-          <span>{uploading ? "Uploading..." : "Upload Image"}</span>
+        <label className="cursor-pointer inline-flex items-center gap-1 px-3 py-1.5 bg-gray-100 dark:bg-panel border border-gray-200 dark:border-border hover:bg-gray-200 text-gray-700 dark:text-text-primary rounded-lg text-xs font-semibold shrink-0 transition-colors">
+          <Upload size={12} className="text-[#E8542A]" />
+          <span>Upload</span>
           <input
             type="file"
             accept="image/*"
@@ -232,35 +327,18 @@ function CmsImageField({
           <AlertCircle size={12} /> {error}
         </p>
       )}
-
-      {value && (
-        <div className="flex items-center gap-3 p-2 bg-gray-50 dark:bg-bg/50 rounded-xl border border-gray-100 dark:border-border mt-2">
-          <img
-            src={getImageUrl(value)}
-            alt="Preview"
-            className="w-16 h-12 rounded-lg object-cover border border-gray-200 shadow-sm"
-          />
-          <div className="flex-1 min-w-0">
-            <p className="text-xs font-medium text-gray-700 dark:text-gray-300 truncate">
-              {value}
-            </p>
-            <p className="text-[10px] text-emerald-600 font-semibold">Image Ready &amp; Saved</p>
-          </div>
-          <button
-            type="button"
-            onClick={() => onChange("")}
-            className="p-1.5 text-gray-400 hover:text-red-500 rounded-lg hover:bg-white transition-colors"
-            title="Remove Image"
-          >
-            <Trash2 size={14} />
-          </button>
-        </div>
-      )}
     </div>
   );
 }
 
 const CMS_PAGES_META = [
+  {
+    slug: "home",
+    name: "Home Page Sections",
+    path: "/",
+    description: "Manage Featured In marquee, Dev Bhoomi Samiti patron, Excellence awards, and Integrity & Compliance",
+    icon: HomeIcon,
+  },
   {
     slug: "header-footer",
     name: "Header Navigation & Topbar",
@@ -346,6 +424,32 @@ export default function CmsDashboardPage() {
   // Local form state
   const [formData, setFormData] = useState<Partial<CmsPage>>({});
   const [activeInitiativeIndex, setActiveInitiativeIndex] = useState(0);
+  const [policyViewMode, setPolicyViewMode] = useState<"edit" | "preview">("edit");
+
+  const getSection = (key: string): CmsSection | undefined => {
+    return (formData.sections || []).find((s) => s.key === key);
+  };
+
+  const updateSection = (
+    key: string,
+    updater: (sec: CmsSection) => Partial<CmsSection>
+  ) => {
+    const currentSections = [...(formData.sections || [])];
+    const idx = currentSections.findIndex((s) => s.key === key);
+    if (idx >= 0) {
+      currentSections[idx] = {
+        ...currentSections[idx],
+        ...updater(currentSections[idx]),
+      };
+    } else {
+      currentSections.push({
+        key,
+        name: key.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase()),
+        ...updater({ key }),
+      });
+    }
+    setFormData({ ...formData, sections: currentSections });
+  };
 
   // Sync loaded pageData into formData
   React.useEffect(() => {
@@ -430,7 +534,7 @@ export default function CmsDashboardPage() {
 
   return (
     <PermissionGuard module="cms">
-      <div className="min-h-screen bg-[#f8fafc] dark:bg-bg p-4 sm:p-6 lg:p-8">
+      <div className="min-h-screen bg-[#f8fafc] text-slate-900 p-4 sm:p-6 lg:p-8 cms-dashboard-container">
         {/* Sticky Top Header Bar */}
         <div className="sticky top-0 z-30 bg-[#f8fafc]/95 dark:bg-bg/95 backdrop-blur-md py-3.5 -mx-4 px-4 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 border-b border-slate-200/80 dark:border-border/80 mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm">
           <div>
@@ -484,8 +588,8 @@ export default function CmsDashboardPage() {
 
         {/* Main Grid: Left Tabs, Right Form */}
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 items-start">
-          {/* LEFT: Page Selectors */}
-          <div className="lg:col-span-1 space-y-2">
+          {/* LEFT: Page Selectors (Sticky Sidebar) */}
+          <div className="lg:col-span-1 space-y-2 lg:sticky lg:top-24 self-start max-h-[calc(100vh-7rem)] overflow-y-auto pr-1">
             <p className="text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-muted px-2 mb-2">
               Static Pages & Layout
             </p>
@@ -538,7 +642,7 @@ export default function CmsDashboardPage() {
             ) : (
               <form onSubmit={handleSave} className="space-y-6">
                 {/* 1. Header & Banner Card */}
-                {activeSlug !== "header-footer" && activeSlug !== "footer-settings" && (
+                {activeSlug !== "header-footer" && activeSlug !== "footer-settings" && activeSlug !== "home" && (
                   <div className="bg-white dark:bg-panel rounded-2xl border border-gray-100 dark:border-border p-6 shadow-sm">
                     <h3 className="text-sm font-bold text-[#0f2347] dark:text-text-primary mb-4 pb-3 border-b border-gray-100 dark:border-border flex items-center gap-2">
                       <ImageIcon size={16} className="text-[#E8542A]" />
@@ -558,7 +662,7 @@ export default function CmsDashboardPage() {
                               setFormData({ ...formData, title: e.target.value })
                             }
                             placeholder="e.g. OUR LEGACY"
-                            className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-border bg-gray-50 dark:bg-bg text-sm text-[#0f2347] dark:text-text-primary focus:outline-none focus:ring-2 focus:ring-[#1a3a6b]/20"
+                            className="w-full px-4 py-2.5 rounded-xl border border-slate-300 bg-white text-sm font-semibold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#0f2347] focus:ring-1 focus:ring-[#0f2347]"
                           />
                         </div>
 
@@ -586,7 +690,7 @@ export default function CmsDashboardPage() {
                       </div>
 
                       <div>
-                        <label className="block text-xs font-semibold text-gray-600 dark:text-muted mb-1.5">
+                        <label className="block text-xs font-semibold text-slate-700 mb-1.5">
                           Subtitle / Tagline
                         </label>
                         <textarea
@@ -596,7 +700,7 @@ export default function CmsDashboardPage() {
                             setFormData({ ...formData, subtitle: e.target.value })
                           }
                           placeholder="A promise made in the streets of Dehradun..."
-                          className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-border bg-gray-50 dark:bg-bg text-sm text-[#0f2347] dark:text-text-primary focus:outline-none focus:ring-2 focus:ring-[#1a3a6b]/20"
+                          className="w-full px-4 py-2.5 rounded-xl border border-slate-300 bg-white text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#0f2347] focus:ring-1 focus:ring-[#0f2347] leading-relaxed"
                         />
                       </div>
                     </div>
@@ -604,158 +708,1612 @@ export default function CmsDashboardPage() {
                 )}
 
                 {/* 2. Page Specific Sections */}
-                {activeSlug === "about" && (
-                  <div className="bg-white dark:bg-panel rounded-2xl border border-gray-100 dark:border-border p-6 shadow-sm space-y-6">
-                    <h3 className="text-sm font-bold text-[#0f2347] dark:text-text-primary pb-3 border-b border-gray-100 dark:border-border flex items-center gap-2">
-                      <FileText size={16} className="text-[#E8542A]" />
-                      About Page Content Sections
-                    </h3>
+                {activeSlug === "home" && (
+                  <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-8 text-slate-900">
+                    <div className="border-b border-slate-100 pb-4">
+                      <h3 className="text-sm font-bold text-[#0f2347] flex items-center gap-2">
+                        <HomeIcon size={16} className="text-[#E8542A]" />
+                        Home Page - Live Section-wise Content Manager
+                      </h3>
+                      <p className="text-xs text-slate-500 mt-1">
+                        Control Featured In media marquee, Principal Patron Dev Bhoomi Samiti, Honors &amp; Awards, and Integrity &amp; Compliance sections.
+                      </p>
+                    </div>
 
-                    {/* Sacred Promise Story */}
-                    <div className="p-4 rounded-xl bg-gray-50 dark:bg-bg border border-gray-100 dark:border-border space-y-4">
-                      <h4 className="text-xs font-bold text-[#0f2347] dark:text-text-primary uppercase tracking-wider">
-                        Section: The Sacred Promise Story
-                      </h4>
+                    {/* Section 1: Featured In Media Marquee */}
+                    <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-4">
+                      <div className="flex items-center justify-between">
+                        <h4 className="text-xs font-bold text-[#0f2347] uppercase tracking-wider flex items-center gap-2">
+                          <Sparkles size={14} className="text-[#E8542A]" />
+                          1. Featured In - Media Marquee Loop
+                        </h4>
+                        <span className="text-[10px] text-slate-400 font-semibold uppercase">Key: featured_in</span>
+                      </div>
+                      <p className="text-xs text-slate-500">
+                        Admin enters media outlet names or uploads logos. Displays as an infinite continuous marquee loop on the home page.
+                      </p>
+
                       <div>
-                        <label className="block text-xs font-semibold text-gray-500 mb-1">
+                        <label className="block text-xs font-semibold text-slate-700 mb-1">
+                          Section Heading
+                        </label>
+                        <input
+                          type="text"
+                          value={getSection("featured_in")?.title ?? "Featured In"}
+                          onChange={(e) =>
+                            updateSection("featured_in", () => ({
+                              title: e.target.value,
+                            }))
+                          }
+                          placeholder="Featured In"
+                          className="w-full px-4 py-2.5 rounded-xl border border-slate-300 bg-white text-sm font-semibold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#0f2347] focus:ring-1 focus:ring-[#0f2347]"
+                        />
+                      </div>
+
+                      {/* Media Outlets List */}
+                      <div className="space-y-3 pt-2">
+                        <div className="flex items-center justify-between">
+                          <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+                            Media Outlets &amp; Press Badges
+                          </label>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const curr = getSection("featured_in")?.items || [];
+                              updateSection("featured_in", () => ({
+                                items: [...curr, { name: "NEW OUTLET", color: "#e11d48", logo: "" }],
+                              }));
+                            }}
+                            className="inline-flex items-center gap-1 px-3 py-1.5 bg-[#0f2347] text-white rounded-lg text-xs font-semibold hover:bg-[#1a3a6b]"
+                          >
+                            <Plus size={12} /> Add Media Outlet
+                          </button>
+                        </div>
+
+                        <div className="space-y-3">
+                          {(getSection("featured_in")?.items || []).map((m: any, idx: number) => (
+                            <div
+                              key={idx}
+                              className="p-3.5 bg-white rounded-xl border border-slate-200 space-y-3 shadow-sm"
+                            >
+                              <div className="flex items-center justify-between">
+                                <span className="text-[11px] font-bold text-[#E8542A] uppercase">
+                                  Media #{idx + 1}
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const curr = [...(getSection("featured_in")?.items || [])];
+                                    curr.splice(idx, 1);
+                                    updateSection("featured_in", () => ({ items: curr }));
+                                  }}
+                                  className="text-slate-400 hover:text-red-500 p-1 rounded-lg"
+                                  title="Remove Media Outlet"
+                                >
+                                  <Trash2 size={14} />
+                                </button>
+                              </div>
+
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <div>
+                                  <label className="block text-[11px] font-semibold text-slate-700 mb-1">
+                                    Media Name (e.g. THE BETTER INDIA)
+                                  </label>
+                                  <input
+                                    type="text"
+                                    value={m.name || ""}
+                                    onChange={(e) => {
+                                      const curr = [...(getSection("featured_in")?.items || [])];
+                                      curr[idx] = { ...curr[idx], name: e.target.value };
+                                      updateSection("featured_in", () => ({ items: curr }));
+                                    }}
+                                    placeholder="THE BETTER INDIA"
+                                    className="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white text-xs font-bold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#0f2347]"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-[11px] font-semibold text-slate-700 mb-1">
+                                    Accent Color (Hex)
+                                  </label>
+                                  <div className="flex items-center gap-2">
+                                    <input
+                                      type="color"
+                                      value={m.color || "#e11d48"}
+                                      onChange={(e) => {
+                                        const curr = [...(getSection("featured_in")?.items || [])];
+                                        curr[idx] = { ...curr[idx], color: e.target.value };
+                                        updateSection("featured_in", () => ({ items: curr }));
+                                      }}
+                                      className="w-8 h-8 rounded border border-slate-300 cursor-pointer p-0"
+                                    />
+                                    <input
+                                      type="text"
+                                      value={m.color || "#e11d48"}
+                                      onChange={(e) => {
+                                        const curr = [...(getSection("featured_in")?.items || [])];
+                                        curr[idx] = { ...curr[idx], color: e.target.value };
+                                        updateSection("featured_in", () => ({ items: curr }));
+                                      }}
+                                      placeholder="#e11d48"
+                                      className="flex-1 px-3 py-2 rounded-lg border border-slate-300 bg-white text-xs font-mono font-bold text-slate-900 focus:outline-none focus:border-[#0f2347]"
+                                    />
+                                  </div>
+                                </div>
+                              </div>
+
+                              <CmsImageField
+                                label="Optional Outlet Logo Image (Leave blank to use stylized typography)"
+                                value={m.logo || ""}
+                                onChange={(url) => {
+                                  const curr = [...(getSection("featured_in")?.items || [])];
+                                  curr[idx] = { ...curr[idx], logo: url };
+                                  updateSection("featured_in", () => ({ items: curr }));
+                                }}
+                                recommendedDimensions="240 × 80 px · Transparent PNG recommended"
+                                placeholder="Upload logo image or enter URL..."
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Section 2: Principal Patron (Dev Bhoomi Samiti) */}
+                    <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-4">
+                      <div className="flex items-center justify-between">
+                        <h4 className="text-xs font-bold text-[#0f2347] uppercase tracking-wider flex items-center gap-2">
+                          <ShieldCheck size={14} className="text-[#E8542A]" />
+                          2. Principal Patron (Dev Bhoomi Samiti)
+                        </h4>
+                        <span className="text-[10px] text-slate-400 font-semibold uppercase">Key: patron_samiti</span>
+                      </div>
+                      <p className="text-xs text-slate-500">
+                        When the user clicks &apos;Learn More&apos; or &apos;Read More&apos;, it links directly to the About Us page section.
+                      </p>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-xs font-semibold text-slate-700 mb-1">
+                            Pill Badge Text
+                          </label>
+                          <input
+                            type="text"
+                            value={getSection("patron_samiti")?.extra?.badgeText ?? "PRINCIPAL PATRON"}
+                            onChange={(e) =>
+                              updateSection("patron_samiti", (sec) => ({
+                                extra: { ...sec.extra, badgeText: e.target.value },
+                              }))
+                            }
+                            placeholder="PRINCIPAL PATRON"
+                            className="w-full px-4 py-2.5 rounded-xl border border-slate-300 bg-white text-xs font-bold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#0f2347]"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-xs font-semibold text-slate-700 mb-1">
+                            Section Main Title
+                          </label>
+                          <input
+                            type="text"
+                            value={getSection("patron_samiti")?.title ?? "DEV BHOOMI SAMITI"}
+                            onChange={(e) =>
+                              updateSection("patron_samiti", () => ({
+                                title: e.target.value,
+                              }))
+                            }
+                            placeholder="DEV BHOOMI SAMITI"
+                            className="w-full px-4 py-2.5 rounded-xl border border-slate-300 bg-white text-xs font-bold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#0f2347]"
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-700 mb-1">
+                          Narrative / Subtitle (Inside Highlight Box)
+                        </label>
+                        <textarea
+                          rows={3}
+                          value={getSection("patron_samiti")?.subtitle ?? ""}
+                          onChange={(e) =>
+                            updateSection("patron_samiti", () => ({
+                              subtitle: e.target.value,
+                            }))
+                          }
+                          placeholder="Dev Bhoomi Samiti is our spiritual and strategic cornerstone..."
+                          className="w-full px-4 py-2.5 rounded-xl border border-slate-300 bg-white text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#0f2347] leading-relaxed"
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-xs font-semibold text-slate-700 mb-1">
+                            Button Label (CTA)
+                          </label>
+                          <input
+                            type="text"
+                            value={getSection("patron_samiti")?.extra?.buttonText ?? "Learn More"}
+                            onChange={(e) =>
+                              updateSection("patron_samiti", (sec) => ({
+                                extra: { ...sec.extra, buttonText: e.target.value },
+                              }))
+                            }
+                            placeholder="Learn More"
+                            className="w-full px-4 py-2.5 rounded-xl border border-slate-300 bg-white text-xs font-bold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#0f2347]"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-semibold text-slate-700 mb-1">
+                            Button Destination URL
+                          </label>
+                          <input
+                            type="text"
+                            value={getSection("patron_samiti")?.extra?.buttonLink ?? "/about"}
+                            onChange={(e) =>
+                              updateSection("patron_samiti", (sec) => ({
+                                extra: { ...sec.extra, buttonLink: e.target.value },
+                              }))
+                            }
+                            placeholder="/about"
+                            className="w-full px-4 py-2.5 rounded-xl border border-slate-300 bg-white text-xs font-medium text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#0f2347]"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Right Card Content */}
+                      <div className="p-4 bg-white rounded-xl border border-slate-200 space-y-3">
+                        <span className="text-[11px] font-bold text-[#E8542A] uppercase block">
+                          Right Dark Card Content
+                        </span>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <div>
+                            <label className="block text-[11px] font-semibold text-slate-700 mb-1">
+                              Card Eyebrow
+                            </label>
+                            <input
+                              type="text"
+                              value={getSection("patron_samiti")?.extra?.cardEyebrow ?? "OUR VISIONARY BACKBONE"}
+                              onChange={(e) =>
+                                updateSection("patron_samiti", (sec) => ({
+                                  extra: { ...sec.extra, cardEyebrow: e.target.value },
+                                }))
+                              }
+                              placeholder="OUR VISIONARY BACKBONE"
+                              className="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white text-xs font-bold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#0f2347]"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-[11px] font-semibold text-slate-700 mb-1">
+                              Card Title
+                            </label>
+                            <input
+                              type="text"
+                              value={getSection("patron_samiti")?.extra?.cardTitle ?? "Spiritual & Social Support"}
+                              onChange={(e) =>
+                                updateSection("patron_samiti", (sec) => ({
+                                  extra: { ...sec.extra, cardTitle: e.target.value },
+                                }))
+                              }
+                              placeholder="Spiritual & Social Support"
+                              className="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white text-xs font-bold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#0f2347]"
+                            />
+                          </div>
+                        </div>
+                        <div>
+                          <label className="block text-[11px] font-semibold text-slate-700 mb-1">
+                            Quote Text
+                          </label>
+                          <textarea
+                            rows={2}
+                            value={getSection("patron_samiti")?.extra?.cardQuote ?? ""}
+                            onChange={(e) =>
+                              updateSection("patron_samiti", (sec) => ({
+                                extra: { ...sec.extra, cardQuote: e.target.value },
+                              }))
+                            }
+                            placeholder='"Uttarakhand, the land of gods, teaches us that service to humanity is the highest form of worship..."'
+                            className="w-full px-3 py-2.5 rounded-lg border border-slate-300 bg-white text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#0f2347] leading-relaxed"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Section 3: Honors & Global Recognition */}
+                    <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-4">
+                      <div className="flex items-center justify-between">
+                        <h4 className="text-xs font-bold text-[#0f2347] uppercase tracking-wider flex items-center gap-2">
+                          <Award size={14} className="text-[#E8542A]" />
+                          3. Honors &amp; Global Recognition
+                        </h4>
+                        <span className="text-[10px] text-slate-400 font-semibold uppercase">Key: excellence_awards</span>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div>
+                          <label className="block text-xs font-semibold text-slate-700 mb-1">
+                            Eyebrow Badge
+                          </label>
+                          <input
+                            type="text"
+                            value={getSection("excellence_awards")?.subtitle ?? "HONORS & GLOBAL RECOGNITION"}
+                            onChange={(e) =>
+                              updateSection("excellence_awards", () => ({
+                                subtitle: e.target.value,
+                              }))
+                            }
+                            placeholder="HONORS & GLOBAL RECOGNITION"
+                            className="w-full px-4 py-2.5 rounded-xl border border-slate-300 bg-white text-xs font-bold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#0f2347]"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-semibold text-slate-700 mb-1">
+                            Main Heading
+                          </label>
+                          <input
+                            type="text"
+                            value={getSection("excellence_awards")?.title ?? "EXCELLENCE IN HUMAN SERVICE"}
+                            onChange={(e) =>
+                              updateSection("excellence_awards", () => ({
+                                title: e.target.value,
+                              }))
+                            }
+                            placeholder="EXCELLENCE IN HUMAN SERVICE"
+                            className="w-full px-4 py-2.5 rounded-xl border border-slate-300 bg-white text-xs font-bold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#0f2347]"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-semibold text-slate-700 mb-1">
+                            Watermark Year Text
+                          </label>
+                          <input
+                            type="text"
+                            value={getSection("excellence_awards")?.extra?.watermarkText ?? "2026"}
+                            onChange={(e) =>
+                              updateSection("excellence_awards", (sec) => ({
+                                extra: { ...sec.extra, watermarkText: e.target.value },
+                              }))
+                            }
+                            placeholder="2026"
+                            className="w-full px-4 py-2.5 rounded-xl border border-slate-300 bg-white text-xs font-mono font-bold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#0f2347]"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Awards Grid Repeater */}
+                      <div className="space-y-3 pt-2">
+                        <div className="flex items-center justify-between">
+                          <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+                            Honors &amp; Awards Cards ({getSection("excellence_awards")?.items?.length || 0})
+                          </label>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const curr = getSection("excellence_awards")?.items || [];
+                              updateSection("excellence_awards", () => ({
+                                items: [...curr, { category: "RECOGNITION", title: "NEW AWARD", year: "2026" }],
+                              }));
+                            }}
+                            className="inline-flex items-center gap-1 px-3 py-1.5 bg-[#0f2347] text-white rounded-lg text-xs font-semibold hover:bg-[#1a3a6b]"
+                          >
+                            <Plus size={12} /> Add Award Card
+                          </button>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          {(getSection("excellence_awards")?.items || []).map((aw: any, idx: number) => (
+                            <div
+                              key={idx}
+                              className="p-3.5 bg-white rounded-xl border border-slate-200 space-y-2.5 shadow-sm"
+                            >
+                              <div className="flex items-center justify-between">
+                                <span className="text-[11px] font-bold text-[#E8542A] uppercase">
+                                  Award #{idx + 1}
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const curr = [...(getSection("excellence_awards")?.items || [])];
+                                    curr.splice(idx, 1);
+                                    updateSection("excellence_awards", () => ({ items: curr }));
+                                  }}
+                                  className="text-slate-400 hover:text-red-500 p-1 rounded-lg"
+                                  title="Remove Award"
+                                >
+                                  <Trash2 size={14} />
+                                </button>
+                              </div>
+
+                              <div className="space-y-2">
+                                <div>
+                                  <label className="block text-[10px] font-semibold text-slate-600 uppercase">
+                                    Category
+                                  </label>
+                                  <input
+                                    type="text"
+                                    value={aw.category || ""}
+                                    onChange={(e) => {
+                                      const curr = [...(getSection("excellence_awards")?.items || [])];
+                                      curr[idx] = { ...curr[idx], category: e.target.value };
+                                      updateSection("excellence_awards", () => ({ items: curr }));
+                                    }}
+                                    placeholder="OVERALL EXCELLENCE"
+                                    className="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white text-xs font-semibold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#0f2347]"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-[10px] font-semibold text-slate-600 uppercase">
+                                    Award Title
+                                  </label>
+                                  <input
+                                    type="text"
+                                    value={aw.title || ""}
+                                    onChange={(e) => {
+                                      const curr = [...(getSection("excellence_awards")?.items || [])];
+                                      curr[idx] = { ...curr[idx], title: e.target.value };
+                                      updateSection("excellence_awards", () => ({ items: curr }));
+                                    }}
+                                    placeholder="BEST NGO OF THE YEAR"
+                                    className="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white text-xs font-bold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#0f2347]"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-[10px] font-semibold text-slate-600 uppercase">
+                                    Year
+                                  </label>
+                                  <input
+                                    type="text"
+                                    value={aw.year || ""}
+                                    onChange={(e) => {
+                                      const curr = [...(getSection("excellence_awards")?.items || [])];
+                                      curr[idx] = { ...curr[idx], year: e.target.value };
+                                      updateSection("excellence_awards", () => ({ items: curr }));
+                                    }}
+                                    placeholder="2026"
+                                    className="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white text-xs font-mono font-bold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#0f2347]"
+                                  />
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Section 4: Integrity & Compliance */}
+                    <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-4">
+                      <div className="flex items-center justify-between">
+                        <h4 className="text-xs font-bold text-[#0f2347] uppercase tracking-wider flex items-center gap-2">
+                          <ShieldCheck size={14} className="text-[#E8542A]" />
+                          4. Integrity &amp; Compliance Section
+                        </h4>
+                        <span className="text-[10px] text-slate-400 font-semibold uppercase">Key: integrity_compliance</span>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-xs font-semibold text-slate-700 mb-1">
+                            Main Title
+                          </label>
+                          <input
+                            type="text"
+                            value={getSection("integrity_compliance")?.title ?? "INTEGRITY & COMPLIANCE"}
+                            onChange={(e) =>
+                              updateSection("integrity_compliance", () => ({
+                                title: e.target.value,
+                              }))
+                            }
+                            placeholder="INTEGRITY & COMPLIANCE"
+                            className="w-full px-4 py-2.5 rounded-xl border border-slate-300 bg-white text-xs font-bold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#0f2347]"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-xs font-semibold text-slate-700 mb-1">
+                            Registered Office Title
+                          </label>
+                          <input
+                            type="text"
+                            value={getSection("integrity_compliance")?.extra?.officeTitle ?? "REGISTERED OFFICE"}
+                            onChange={(e) =>
+                              updateSection("integrity_compliance", (sec) => ({
+                                extra: { ...sec.extra, officeTitle: e.target.value },
+                              }))
+                            }
+                            placeholder="REGISTERED OFFICE"
+                            className="w-full px-4 py-2.5 rounded-xl border border-slate-300 bg-white text-xs font-bold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#0f2347]"
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-700 mb-1">
+                          Introductory Narrative
+                        </label>
+                        <textarea
+                          rows={2}
+                          value={getSection("integrity_compliance")?.description ?? ""}
+                          onChange={(e) =>
+                            updateSection("integrity_compliance", () => ({
+                              description: e.target.value,
+                            }))
+                          }
+                          placeholder="At Seva India Foundation, trust isn't a promise—it's a practice..."
+                          className="w-full px-4 py-2.5 rounded-xl border border-slate-300 bg-white text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#0f2347] leading-relaxed"
+                        />
+                      </div>
+
+                      {/* Percentage Allocations */}
+                      <div className="p-4 bg-white rounded-xl border border-slate-200 space-y-3">
+                        <span className="text-[11px] font-bold text-[#E8542A] uppercase block">
+                          Fund Allocation Progress Bars
+                        </span>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <div>
+                              <label className="block text-[11px] font-semibold text-slate-700 mb-1">
+                                Program Support Label
+                              </label>
+                              <input
+                                type="text"
+                                value={getSection("integrity_compliance")?.extra?.programSupportLabel ?? "DIRECT PROGRAM SUPPORT"}
+                                onChange={(e) =>
+                                  updateSection("integrity_compliance", (sec) => ({
+                                    extra: { ...sec.extra, programSupportLabel: e.target.value },
+                                  }))
+                                }
+                                placeholder="DIRECT PROGRAM SUPPORT"
+                                className="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white text-xs font-bold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#0f2347]"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-[11px] font-semibold text-slate-700 mb-1">
+                                Program Support % (e.g. 90%)
+                              </label>
+                              <input
+                                type="text"
+                                value={getSection("integrity_compliance")?.extra?.programSupportPercent ?? "90%"}
+                                onChange={(e) =>
+                                  updateSection("integrity_compliance", (sec) => ({
+                                    extra: { ...sec.extra, programSupportPercent: e.target.value },
+                                  }))
+                                }
+                                placeholder="90%"
+                                className="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white text-xs font-mono font-bold text-amber-600 placeholder:text-slate-400 focus:outline-none focus:border-[#0f2347]"
+                              />
+                            </div>
+                          </div>
+
+                          <div className="space-y-2">
+                            <div>
+                              <label className="block text-[11px] font-semibold text-slate-700 mb-1">
+                                Admin &amp; Fundraising Label
+                              </label>
+                              <input
+                                type="text"
+                                value={getSection("integrity_compliance")?.extra?.adminLabel ?? "FUNDRAISING & ADMIN"}
+                                onChange={(e) =>
+                                  updateSection("integrity_compliance", (sec) => ({
+                                    extra: { ...sec.extra, adminLabel: e.target.value },
+                                  }))
+                                }
+                                placeholder="FUNDRAISING & ADMIN"
+                                className="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white text-xs font-bold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#0f2347]"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-[11px] font-semibold text-slate-700 mb-1">
+                                Admin &amp; Fundraising % (e.g. 10%)
+                              </label>
+                              <input
+                                type="text"
+                                value={getSection("integrity_compliance")?.extra?.adminPercent ?? "10%"}
+                                onChange={(e) =>
+                                  updateSection("integrity_compliance", (sec) => ({
+                                    extra: { ...sec.extra, adminPercent: e.target.value },
+                                  }))
+                                }
+                                placeholder="10%"
+                                className="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white text-xs font-mono font-bold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#0f2347]"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Government IDs */}
+                      <div className="p-4 bg-white rounded-xl border border-slate-200 space-y-3">
+                        <span className="text-[11px] font-bold text-[#E8542A] uppercase block">
+                          Legal &amp; Regulatory Numbers
+                        </span>
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                          <div>
+                            <label className="block text-[11px] font-semibold text-slate-700 mb-1">
+                              NGO Darpan ID
+                            </label>
+                            <input
+                              type="text"
+                              value={getSection("integrity_compliance")?.extra?.darpanId ?? "UK/2026/0993905"}
+                              onChange={(e) =>
+                                updateSection("integrity_compliance", (sec) => ({
+                                  extra: { ...sec.extra, darpanId: e.target.value },
+                                }))
+                              }
+                              placeholder="UK/2026/0993905"
+                              className="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white text-xs font-mono font-bold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#0f2347]"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-[11px] font-semibold text-slate-700 mb-1">
+                              CIN Number
+                            </label>
+                            <input
+                              type="text"
+                              value={getSection("integrity_compliance")?.extra?.cin ?? "U88900UT2026NPL020825"}
+                              onChange={(e) =>
+                                updateSection("integrity_compliance", (sec) => ({
+                                  extra: { ...sec.extra, cin: e.target.value },
+                                }))
+                              }
+                              placeholder="U88900UT2026NPL020825"
+                              className="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white text-xs font-mono font-bold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#0f2347]"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-[11px] font-semibold text-slate-700 mb-1">
+                              Section 8 License
+                            </label>
+                            <input
+                              type="text"
+                              value={getSection("integrity_compliance")?.extra?.licenseNo ?? "No. 179973"}
+                              onChange={(e) =>
+                                updateSection("integrity_compliance", (sec) => ({
+                                  extra: { ...sec.extra, licenseNo: e.target.value },
+                                }))
+                              }
+                              placeholder="No. 179973"
+                              className="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white text-xs font-mono font-bold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#0f2347]"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-[11px] font-semibold text-slate-700 mb-1">
+                              PAN Number
+                            </label>
+                            <input
+                              type="text"
+                              value={getSection("integrity_compliance")?.extra?.panNumber ?? "ABSCS7219M"}
+                              onChange={(e) =>
+                                updateSection("integrity_compliance", (sec) => ({
+                                  extra: { ...sec.extra, panNumber: e.target.value },
+                                }))
+                              }
+                              placeholder="ABSCS7219M"
+                              className="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white text-xs font-mono font-bold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#0f2347]"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-[11px] font-semibold text-slate-700 mb-1">
+                              TAN Number
+                            </label>
+                            <input
+                              type="text"
+                              value={getSection("integrity_compliance")?.extra?.tanNumber ?? "MRTS38379F"}
+                              onChange={(e) =>
+                                updateSection("integrity_compliance", (sec) => ({
+                                  extra: { ...sec.extra, tanNumber: e.target.value },
+                                }))
+                              }
+                              placeholder="MRTS38379F"
+                              className="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white text-xs font-mono font-bold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#0f2347]"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-[11px] font-semibold text-slate-700 mb-1">
+                              Compliance Documents Link
+                            </label>
+                            <input
+                              type="text"
+                              value={getSection("integrity_compliance")?.extra?.complianceDocLink ?? "/about"}
+                              onChange={(e) =>
+                                updateSection("integrity_compliance", (sec) => ({
+                                  extra: { ...sec.extra, complianceDocLink: e.target.value },
+                                }))
+                              }
+                              placeholder="/about"
+                              className="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white text-xs font-medium text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#0f2347]"
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Registered Office Address */}
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-700 mb-1">
+                          Registered Office Full Physical Address
+                        </label>
+                        <textarea
+                          rows={2}
+                          value={getSection("integrity_compliance")?.extra?.officeAddress ?? ""}
+                          onChange={(e) =>
+                            updateSection("integrity_compliance", (sec) => ({
+                              extra: { ...sec.extra, officeAddress: e.target.value },
+                            }))
+                          }
+                          placeholder="20, Sahastradhara Road, Rishinagar Upper Adhoiwala, Dehradun, Uttarakhand - 248001"
+                          className="w-full px-4 py-2.5 rounded-xl border border-slate-300 bg-white text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#0f2347] leading-relaxed"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {activeSlug === "about" && (
+                  <div className="bg-white dark:bg-panel rounded-2xl border border-gray-100 dark:border-border p-6 shadow-sm space-y-8">
+                    <div className="border-b border-gray-100 dark:border-border pb-4">
+                      <h3 className="text-sm font-bold text-[#0f2347] dark:text-text-primary flex items-center gap-2">
+                        <FileText size={16} className="text-[#E8542A]" />
+                        About Us Page - Section-wise Content Manager
+                      </h3>
+                      <p className="text-xs text-gray-500 mt-1">
+                        Edit each section individually. Data entered here updates dynamically on the live website.
+                      </p>
+                    </div>
+
+                    {/* Section 1: Sacred Promise Story */}
+                    <div className="p-5 rounded-2xl bg-gray-50 dark:bg-bg border border-gray-100 dark:border-border space-y-4">
+                      <div className="flex items-center justify-between">
+                        <h4 className="text-xs font-bold text-[#0f2347] dark:text-text-primary uppercase tracking-wider flex items-center gap-2">
+                          <Heart size={14} className="text-[#E8542A]" />
+                          1. The Sacred Promise Story
+                        </h4>
+                        <span className="text-[10px] text-gray-400 font-semibold uppercase">Key: sacred_promise</span>
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-semibold text-gray-600 dark:text-muted mb-1">
                           Story Narrative Paragraphs
                         </label>
                         <textarea
                           rows={4}
-                          value={
-                            formData.sections?.find((s) => s.key === "sacred_promise")
-                              ?.description || ""
+                          value={getSection("sacred_promise")?.description || ""}
+                          onChange={(e) =>
+                            updateSection("sacred_promise", () => ({
+                              description: e.target.value,
+                            }))
                           }
-                          onChange={(e) => {
-                            const val = e.target.value;
-                            const updatedSections = [...(formData.sections || [])];
-                            const idx = updatedSections.findIndex(
-                              (s) => s.key === "sacred_promise"
-                            );
-                            if (idx >= 0) {
-                              updatedSections[idx] = {
-                                ...updatedSections[idx],
-                                description: val,
-                              };
-                            } else {
-                              updatedSections.push({
-                                key: "sacred_promise",
-                                name: "The Sacred Promise",
-                                description: val,
-                              });
-                            }
-                            setFormData({ ...formData, sections: updatedSections });
-                          }}
+                          placeholder="In 2026, when we were just school students..."
                           className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-border bg-white dark:bg-panel text-sm text-[#0f2347] dark:text-text-primary focus:outline-none"
                         />
                       </div>
 
-                      {/* Sacred Promise Photo Uploader */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-xs font-semibold text-gray-600 dark:text-muted mb-1">
+                            Founded Year Badge
+                          </label>
+                          <input
+                            type="text"
+                            value={getSection("sacred_promise")?.extra?.year || "2026"}
+                            onChange={(e) =>
+                              updateSection("sacred_promise", (sec) => ({
+                                extra: { ...sec.extra, year: e.target.value },
+                              }))
+                            }
+                            placeholder="2026"
+                            className="w-full px-4 py-2 rounded-xl border border-gray-200 dark:border-border bg-white dark:bg-panel text-xs text-[#0f2347] dark:text-text-primary focus:outline-none"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-semibold text-gray-600 dark:text-muted mb-1">
+                            Badge Subtitle Text
+                          </label>
+                          <input
+                            type="text"
+                            value={getSection("sacred_promise")?.extra?.badgeText || "Born of Student Empathy"}
+                            onChange={(e) =>
+                              updateSection("sacred_promise", (sec) => ({
+                                extra: { ...sec.extra, badgeText: e.target.value },
+                              }))
+                            }
+                            placeholder="Born of Student Empathy"
+                            className="w-full px-4 py-2 rounded-xl border border-gray-200 dark:border-border bg-white dark:bg-panel text-xs text-[#0f2347] dark:text-text-primary focus:outline-none"
+                          />
+                        </div>
+                      </div>
+
                       <CmsImageField
                         label="Sacred Promise Story Feature Photo"
-                        value={
-                          formData.sections?.find((s) => s.key === "sacred_promise")
-                            ?.image || ""
+                        value={getSection("sacred_promise")?.image || ""}
+                        onChange={(url) =>
+                          updateSection("sacred_promise", () => ({ image: url }))
                         }
-                        onChange={(url) => {
-                          const updatedSections = [...(formData.sections || [])];
-                          const idx = updatedSections.findIndex(
-                            (s) => s.key === "sacred_promise"
-                          );
-                          if (idx >= 0) {
-                            updatedSections[idx] = {
-                              ...updatedSections[idx],
-                              image: url,
-                            };
-                          } else {
-                            updatedSections.push({
-                              key: "sacred_promise",
-                              name: "The Sacred Promise",
-                              description: "",
-                              image: url,
-                            });
-                          }
-                          setFormData({ ...formData, sections: updatedSections });
-                        }}
                         recommendedDimensions="800 × 600 px · Max 5MB"
                         placeholder="Upload story image or paste URL..."
                       />
                     </div>
 
-                    {/* Vision & Mission */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div className="p-4 rounded-xl bg-gray-50 dark:bg-bg border border-gray-100 dark:border-border space-y-2">
-                        <label className="block text-xs font-bold text-[#0f2347] dark:text-text-primary uppercase">
-                          Our Vision
-                        </label>
-                        <textarea
-                          rows={4}
-                          value={
-                            formData.sections?.find((s) => s.key === "vision_mission")
-                              ?.extra?.vision || ""
-                          }
-                          onChange={(e) => {
-                            const val = e.target.value;
-                            const updatedSections = [...(formData.sections || [])];
-                            const idx = updatedSections.findIndex(
-                              (s) => s.key === "vision_mission"
-                            );
-                            if (idx >= 0) {
-                              updatedSections[idx] = {
-                                ...updatedSections[idx],
-                                extra: {
-                                  ...updatedSections[idx].extra,
-                                  vision: val,
-                                },
-                              };
-                            } else {
-                              updatedSections.push({
-                                key: "vision_mission",
-                                name: "Vision & Mission",
-                                extra: { vision: val },
-                              });
-                            }
-                            setFormData({ ...formData, sections: updatedSections });
-                          }}
-                          className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-border bg-white dark:bg-panel text-xs text-[#0f2347] dark:text-text-primary focus:outline-none"
-                        />
+                    {/* Section 2: Vision & Mission */}
+                    <div className="p-5 rounded-2xl bg-gray-50 dark:bg-bg border border-gray-100 dark:border-border space-y-4">
+                      <div className="flex items-center justify-between">
+                        <h4 className="text-xs font-bold text-[#0f2347] dark:text-text-primary uppercase tracking-wider flex items-center gap-2">
+                          <Eye size={14} className="text-[#E8542A]" />
+                          2. Vision &amp; Mission Statements
+                        </h4>
+                        <span className="text-[10px] text-gray-400 font-semibold uppercase">Key: vision_mission</span>
                       </div>
 
-                      <div className="p-4 rounded-xl bg-gray-50 dark:bg-bg border border-gray-100 dark:border-border space-y-2">
-                        <label className="block text-xs font-bold text-[#0f2347] dark:text-text-primary uppercase">
-                          Our Mission
-                        </label>
-                        <textarea
-                          rows={4}
-                          value={
-                            formData.sections?.find((s) => s.key === "vision_mission")
-                              ?.extra?.mission || ""
-                          }
-                          onChange={(e) => {
-                            const val = e.target.value;
-                            const updatedSections = [...(formData.sections || [])];
-                            const idx = updatedSections.findIndex(
-                              (s) => s.key === "vision_mission"
-                            );
-                            if (idx >= 0) {
-                              updatedSections[idx] = {
-                                ...updatedSections[idx],
-                                extra: {
-                                  ...updatedSections[idx].extra,
-                                  mission: val,
-                                },
-                              };
-                            } else {
-                              updatedSections.push({
-                                key: "vision_mission",
-                                name: "Vision & Mission",
-                                extra: { mission: val },
-                              });
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="space-y-1.5">
+                          <label className="block text-xs font-bold text-[#0f2347] dark:text-text-primary uppercase">
+                            Our Vision Statement
+                          </label>
+                          <textarea
+                            rows={4}
+                            value={getSection("vision_mission")?.extra?.vision || ""}
+                            onChange={(e) =>
+                              updateSection("vision_mission", (sec) => ({
+                                extra: { ...sec.extra, vision: e.target.value },
+                              }))
                             }
-                            setFormData({ ...formData, sections: updatedSections });
-                          }}
-                          className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-border bg-white dark:bg-panel text-xs text-[#0f2347] dark:text-text-primary focus:outline-none"
-                        />
+                            placeholder="Seva India Foundation envisions a Uttarakhand..."
+                            className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-border bg-white dark:bg-panel text-xs text-[#0f2347] dark:text-text-primary focus:outline-none leading-relaxed"
+                          />
+                        </div>
+
+                        <div className="space-y-1.5">
+                          <label className="block text-xs font-bold text-[#0f2347] dark:text-text-primary uppercase">
+                            Our Mission Statement
+                          </label>
+                          <textarea
+                            rows={4}
+                            value={getSection("vision_mission")?.extra?.mission || ""}
+                            onChange={(e) =>
+                              updateSection("vision_mission", (sec) => ({
+                                extra: { ...sec.extra, mission: e.target.value },
+                              }))
+                            }
+                            placeholder="Aligned with the vision of a poverty-free India..."
+                            className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-border bg-white dark:bg-panel text-xs text-[#0f2347] dark:text-text-primary focus:outline-none leading-relaxed"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Section 3: Areas of Focus (Screenshot 1) */}
+                    <div className="p-5 rounded-2xl bg-gray-50 dark:bg-bg border border-gray-100 dark:border-border space-y-4">
+                      <div className="flex items-center justify-between">
+                        <h4 className="text-xs font-bold text-[#0f2347] dark:text-text-primary uppercase tracking-wider flex items-center gap-2">
+                          <Check size={14} className="text-[#E8542A]" />
+                          3. Areas of Focus Cards
+                        </h4>
+                        <span className="text-[10px] text-gray-400 font-semibold uppercase">Key: areas_of_focus</span>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-xs font-semibold text-gray-600 dark:text-muted mb-1">
+                            Section Title
+                          </label>
+                          <input
+                            type="text"
+                            value={getSection("areas_of_focus")?.title || "AREAS OF FOCUS"}
+                            onChange={(e) =>
+                              updateSection("areas_of_focus", () => ({ title: e.target.value }))
+                            }
+                            className="w-full px-4 py-2 rounded-xl border border-gray-200 dark:border-border bg-white dark:bg-panel text-xs text-[#0f2347] dark:text-text-primary focus:outline-none font-semibold"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-semibold text-gray-600 dark:text-muted mb-1">
+                            Section Subtitle
+                          </label>
+                          <input
+                            type="text"
+                            value={getSection("areas_of_focus")?.subtitle || "Our organization's efforts are concentrated on these key areas."}
+                            onChange={(e) =>
+                              updateSection("areas_of_focus", () => ({ subtitle: e.target.value }))
+                            }
+                            className="w-full px-4 py-2 rounded-xl border border-gray-200 dark:border-border bg-white dark:bg-panel text-xs text-[#0f2347] dark:text-text-primary focus:outline-none"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Items List */}
+                      <div className="space-y-3 pt-2">
+                        <div className="flex items-center justify-between">
+                          <label className="text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
+                            Focus Cards ({((getSection("areas_of_focus")?.items as any[]) || []).length})
+                          </label>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const items = [...((getSection("areas_of_focus")?.items as any[]) || [])];
+                              items.push({
+                                title: "NEW FOCUS AREA",
+                                desc: "Description of the focus area and mission impact.",
+                              });
+                              updateSection("areas_of_focus", () => ({ items }));
+                            }}
+                            className="inline-flex items-center gap-1 px-3 py-1 bg-[#0f2347] hover:bg-[#1a3a6b] text-white text-[11px] font-bold rounded-lg transition-colors"
+                          >
+                            <Plus size={12} />
+                            Add Focus Area
+                          </button>
+                        </div>
+
+                        {(((getSection("areas_of_focus")?.items as any[]) || []).length === 0) ? (
+                          <p className="text-xs text-gray-400 italic p-3 bg-white dark:bg-panel rounded-xl">
+                            Using default 5 focus areas (Women Empowerment, Senior Citizen Welfare, Youth Development, Rural Development, Leprosy Support). Click &ldquo;Add Focus Area&rdquo; to customize.
+                          </p>
+                        ) : (
+                          <div className="space-y-3">
+                            {((getSection("areas_of_focus")?.items as any[]) || []).map((item, idx) => (
+                              <div
+                                key={idx}
+                                className="p-3.5 bg-white dark:bg-panel rounded-xl border border-gray-200 dark:border-border space-y-2 relative"
+                              >
+                                <div className="flex items-center justify-between gap-2">
+                                  <input
+                                    type="text"
+                                    value={item.title || ""}
+                                    onChange={(e) => {
+                                      const items = [...((getSection("areas_of_focus")?.items as any[]) || [])];
+                                      items[idx] = { ...items[idx], title: e.target.value };
+                                      updateSection("areas_of_focus", () => ({ items }));
+                                    }}
+                                    placeholder="Focus Area Title (e.g. WOMEN EMPOWERMENT)"
+                                    className="flex-1 px-3 py-1.5 rounded-lg border border-gray-200 dark:border-border text-xs font-bold text-[#0f2347] dark:text-text-primary focus:outline-none"
+                                  />
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      const items = ((getSection("areas_of_focus")?.items as any[]) || []).filter((_, i) => i !== idx);
+                                      updateSection("areas_of_focus", () => ({ items }));
+                                    }}
+                                    className="p-1 text-gray-400 hover:text-red-500 rounded transition-colors"
+                                    title="Delete focus card"
+                                  >
+                                    <Trash2 size={14} />
+                                  </button>
+                                </div>
+                                <textarea
+                                  rows={2}
+                                  value={item.desc || ""}
+                                  onChange={(e) => {
+                                    const items = [...((getSection("areas_of_focus")?.items as any[]) || [])];
+                                    items[idx] = { ...items[idx], desc: e.target.value };
+                                    updateSection("areas_of_focus", () => ({ items }));
+                                  }}
+                                  placeholder="Focus area description..."
+                                  className="w-full px-3 py-1.5 rounded-lg border border-gray-200 dark:border-border text-xs text-[#0f2347] dark:text-text-primary focus:outline-none leading-relaxed"
+                                />
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Section 4: Stewards / Leadership (Screenshot 2) */}
+                    <div className="p-5 rounded-2xl bg-gray-50 dark:bg-bg border border-gray-100 dark:border-border space-y-4">
+                      <div className="flex items-center justify-between">
+                        <h4 className="text-xs font-bold text-[#0f2347] dark:text-text-primary uppercase tracking-wider flex items-center gap-2">
+                          <Users size={14} className="text-[#E8542A]" />
+                          4. Stewards of the Mission / Leadership (Pravesh Uniyal &amp; People)
+                        </h4>
+                        <span className="text-[10px] text-gray-400 font-semibold uppercase">Key: leadership</span>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-xs font-semibold text-gray-600 dark:text-muted mb-1">
+                            Section Title
+                          </label>
+                          <input
+                            type="text"
+                            value={getSection("leadership")?.title || "STEWARDS OF THE MISSION"}
+                            onChange={(e) =>
+                              updateSection("leadership", () => ({ title: e.target.value }))
+                            }
+                            className="w-full px-4 py-2 rounded-xl border border-gray-200 dark:border-border bg-white dark:bg-panel text-xs text-[#0f2347] dark:text-text-primary focus:outline-none font-semibold"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-semibold text-gray-600 dark:text-muted mb-1">
+                            Section Subtitle
+                          </label>
+                          <input
+                            type="text"
+                            value={getSection("leadership")?.subtitle || "Our leadership is a blend of seasoned social architects and corporate experts, all united by a singular commitment to ethical service."}
+                            onChange={(e) =>
+                              updateSection("leadership", () => ({ subtitle: e.target.value }))
+                            }
+                            className="w-full px-4 py-2 rounded-xl border border-gray-200 dark:border-border bg-white dark:bg-panel text-xs text-[#0f2347] dark:text-text-primary focus:outline-none"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Leaders List with Avatar Upload */}
+                      <div className="space-y-3 pt-2">
+                        <div className="flex items-center justify-between">
+                          <label className="text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
+                            Team Members &amp; Stewards ({((getSection("leadership")?.items as any[]) || []).length})
+                          </label>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const items = [...((getSection("leadership")?.items as any[]) || [])];
+                              items.push({
+                                name: "NEW LEADER",
+                                role: "BOARD MEMBER / ADVISOR",
+                                initials: "NL",
+                                image: "",
+                              });
+                              updateSection("leadership", () => ({ items }));
+                            }}
+                            className="inline-flex items-center gap-1 px-3 py-1 bg-[#0f2347] hover:bg-[#1a3a6b] text-white text-[11px] font-bold rounded-lg transition-colors"
+                          >
+                            <Plus size={12} />
+                            Add Leader
+                          </button>
+                        </div>
+
+                        {(((getSection("leadership")?.items as any[]) || []).length === 0) ? (
+                          <p className="text-xs text-gray-400 italic p-3 bg-white dark:bg-panel rounded-xl">
+                            Using default stewards (Pravesh Uniyal, Swati, Dr. Rajesh Kumar). Click &ldquo;Add Leader&rdquo; to customize or upload images.
+                          </p>
+                        ) : (
+                          <div className="space-y-4">
+                            {((getSection("leadership")?.items as any[]) || []).map((item, idx) => (
+                              <div
+                                key={idx}
+                                className="p-4 bg-white dark:bg-panel rounded-xl border border-gray-200 dark:border-border space-y-3"
+                              >
+                                <div className="flex items-center justify-between gap-3">
+                                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 flex-1">
+                                    <input
+                                      type="text"
+                                      value={item.name || ""}
+                                      onChange={(e) => {
+                                        const items = [...((getSection("leadership")?.items as any[]) || [])];
+                                        items[idx] = { ...items[idx], name: e.target.value };
+                                        updateSection("leadership", () => ({ items }));
+                                      }}
+                                      placeholder="Full Name (e.g. PRAVESH UNIYAL)"
+                                      className="px-3 py-1.5 rounded-lg border border-gray-200 dark:border-border text-xs font-bold text-[#0f2347] dark:text-text-primary focus:outline-none"
+                                    />
+                                    <input
+                                      type="text"
+                                      value={item.role || ""}
+                                      onChange={(e) => {
+                                        const items = [...((getSection("leadership")?.items as any[]) || [])];
+                                        items[idx] = { ...items[idx], role: e.target.value };
+                                        updateSection("leadership", () => ({ items }));
+                                      }}
+                                      placeholder="Role / Designation (e.g. FOUNDER & CHAIRMAN)"
+                                      className="px-3 py-1.5 rounded-lg border border-gray-200 dark:border-border text-xs text-[#0f2347] dark:text-text-primary focus:outline-none"
+                                    />
+                                    <input
+                                      type="text"
+                                      value={item.initials || ""}
+                                      onChange={(e) => {
+                                        const items = [...((getSection("leadership")?.items as any[]) || [])];
+                                        items[idx] = { ...items[idx], initials: e.target.value };
+                                        updateSection("leadership", () => ({ items }));
+                                      }}
+                                      placeholder="Initials fallback (e.g. PU)"
+                                      className="px-3 py-1.5 rounded-lg border border-gray-200 dark:border-border text-xs font-mono uppercase text-[#0f2347] dark:text-text-primary focus:outline-none"
+                                    />
+                                  </div>
+
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      const items = ((getSection("leadership")?.items as any[]) || []).filter((_, i) => i !== idx);
+                                      updateSection("leadership", () => ({ items }));
+                                    }}
+                                    className="p-1.5 text-gray-400 hover:text-red-500 rounded transition-colors shrink-0"
+                                    title="Delete leader"
+                                  >
+                                    <Trash2 size={14} />
+                                  </button>
+                                </div>
+
+                                {/* Leader Photo Upload */}
+                                <CmsImageField
+                                  label={`Photo for ${item.name || "Leader"}`}
+                                  value={item.image || ""}
+                                  onChange={(url) => {
+                                    const items = [...((getSection("leadership")?.items as any[]) || [])];
+                                    items[idx] = { ...items[idx], image: url };
+                                    updateSection("leadership", () => ({ items }));
+                                  }}
+                                  recommendedDimensions="Square avatar · 400 × 400 px · Optional (fallback initials PU/S/RK used if empty)"
+                                  placeholder="Upload leader photo or enter image URL..."
+                                />
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Section 5: The Stewardship of Your Trust (Screenshot 3) */}
+                    <div className="p-5 rounded-2xl bg-gray-50 dark:bg-bg border border-gray-100 dark:border-border space-y-4">
+                      <div className="flex items-center justify-between">
+                        <h4 className="text-xs font-bold text-[#0f2347] dark:text-text-primary uppercase tracking-wider flex items-center gap-2">
+                          <Percent size={14} className="text-[#E8542A]" />
+                          5. The Stewardship of Your Trust &amp; Fund Allocation
+                        </h4>
+                        <span className="text-[10px] text-gray-400 font-semibold uppercase">Key: trust_stewardship</span>
+                      </div>
+
+                      <div className="space-y-3">
+                        <div>
+                          <label className="block text-xs font-semibold text-gray-600 dark:text-muted mb-1">
+                            Section Title
+                          </label>
+                          <input
+                            type="text"
+                            value={getSection("trust_stewardship")?.title || "THE STEWARDSHIP OF YOUR TRUST"}
+                            onChange={(e) =>
+                              updateSection("trust_stewardship", () => ({ title: e.target.value }))
+                            }
+                            className="w-full px-4 py-2 rounded-xl border border-gray-200 dark:border-border bg-white dark:bg-panel text-xs text-[#0f2347] dark:text-text-primary focus:outline-none font-semibold"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-xs font-semibold text-gray-600 dark:text-muted mb-1">
+                            Section Lead Description
+                          </label>
+                          <textarea
+                            rows={3}
+                            value={getSection("trust_stewardship")?.description || "At Seva India Foundation, trust isn't a promise—it's a practice. Your donation is 100% safe with us, and we ensure it reaches the ground where it is needed most, with 100% updates sent to you via WhatsApp and email."}
+                            onChange={(e) =>
+                              updateSection("trust_stewardship", () => ({ description: e.target.value }))
+                            }
+                            className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-border bg-white dark:bg-panel text-xs text-[#0f2347] dark:text-text-primary focus:outline-none leading-relaxed"
+                          />
+                        </div>
+
+                        {/* Breakdown Cards */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+                          {/* Program Support */}
+                          <div className="p-3.5 bg-white dark:bg-panel rounded-xl border border-gray-200 dark:border-border space-y-2">
+                            <span className="text-[11px] font-bold text-[#E8542A] uppercase">Left Card (Direct Program)</span>
+                            <div className="flex gap-2">
+                              <input
+                                type="text"
+                                value={getSection("trust_stewardship")?.extra?.programSupportPercent || "90%"}
+                                onChange={(e) =>
+                                  updateSection("trust_stewardship", (sec) => ({
+                                    extra: { ...sec.extra, programSupportPercent: e.target.value },
+                                  }))
+                                }
+                                placeholder="90%"
+                                className="w-20 px-3 py-1.5 rounded-lg border border-gray-200 dark:border-border text-xs font-bold text-[#0f2347] dark:text-text-primary focus:outline-none"
+                              />
+                              <input
+                                type="text"
+                                value={getSection("trust_stewardship")?.extra?.programSupportTitle || "DIRECT PROGRAM SUPPORT"}
+                                onChange={(e) =>
+                                  updateSection("trust_stewardship", (sec) => ({
+                                    extra: { ...sec.extra, programSupportTitle: e.target.value },
+                                  }))
+                                }
+                                placeholder="DIRECT PROGRAM SUPPORT"
+                                className="flex-1 px-3 py-1.5 rounded-lg border border-gray-200 dark:border-border text-xs font-bold text-[#0f2347] dark:text-text-primary focus:outline-none"
+                              />
+                            </div>
+                            <textarea
+                              rows={2}
+                              value={getSection("trust_stewardship")?.extra?.programSupportDesc || "Goes directly to funding our on-the-ground projects, resources, and beneficiary aid."}
+                              onChange={(e) =>
+                                updateSection("trust_stewardship", (sec) => ({
+                                  extra: { ...sec.extra, programSupportDesc: e.target.value },
+                                }))
+                              }
+                              placeholder="Description..."
+                              className="w-full px-3 py-1.5 rounded-lg border border-gray-200 dark:border-border text-xs text-[#0f2347] dark:text-text-primary focus:outline-none"
+                            />
+                          </div>
+
+                          {/* Admin & Fundraising */}
+                          <div className="p-3.5 bg-white dark:bg-panel rounded-xl border border-gray-200 dark:border-border space-y-2">
+                            <span className="text-[11px] font-bold text-[#0f2347] dark:text-text-primary uppercase">Right Card (Admin &amp; Fundraising)</span>
+                            <div className="flex gap-2">
+                              <input
+                                type="text"
+                                value={getSection("trust_stewardship")?.extra?.adminPercent || "10%"}
+                                onChange={(e) =>
+                                  updateSection("trust_stewardship", (sec) => ({
+                                    extra: { ...sec.extra, adminPercent: e.target.value },
+                                  }))
+                                }
+                                placeholder="10%"
+                                className="w-20 px-3 py-1.5 rounded-lg border border-gray-200 dark:border-border text-xs font-bold text-[#0f2347] dark:text-text-primary focus:outline-none"
+                              />
+                              <input
+                                type="text"
+                                value={getSection("trust_stewardship")?.extra?.adminTitle || "ADMIN & FUNDRAISING"}
+                                onChange={(e) =>
+                                  updateSection("trust_stewardship", (sec) => ({
+                                    extra: { ...sec.extra, adminTitle: e.target.value },
+                                  }))
+                                }
+                                placeholder="ADMIN & FUNDRAISING"
+                                className="flex-1 px-3 py-1.5 rounded-lg border border-gray-200 dark:border-border text-xs font-bold text-[#0f2347] dark:text-text-primary focus:outline-none"
+                              />
+                            </div>
+                            <textarea
+                              rows={2}
+                              value={getSection("trust_stewardship")?.extra?.adminDesc || "Essential operations, technology, and compliance to ensure radical transparency."}
+                              onChange={(e) =>
+                                updateSection("trust_stewardship", (sec) => ({
+                                  extra: { ...sec.extra, adminDesc: e.target.value },
+                                }))
+                              }
+                              placeholder="Description..."
+                              className="w-full px-3 py-1.5 rounded-lg border border-gray-200 dark:border-border text-xs text-[#0f2347] dark:text-text-primary focus:outline-none"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Section 6: Awards & Recognition (Screenshot 4) */}
+                    <div className="p-5 rounded-2xl bg-gray-50 dark:bg-bg border border-gray-100 dark:border-border space-y-4">
+                      <div className="flex items-center justify-between">
+                        <h4 className="text-xs font-bold text-[#0f2347] dark:text-text-primary uppercase tracking-wider flex items-center gap-2">
+                          <Award size={14} className="text-[#E8542A]" />
+                          6. Awards &amp; Recognition
+                        </h4>
+                        <span className="text-[10px] text-gray-400 font-semibold uppercase">Key: awards_recognition</span>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-xs font-semibold text-gray-600 dark:text-muted mb-1">
+                            Section Title
+                          </label>
+                          <input
+                            type="text"
+                            value={getSection("awards_recognition")?.title || "Awards & Recognition"}
+                            onChange={(e) =>
+                              updateSection("awards_recognition", () => ({ title: e.target.value }))
+                            }
+                            className="w-full px-4 py-2 rounded-xl border border-gray-200 dark:border-border bg-white dark:bg-panel text-xs text-[#0f2347] dark:text-text-primary focus:outline-none font-semibold"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-semibold text-gray-600 dark:text-muted mb-1">
+                            Optional Subtitle
+                          </label>
+                          <input
+                            type="text"
+                            value={getSection("awards_recognition")?.subtitle || ""}
+                            onChange={(e) =>
+                              updateSection("awards_recognition", () => ({ subtitle: e.target.value }))
+                            }
+                            placeholder="Optional subtitle..."
+                            className="w-full px-4 py-2 rounded-xl border border-gray-200 dark:border-border bg-white dark:bg-panel text-xs text-[#0f2347] dark:text-text-primary focus:outline-none"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Awards Items */}
+                      <div className="space-y-3 pt-2">
+                        <div className="flex items-center justify-between">
+                          <label className="text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
+                            Award Badges ({((getSection("awards_recognition")?.items as any[]) || []).length})
+                          </label>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const items = [...((getSection("awards_recognition")?.items as any[]) || [])];
+                              items.push({ title: "NEW EXCELLENCE AWARD" });
+                              updateSection("awards_recognition", () => ({ items }));
+                            }}
+                            className="inline-flex items-center gap-1 px-3 py-1 bg-[#0f2347] hover:bg-[#1a3a6b] text-white text-[11px] font-bold rounded-lg transition-colors"
+                          >
+                            <Plus size={12} />
+                            Add Award
+                          </button>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          {((getSection("awards_recognition")?.items as any[]) || []).map((item, idx) => (
+                            <div
+                              key={idx}
+                              className="p-3 bg-white dark:bg-panel rounded-xl border border-gray-200 dark:border-border flex items-center justify-between gap-2"
+                            >
+                              <div className="flex items-center gap-2 flex-1">
+                                <Award size={16} className="text-[#f5a623] shrink-0" />
+                                <input
+                                  type="text"
+                                  value={item.title || ""}
+                                  onChange={(e) => {
+                                    const items = [...((getSection("awards_recognition")?.items as any[]) || [])];
+                                    items[idx] = { ...items[idx], title: e.target.value };
+                                    updateSection("awards_recognition", () => ({ items }));
+                                  }}
+                                  placeholder="Award Title (e.g. BEST NGO FOR EDUCATION)"
+                                  className="w-full px-2.5 py-1 rounded-lg border border-gray-200 dark:border-border text-xs font-bold text-[#0f2347] dark:text-text-primary focus:outline-none"
+                                />
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const items = ((getSection("awards_recognition")?.items as any[]) || []).filter((_, i) => i !== idx);
+                                  updateSection("awards_recognition", () => ({ items }));
+                                }}
+                                className="p-1 text-gray-400 hover:text-red-500 rounded transition-colors"
+                                title="Delete award"
+                              >
+                                <Trash2 size={13} />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Section 7: Allies in Impact (Screenshot 5) */}
+                    <div className="p-5 rounded-2xl bg-gray-50 dark:bg-bg border border-gray-100 dark:border-border space-y-4">
+                      <div className="flex items-center justify-between">
+                        <h4 className="text-xs font-bold text-[#0f2347] dark:text-text-primary uppercase tracking-wider flex items-center gap-2">
+                          <HeartHandshake size={14} className="text-[#E8542A]" />
+                          7. Allies in Impact (Dev Bhoomi Samiti &amp; Core Strength)
+                        </h4>
+                        <span className="text-[10px] text-gray-400 font-semibold uppercase">Key: allies_in_impact</span>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-xs font-semibold text-gray-600 dark:text-muted mb-1">
+                            Section Title
+                          </label>
+                          <input
+                            type="text"
+                            value={getSection("allies_in_impact")?.title || "ALLIES IN IMPACT"}
+                            onChange={(e) =>
+                              updateSection("allies_in_impact", () => ({ title: e.target.value }))
+                            }
+                            className="w-full px-4 py-2 rounded-xl border border-gray-200 dark:border-border bg-white dark:bg-panel text-xs text-[#0f2347] dark:text-text-primary focus:outline-none font-semibold"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-semibold text-gray-600 dark:text-muted mb-1">
+                            Section Subtitle
+                          </label>
+                          <input
+                            type="text"
+                            value={getSection("allies_in_impact")?.subtitle || "Powered by organizations that prioritize direct, ground-level action over corporate lip-service."}
+                            onChange={(e) =>
+                              updateSection("allies_in_impact", () => ({ subtitle: e.target.value }))
+                            }
+                            className="w-full px-4 py-2 rounded-xl border border-gray-200 dark:border-border bg-white dark:bg-panel text-xs text-[#0f2347] dark:text-text-primary focus:outline-none"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+                        {/* Left Card: DEV BHOOMI SAMITI */}
+                        <div className="p-4 bg-white dark:bg-panel rounded-xl border border-gray-200 dark:border-border space-y-3">
+                          <span className="text-[11px] font-bold text-[#f5a623] uppercase">Principal Patron Card</span>
+                          <div>
+                            <label className="block text-[11px] font-semibold text-gray-500 mb-1">Partner Organization Name</label>
+                            <input
+                              type="text"
+                              value={getSection("allies_in_impact")?.extra?.partnerName || "DEV BHOOMI SAMITI"}
+                              onChange={(e) =>
+                                updateSection("allies_in_impact", (sec) => ({
+                                  extra: { ...sec.extra, partnerName: e.target.value },
+                                }))
+                              }
+                              placeholder="DEV BHOOMI SAMITI"
+                              className="w-full px-3 py-1.5 rounded-lg border border-gray-200 dark:border-border text-xs font-bold text-[#0f2347] dark:text-text-primary focus:outline-none"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-[11px] font-semibold text-gray-500 mb-1">Strategic Pillar Narrative</label>
+                            <textarea
+                              rows={3}
+                              value={getSection("allies_in_impact")?.extra?.partnerPillar || "Strategic Pillar: The immense contribution of Dev Bhoomi Samiti is what makes our mission possible. As our principal patron, they provide the visionary leadership and total support that fuels every project, every camp, and every life we touch."}
+                              onChange={(e) =>
+                                updateSection("allies_in_impact", (sec) => ({
+                                  extra: { ...sec.extra, partnerPillar: e.target.value },
+                                }))
+                              }
+                              className="w-full px-3 py-1.5 rounded-lg border border-gray-200 dark:border-border text-xs text-[#0f2347] dark:text-text-primary focus:outline-none leading-relaxed"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-[11px] font-semibold text-gray-500 mb-1">Official Website Link</label>
+                            <input
+                              type="text"
+                              value={getSection("allies_in_impact")?.extra?.partnerWebsiteUrl || "https://devbhoomisamiti.org"}
+                              onChange={(e) =>
+                                updateSection("allies_in_impact", (sec) => ({
+                                  extra: { ...sec.extra, partnerWebsiteUrl: e.target.value },
+                                }))
+                              }
+                              placeholder="https://..."
+                              className="w-full px-3 py-1.5 rounded-lg border border-gray-200 dark:border-border text-xs text-[#0f2347] dark:text-text-primary focus:outline-none font-mono"
+                            />
+                          </div>
+                        </div>
+
+                        {/* Right Card: Foundation Core Strength */}
+                        <div className="p-4 bg-white dark:bg-panel rounded-xl border border-gray-200 dark:border-border space-y-3">
+                          <span className="text-[11px] font-bold text-[#0f2347] dark:text-text-primary uppercase">Core Strength Card</span>
+                          <div>
+                            <label className="block text-[11px] font-semibold text-gray-500 mb-1">Card Title</label>
+                            <input
+                              type="text"
+                              value={getSection("allies_in_impact")?.extra?.coreStrengthTitle || "FOUNDATION'S CORE STRENGTH"}
+                              onChange={(e) =>
+                                updateSection("allies_in_impact", (sec) => ({
+                                  extra: { ...sec.extra, coreStrengthTitle: e.target.value },
+                                }))
+                              }
+                              placeholder="FOUNDATION'S CORE STRENGTH"
+                              className="w-full px-3 py-1.5 rounded-lg border border-gray-200 dark:border-border text-xs font-bold text-[#0f2347] dark:text-text-primary focus:outline-none"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-[11px] font-semibold text-gray-500 mb-1">Operational Model Narrative</label>
+                            <textarea
+                              rows={3}
+                              value={getSection("allies_in_impact")?.extra?.coreStrengthDesc || "Our operational model is built on the immense contribution and full visionary backing of Dev Bhoomi Samiti. This unique alliance allows us to focus 100% of our energy on ground-level implementation, ensuring that every resource is utilized for maximum social impact."}
+                              onChange={(e) =>
+                                updateSection("allies_in_impact", (sec) => ({
+                                  extra: { ...sec.extra, coreStrengthDesc: e.target.value },
+                                }))
+                              }
+                              className="w-full px-3 py-1.5 rounded-lg border border-gray-200 dark:border-border text-xs text-[#0f2347] dark:text-text-primary focus:outline-none leading-relaxed"
+                            />
+                          </div>
+                          <div className="grid grid-cols-2 gap-2">
+                            <div>
+                              <label className="block text-[10px] font-semibold text-gray-500 mb-1">Status Label</label>
+                              <input
+                                type="text"
+                                value={getSection("allies_in_impact")?.extra?.partnershipStatusLabel || "PARTNERSHIP STATUS"}
+                                onChange={(e) =>
+                                  updateSection("allies_in_impact", (sec) => ({
+                                    extra: { ...sec.extra, partnershipStatusLabel: e.target.value },
+                                  }))
+                                }
+                                className="w-full px-2.5 py-1.5 rounded-lg border border-gray-200 dark:border-border text-xs text-[#0f2347] dark:text-text-primary focus:outline-none"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-[10px] font-semibold text-gray-500 mb-1">Status Value</label>
+                              <input
+                                type="text"
+                                value={getSection("allies_in_impact")?.extra?.partnershipStatusValue || "CORE STRATEGIC ALLIANCE"}
+                                onChange={(e) =>
+                                  updateSection("allies_in_impact", (sec) => ({
+                                    extra: { ...sec.extra, partnershipStatusValue: e.target.value },
+                                  }))
+                                }
+                                className="w-full px-2.5 py-1.5 rounded-lg border border-gray-200 dark:border-border text-xs font-bold text-[#0f2347] dark:text-text-primary focus:outline-none"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Section 8: 100% Transparency & Governance Compliance */}
+                    <div className="p-5 rounded-2xl bg-gray-50 dark:bg-bg border border-gray-100 dark:border-border space-y-4">
+                      <div className="flex items-center justify-between">
+                        <h4 className="text-xs font-bold text-[#0f2347] dark:text-text-primary uppercase tracking-wider flex items-center gap-2">
+                          <ShieldCheck size={14} className="text-[#E8542A]" />
+                          8. 100% Transparency &amp; Governance Compliance Box
+                        </h4>
+                        <span className="text-[10px] text-gray-400 font-semibold uppercase">Key: transparency</span>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-xs font-semibold text-gray-600 dark:text-muted mb-1">
+                            Section Headline
+                          </label>
+                          <input
+                            type="text"
+                            value={getSection("transparency")?.title || "100% TRANSPARENT & ACCOUNTABLE"}
+                            onChange={(e) =>
+                              updateSection("transparency", () => ({ title: e.target.value }))
+                            }
+                            className="w-full px-4 py-2 rounded-xl border border-gray-200 dark:border-border bg-white dark:bg-panel text-xs text-[#0f2347] dark:text-text-primary focus:outline-none font-semibold"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-semibold text-gray-600 dark:text-muted mb-1">
+                            Section Description
+                          </label>
+                          <textarea
+                            rows={2}
+                            value={getSection("transparency")?.description || "At Seva India Foundation, trust isn't a promise—it's a practice. As a registered Section 8 NGO, we protect your trust through meticulous accountability and radical transparency."}
+                            onChange={(e) =>
+                              updateSection("transparency", () => ({ description: e.target.value }))
+                            }
+                            className="w-full px-4 py-2 rounded-xl border border-gray-200 dark:border-border bg-white dark:bg-panel text-xs text-[#0f2347] dark:text-text-primary focus:outline-none leading-relaxed"
+                          />
+                        </div>
+                      </div>
+
+                      {/* 4 Compliance Data Inputs */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-2">
+                        <div>
+                          <label className="block text-[11px] font-semibold text-gray-500 mb-1">
+                            NGO Darpan ID
+                          </label>
+                          <input
+                            type="text"
+                            value={getSection("transparency")?.extra?.darpanId || "UK/2026/0993905"}
+                            onChange={(e) =>
+                              updateSection("transparency", (sec) => ({
+                                extra: { ...sec.extra, darpanId: e.target.value },
+                              }))
+                            }
+                            className="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-border bg-white dark:bg-panel text-xs font-mono font-bold text-[#0f2347] dark:text-text-primary focus:outline-none"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-[11px] font-semibold text-gray-500 mb-1">
+                            CIN Number (Auto word-wrap fixed)
+                          </label>
+                          <input
+                            type="text"
+                            value={getSection("transparency")?.extra?.cin || "U88900UT2026NPL020825"}
+                            onChange={(e) =>
+                              updateSection("transparency", (sec) => ({
+                                extra: { ...sec.extra, cin: e.target.value },
+                              }))
+                            }
+                            className="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-border bg-white dark:bg-panel text-xs font-mono font-bold text-[#0f2347] dark:text-text-primary focus:outline-none"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-[11px] font-semibold text-gray-500 mb-1">
+                            Tax Exemption
+                          </label>
+                          <input
+                            type="text"
+                            value={getSection("transparency")?.extra?.taxExemption || "80G & 12A"}
+                            onChange={(e) =>
+                              updateSection("transparency", (sec) => ({
+                                extra: { ...sec.extra, taxExemption: e.target.value },
+                              }))
+                            }
+                            className="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-border bg-white dark:bg-panel text-xs font-semibold text-[#0f2347] dark:text-text-primary focus:outline-none"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-[11px] font-semibold text-gray-500 mb-1">
+                            Legal Status
+                          </label>
+                          <input
+                            type="text"
+                            value={getSection("transparency")?.extra?.legalStatus || "Section 8 Company"}
+                            onChange={(e) =>
+                              updateSection("transparency", (sec) => ({
+                                extra: { ...sec.extra, legalStatus: e.target.value },
+                              }))
+                            }
+                            className="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-border bg-white dark:bg-panel text-xs font-semibold text-[#0f2347] dark:text-text-primary focus:outline-none"
+                          />
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -1549,26 +3107,90 @@ export default function CmsDashboardPage() {
                 {(activeSlug === "privacy" ||
                   activeSlug === "terms" ||
                   activeSlug === "refund-policy") && (
-                  <div className="bg-white dark:bg-panel rounded-2xl border border-gray-100 dark:border-border p-6 shadow-sm space-y-4">
-                    <h3 className="text-sm font-bold text-[#0f2347] dark:text-text-primary pb-3 border-b border-gray-100 dark:border-border flex items-center gap-2">
-                      <FileText size={16} className="text-[#E8542A]" />
-                      Legal Policy Document Content (HTML / Markdown / Text)
-                    </h3>
+                  <div className="bg-white dark:bg-panel rounded-2xl border border-gray-100 dark:border-border p-6 shadow-sm space-y-6">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-gray-100 dark:border-border">
+                      <div className="flex items-center gap-2">
+                        <FileText size={18} className="text-[#E8542A]" />
+                        <div>
+                          <h3 className="text-sm font-bold text-[#0f2347] dark:text-text-primary">
+                            Policy Document Content Editor
+                          </h3>
+                          <p className="text-xs text-gray-500">
+                            Format headings, bold text, lists, and paragraphs. No image uploads allowed.
+                          </p>
+                        </div>
+                      </div>
 
-                    <div>
-                      <label className="block text-xs font-semibold text-gray-600 dark:text-muted mb-1.5">
-                        Full Document Text &amp; Clauses
-                      </label>
-                      <textarea
-                        rows={16}
-                        value={formData.content || ""}
-                        onChange={(e) =>
-                          setFormData({ ...formData, content: e.target.value })
-                        }
-                        placeholder="Enter the full policy clauses, headings, and legal disclosures..."
-                        className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-border bg-gray-50 dark:bg-bg text-sm text-[#0f2347] dark:text-text-primary focus:outline-none font-mono leading-relaxed"
-                      />
+                      {/* View mode toggle */}
+                      <div className="flex items-center bg-gray-100 dark:bg-bg p-1 rounded-xl">
+                        <button
+                          type="button"
+                          onClick={() => setPolicyViewMode("edit")}
+                          className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                            policyViewMode === "edit"
+                              ? "bg-white dark:bg-panel text-[#0f2347] dark:text-text-primary shadow-xs"
+                              : "text-gray-500 hover:text-gray-900"
+                          }`}
+                        >
+                          Rich Text Editor
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setPolicyViewMode("preview")}
+                          className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                            policyViewMode === "preview"
+                              ? "bg-white dark:bg-panel text-[#0f2347] dark:text-text-primary shadow-xs"
+                              : "text-gray-500 hover:text-gray-900"
+                          }`}
+                        >
+                          Live Website Preview
+                        </button>
+                      </div>
                     </div>
+
+                    {policyViewMode === "edit" ? (
+                      <div className="space-y-2">
+                        <label className="block text-xs font-semibold text-gray-600 dark:text-muted">
+                          Document Clauses &amp; Content (Bold, Headings, Bullets supported)
+                        </label>
+                        <RichTextEditor
+                          value={formData.content || ""}
+                          onChange={(val) => setFormData({ ...formData, content: val })}
+                          hideImageUpload={true}
+                          placeholder="Enter policy sections, headings, bold clauses, lists..."
+                        />
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        <div className="p-4 rounded-xl bg-blue-50/60 border border-blue-100 text-xs text-blue-700 flex items-center justify-between">
+                          <span>Live Website Replica: Exact styling matches public website view</span>
+                          <span className="font-semibold uppercase tracking-wider text-[10px] bg-blue-100 px-2 py-0.5 rounded">
+                            Interactive Preview
+                          </span>
+                        </div>
+                        <div className="bg-[#f8fafc] rounded-2xl p-6 sm:p-10 border border-slate-200 shadow-inner">
+                          <div className="max-w-3xl mx-auto bg-white rounded-2xl p-8 shadow-sm border border-slate-100">
+                            <div className="text-center pb-6 mb-6 border-b border-slate-100">
+                              <span className="inline-block px-3 py-1 rounded-full bg-amber-50 text-[#F5A623] text-[10px] font-bold uppercase tracking-wider mb-2">
+                                Official Policy
+                              </span>
+                              <h2 className="text-2xl font-serif font-bold text-[#0A1A2F]">
+                                {formData.title || activeMeta.name}
+                              </h2>
+                              <p className="text-slate-500 text-xs mt-1">
+                                {formData.subtitle || activeMeta.description}
+                              </p>
+                            </div>
+                            <div
+                              className="prose prose-slate max-w-none text-slate-700 leading-relaxed text-sm [&_h2]:text-lg [&_h2]:font-bold [&_h2]:text-[#0A1A2F] [&_h2]:mt-5 [&_h2]:mb-2 [&_h3]:text-base [&_h3]:font-semibold [&_h3]:text-[#0A1A2F] [&_h3]:mt-3 [&_h3]:mb-1 [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:my-2 [&_ol]:list-decimal [&_ol]:pl-5 [&_ol]:my-2 [&_li]:my-1 [&_p]:my-2"
+                              dangerouslySetInnerHTML={{
+                                __html: formData.content || "<p className='text-slate-400 italic'>No content written yet. Switch to Editor tab to add clauses.</p>",
+                              }}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
               </form>

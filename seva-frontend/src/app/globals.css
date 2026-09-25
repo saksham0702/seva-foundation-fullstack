@@ -272,3 +272,25 @@
     transform: none !important;
   }
 }
+
+/* ── CMS Dashboard Form Controls (Guarantees crisp dark text and white bg for all inputs/textareas) ── */
+.cms-dashboard-container input:not([type="checkbox"]):not([type="radio"]):not([type="color"]):not([type="file"]):not([type="submit"]):not([type="button"]),
+.cms-dashboard-container textarea,
+.cms-dashboard-container select {
+  color: #0f172a !important; /* text-slate-900 */
+  background-color: #ffffff !important;
+  border-color: #cbd5e1 !important; /* border-slate-300 */
+}
+
+.cms-dashboard-container input:not([type="checkbox"]):not([type="radio"]):not([type="color"]):not([type="file"]):not([type="submit"]):not([type="button"]):focus,
+.cms-dashboard-container textarea:focus,
+.cms-dashboard-container select:focus {
+  border-color: #0f2347 !important;
+  outline: none !important;
+  box-shadow: 0 0 0 2px rgba(15, 35, 71, 0.12) !important;
+}
+
+.cms-dashboard-container input::placeholder,
+.cms-dashboard-container textarea::placeholder {
+  color: #94a3b8 !important; /* text-slate-400 */
+}

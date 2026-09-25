@@ -64,7 +64,7 @@ export default async function PrivacyPolicyPage() {
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 sm:p-10 space-y-8">
           {customContent ? (
             <div
-              className="prose max-w-none text-slate-700 leading-relaxed text-sm sm:text-base whitespace-pre-wrap"
+              className="prose prose-slate max-w-none text-slate-700 leading-relaxed text-sm sm:text-base [&_h2]:text-xl [&_h2]:font-bold [&_h2]:text-[#0A1A2F] [&_h2]:mt-6 [&_h2]:mb-3 [&_h3]:text-lg [&_h3]:font-semibold [&_h3]:text-[#0A1A2F] [&_h3]:mt-4 [&_h3]:mb-2 [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:my-3 [&_ol]:list-decimal [&_ol]:pl-5 [&_ol]:my-3 [&_li]:my-1.5 [&_p]:my-2.5"
               dangerouslySetInnerHTML={{ __html: customContent }}
             />
           ) : (

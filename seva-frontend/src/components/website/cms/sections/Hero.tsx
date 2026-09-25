@@ -50,18 +50,19 @@ export default function HeroSection({ data }: HeroProps) {
         ) : (
           <div className="absolute inset-0 bg-gradient-to-br from-[#0B1120] via-[#1a3a6b] to-[#E8542A]/20" />
         )}
-        {/* Soft, lightened backdrop gradient so media is clear and vibrant */}
-        <div className="absolute inset-0 bg-gradient-to-t from-[#0B1120]/75 via-[#0B1120]/35 to-black/20" />
+        {/* Balanced backdrop overlay so media is rich while text is crystal clear */}
+        <div className="absolute inset-0 bg-black/35" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#0B1120]/90 via-[#0B1120]/60 to-black/30" />
       </div>
 
       {/* Content */}
       <div className="relative z-10 text-center px-4 max-w-4xl mx-auto">
-        <h1 className="text-4xl md:text-6xl lg:text-7xl font-semibold tracking-wide text-white">
+        <h1 className="text-4xl md:text-6xl lg:text-7xl font-serif font-extrabold tracking-wide text-white drop-shadow-md">
           {firstWords && <span className="text-white">{firstWords} </span>}
           <span className="text-[#f5a623]">{lastWord}</span>
         </h1>
-        <div className="w-16 h-1 bg-[#f5a623] mx-auto mt-4 mb-6" />
-        <p className="text-white/80 italic text-base md:text-lg leading-relaxed max-w-2xl mx-auto">
+        <div className="w-16 h-1 bg-[#f5a623] mx-auto mt-4 mb-6 rounded-full" />
+        <p className="text-white/90 italic text-base md:text-lg leading-relaxed max-w-2xl mx-auto drop-shadow-sm font-medium">
           {subtitle}
         </p>
       </div>
