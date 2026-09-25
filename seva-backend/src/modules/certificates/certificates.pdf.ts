@@ -69,6 +69,36 @@ export const generateCertificatePdf = async (certificate: ICertificate): Promise
     const bodyY = 283;
     const bodyWidth = width - 240;
 
+    // Reserve the zone between body start and the cause line's lowest allowed position.
+    // (causeMaxY is where "Cause / Program" is allowed to sit at the latest, keeping it
+    // safely clear of the signature/QR zone that starts around height - 160.)
+    const causeMaxY = height - 130;
+    const maxBodyHeight = causeMaxY - bodyY - 20; // 20px breathing room before the cause line
+
+    // ── Step 1: measure the body height reliably (plain text, base font size) ──
+    // We deliberately measure BEFORE doing any continued/bold-segment rendering,
+    // because pdfkit's doc.y after a mixed-font continued chain is not trustworthy
+    // for multi-line paragraphs — that unreliable measurement was the root cause
+    // of the cause/program line overlapping the certificate body text.
+    let bodyFontSize = 11;
+    let boldFontSize = 12;
+    let measuredHeight = doc
+      .font("Times-Roman")
+      .fontSize(bodyFontSize)
+      .heightOfString(bodyText, { width: bodyWidth, align: "center", lineGap: 4 });
+
+    // ── Step 2: if the text is too long for the available space, shrink it down ──
+    // (rather than letting it silently collide with whatever comes after it).
+    const MIN_FONT_SIZE = 8;
+    while (measuredHeight > maxBodyHeight && bodyFontSize > MIN_FONT_SIZE) {
+      bodyFontSize -= 1;
+      boldFontSize = bodyFontSize + 1;
+      measuredHeight = doc
+        .font("Times-Roman")
+        .fontSize(bodyFontSize)
+        .heightOfString(bodyText, { width: bodyWidth, align: "center", lineGap: 4 });
+    }
+
     const quoteRegex = /(["""]+[^"""]+["""]+|'[^']+'|'[^']+')/g;
     const matches = Array.from(bodyText.matchAll(quoteRegex));
 
@@ -91,9 +121,9 @@ export const generateCertificatePdf = async (certificate: ICertificate): Promise
       segments.forEach((seg, sIdx) => {
         const isLast = sIdx === segments.length - 1;
         if (seg.isBold) {
-          doc.fontSize(12).font("Times-Bold").fillColor("#0B2C6B");
+          doc.fontSize(boldFontSize).font("Times-Bold").fillColor("#0B2C6B");
         } else {
-          doc.fontSize(11).font("Times-Roman").fillColor("#444");
+          doc.fontSize(bodyFontSize).font("Times-Roman").fillColor("#444");
         }
         if (sIdx === 0) {
           doc.text(seg.text, bodyX, bodyY, {
@@ -103,21 +133,23 @@ export const generateCertificatePdf = async (certificate: ICertificate): Promise
             continued: !isLast,
           });
         } else {
-          doc.text(seg.text, { continued: !isLast, lineGap: 4 });
+          // NOTE: width must be repeated here too, otherwise continued segments
+          // can wrap against the full page width instead of bodyWidth.
+          doc.text(seg.text, { width: bodyWidth, align: "center", continued: !isLast, lineGap: 4 });
         }
       });
     } else {
       doc
         .fillColor("#444")
-        .fontSize(11)
+        .fontSize(bodyFontSize)
         .font("Times-Roman")
         .text(bodyText, bodyX, bodyY, { width: bodyWidth, align: "center", lineGap: 4 });
     }
 
-    // Position cause/program text dynamically after body, with a hard cap before signature zone
-    const afterBodyY = doc.y + 12;
-    // Signature zone starts at height - 100; keep causeText at least 20pt above it
-    const causeY = Math.min(afterBodyY, height - 130);
+    // ── Step 3: position the cause/program line using the MEASURED height, ──
+    // not doc.y, so it can never overlap the body text above it.
+    const afterBodyY = bodyY + measuredHeight + 12;
+    const causeY = Math.min(afterBodyY, causeMaxY);
 
     const causeText = certificate.projectName
       ? `${certificate.programName} — ${certificate.projectName}`
