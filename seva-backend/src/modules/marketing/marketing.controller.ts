@@ -33,6 +33,28 @@ const getAudienceCounts = asyncHandler(async (_req: Request, res: Response) => {
   });
 });
 
+const previewRecipients = asyncHandler(async (req: Request, res: Response) => {
+  const audienceType = (req.query.audienceType as any) || "ALL_DONORS";
+  const filter: any = {};
+  if (req.query.campaignId) filter.campaignId = req.query.campaignId;
+  if (req.query.volunteerCategory) filter.volunteerCategory = req.query.volunteerCategory;
+
+  const recipients = await MarketingService.resolveAudienceRecipients(
+    audienceType,
+    filter
+  );
+
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "Audience recipients preview fetched successfully",
+    data: {
+      recipients,
+      count: recipients.length,
+    },
+  });
+});
+
 // ── Campaigns ────────────────────────────────────────────────────────────────
 const getAllCampaigns = asyncHandler(async (req: Request, res: Response) => {
   const data = await MarketingService.getAllCampaigns(req.query);
@@ -330,6 +352,7 @@ const getLogs = asyncHandler(async (req: Request, res: Response) => {
 export const MarketingController = {
   getStats,
   getAudienceCounts,
+  previewRecipients,
   getAllCampaigns,
   getCampaignById,
   createCampaign,

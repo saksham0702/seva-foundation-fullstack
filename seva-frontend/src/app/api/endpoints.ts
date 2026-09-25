@@ -199,6 +199,7 @@ export const endpoint = {
   whatsapp: {
     stats: "/marketing/stats",
     audienceCounts: "/marketing/audience-counts",
+    previewRecipients: "/marketing/preview-recipients",
     getCampaigns: "/marketing/campaigns",
     getCampaignById: (id: string) => `/marketing/campaigns/${id}`,
     createCampaign: "/marketing/campaigns",

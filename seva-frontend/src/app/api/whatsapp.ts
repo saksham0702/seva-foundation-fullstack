@@ -146,6 +146,16 @@ export const whatsappAPI = {
     return res.data?.data || res.data;
   },
 
+  previewRecipients: async (
+    audienceType: string,
+    filter?: any
+  ): Promise<{ recipients: IRecipient[]; count: number }> => {
+    const res = await axiosInstance.get(endpoint.whatsapp.previewRecipients, {
+      params: { audienceType, ...filter },
+    });
+    return res.data?.data || res.data || { recipients: [], count: 0 };
+  },
+
   getCampaigns: async (params?: {
     status?: string;
     provider?: string;

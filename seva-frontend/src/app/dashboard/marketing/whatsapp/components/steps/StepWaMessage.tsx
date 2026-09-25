@@ -77,12 +77,15 @@ export function StepWAMessage() {
   async function handleMediaUpload(file: File) {
     try {
       setUploadingMedia(true);
+      const isImg = file.type.startsWith("image/") || /\.(png|jpe?g|webp|gif|svg)$/i.test(file.name);
+      const detectedType: "image" | "document" = isImg ? "image" : "document";
       const url = await uploadCmsImageFile(file);
       updateDraft({
         mediaUrl: url,
         mediaFileName: file.name,
+        mediaType: detectedType,
       });
-      toast.success("Media file uploaded successfully");
+      toast.success(`${isImg ? "Image" : "Document"} uploaded successfully`);
     } catch (err: any) {
       toast.error("Failed to upload media. Please try again.");
     } finally {

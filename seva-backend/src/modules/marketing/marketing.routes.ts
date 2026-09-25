@@ -8,6 +8,7 @@ const memoryUpload = multer({ storage: multer.memoryStorage() });
 // ── Overall Stats & Audience ────────────────────────────────────────────────
 router.get("/stats", MarketingController.getStats);
 router.get("/audience-counts", MarketingController.getAudienceCounts);
+router.get("/preview-recipients", MarketingController.previewRecipients);
 
 // ── Campaigns ────────────────────────────────────────────────────────────────
 router.get("/campaigns", MarketingController.getAllCampaigns);
@@ -24,6 +25,7 @@ router.get("/templates", MarketingController.getAllTemplates);
 router.get("/templates/:id", MarketingController.getTemplateById);
 router.post("/templates", MarketingController.createTemplate);
 router.patch("/templates/:id", MarketingController.updateTemplate);
+router.put("/templates/:id", MarketingController.updateTemplate);
 router.delete("/templates/:id", MarketingController.deleteTemplate);
 router.post("/templates/seed", MarketingController.seedTemplates);
 

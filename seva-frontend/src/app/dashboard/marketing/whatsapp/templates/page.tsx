@@ -8,7 +8,7 @@ export default function WhatsAppTemplatesRedirect() {
   const router = useRouter();
 
   useEffect(() => {
-    router.replace("/dashboard/marketing/whatsapp?tab=templates");
+    router.replace("/dashboard/marketing/templates?type=whatsapp");
   }, [router]);
 
   return (

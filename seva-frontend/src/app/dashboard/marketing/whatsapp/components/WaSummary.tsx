@@ -52,29 +52,47 @@ export function WASummary() {
           {/* Chat Canvas (Scrollable) */}
           <div className="p-3 h-[320px] max-h-[420px] overflow-y-auto space-y-2 scrollbar-thin scrollbar-thumb-slate-300 scrollbar-track-transparent">
             <div className="bg-white rounded-2xl rounded-tl-none p-3 shadow-sm border border-slate-200/60 max-w-[94%] self-start space-y-2">
-              {draft.mediaType === "image" && (
-                <div className="w-full h-32 bg-slate-100 rounded-xl flex flex-col items-center justify-center border border-slate-200 overflow-hidden">
-                  {draft.mediaUrl ? (
-                    <img
-                      src={draft.mediaUrl}
-                      alt="Media attachment"
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="flex flex-col items-center text-slate-400">
-                      <ImageIcon size={20} />
-                      <span className="text-[10px] mt-1">Image Attachment</span>
-                    </div>
-                  )}
+              {/* Media Preview: Image */}
+              {((draft.mediaType === "image" && draft.mediaUrl) ||
+                (draft.mediaUrl && !draft.mediaUrl.match(/\.(pdf|docx?|xlsx?|csv)$/i) && draft.mediaType !== "document")) && (
+                <div className="w-full rounded-xl overflow-hidden border border-slate-200 bg-slate-100 shadow-sm relative group">
+                  <img
+                    src={draft.mediaUrl}
+                    alt={draft.mediaFileName || "Attached Media"}
+                    className="w-full max-h-44 object-cover"
+                    onError={(e) => {
+                      (e.target as HTMLElement).style.display = "none";
+                    }}
+                  />
+                  <div className="absolute bottom-1 right-1 bg-black/60 backdrop-blur-sm text-white text-[9px] px-1.5 py-0.5 rounded font-mono">
+                    IMAGE
+                  </div>
                 </div>
               )}
 
-              {draft.mediaType === "document" && (
-                <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-2">
-                  <FileText size={16} className="text-red-500 shrink-0" />
-                  <span className="text-[10px] font-bold text-slate-700 truncate">
-                    {draft.mediaFileName || "Attachment.pdf"}
-                  </span>
+              {/* Media Placeholder if image mode selected but no file yet */}
+              {draft.mediaType === "image" && !draft.mediaUrl && (
+                <div className="w-full h-28 bg-slate-100 rounded-xl flex flex-col items-center justify-center border border-dashed border-slate-300 text-slate-400">
+                  <ImageIcon size={22} className="text-slate-400" />
+                  <span className="text-[10px] font-bold mt-1 text-slate-500">Image will appear here</span>
+                </div>
+              )}
+
+              {/* Media Preview: Document */}
+              {(draft.mediaType === "document" ||
+                (draft.mediaUrl && draft.mediaUrl.match(/\.(pdf|docx?|xlsx?|csv)$/i))) && (
+                <div className="flex items-center gap-3 bg-slate-50 hover:bg-slate-100/80 border border-slate-200 rounded-xl p-2.5 transition-all shadow-sm">
+                  <div className="w-9 h-9 rounded-lg bg-red-100 text-red-600 flex items-center justify-center shrink-0 shadow-xs">
+                    <FileText size={18} />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs font-bold text-slate-900 truncate">
+                      {draft.mediaFileName || (draft.mediaUrl ? draft.mediaUrl.split("/").pop() : "Attached Document.pdf")}
+                    </p>
+                    <p className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold">
+                      Document • Attached
+                    </p>
+                  </div>
                 </div>
               )}
 

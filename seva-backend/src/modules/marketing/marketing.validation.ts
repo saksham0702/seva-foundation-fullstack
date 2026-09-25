@@ -49,17 +49,17 @@ export const CreateCampaignSchema = z.object({
 });
 
 export const CreateTemplateSchema = z.object({
-  name: z.string().min(2, "Template name is required"),
-  category: z.enum(["DONATION", "VOLUNTEER", "CAMPAIGN", "NEWSLETTER", "GENERAL"]).default("GENERAL"),
-  body: z.string().min(2, "Template body is required"),
+  name: z.string().min(1, "Template name is required"),
+  category: z.string().default("GENERAL"),
+  body: z.string().min(1, "Template body is required"),
   headerType: z.enum(["NONE", "TEXT", "IMAGE", "DOCUMENT"]).default("NONE"),
-  headerMediaUrl: z.string().optional(),
-  footerText: z.string().optional(),
+  headerMediaUrl: z.string().optional().default(""),
+  footerText: z.string().optional().default(""),
   sampleVariables: z.record(z.string(), z.any()).optional(),
   isActive: z.boolean().default(true),
-});
+}).passthrough();
 
-export const UpdateTemplateSchema = CreateTemplateSchema.partial();
+export const UpdateTemplateSchema = CreateTemplateSchema.partial().passthrough();
 
 export const UpdateConfigSchema = z.object({
   activeProvider: z.enum(["BAILEYS", "OFFICIAL_API"]).optional(),

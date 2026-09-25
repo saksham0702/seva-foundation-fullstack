@@ -25,6 +25,7 @@ export function StepWAAudience() {
   const fileRef = useRef<HTMLInputElement>(null);
   const [dragOver, setDragOver] = useState(false);
   const [loadingCounts, setLoadingCounts] = useState(true);
+  const [loadingRecipients, setLoadingRecipients] = useState(false);
   const [parsingFile, setParsingFile] = useState(false);
   const [counts, setCounts] = useState<IAudienceCounts>({
     ALL_DONORS: 0,
@@ -35,6 +36,33 @@ export function StepWAAudience() {
     LEADS: 0,
   });
 
+  async function loadSegmentContacts(type: WAAudienceType) {
+    try {
+      setLoadingRecipients(true);
+      const res = await whatsappAPI.previewRecipients(type);
+      const loaded = res.recipients || [];
+      updateDraft({
+        audienceType: type,
+        customRecipients: loaded.map((r) => ({
+          name: r.name,
+          phone: r.phone,
+          variables: r.variables,
+        })),
+        estimatedRecipientCount: loaded.length,
+      });
+      if (loaded.length > 0) {
+        toast.info(`Loaded ${loaded.length} verified contacts for ${type.replace(/_/g, " ")}`);
+      } else {
+        toast.warning(`No active contacts found with valid phone numbers for this segment.`);
+      }
+    } catch (err: any) {
+      console.error("Failed to load contacts for segment:", err);
+      toast.error("Failed to load contacts for selected segment");
+    } finally {
+      setLoadingRecipients(false);
+    }
+  }
+
   useEffect(() => {
     async function loadCounts() {
       try {
@@ -42,11 +70,11 @@ export function StepWAAudience() {
         const data = await whatsappAPI.getAudienceCounts();
         setCounts(data);
 
-        // Update estimated count for initial draft
+        // Preload contacts for the initial segment if not custom file
         if (draft.audienceType !== "CUSTOM_FILE") {
-          updateDraft({
-            estimatedRecipientCount: (data as any)[draft.audienceType] || 0,
-          });
+          // If leads was previously selected, default to ALL_DONORS
+          const initialType = draft.audienceType === "LEADS" ? "ALL_DONORS" : draft.audienceType;
+          await loadSegmentContacts(initialType);
         }
       } catch (err) {
         console.error("Failed to load audience counts:", err);
@@ -93,7 +121,7 @@ export function StepWAAudience() {
     {
       type: "ALL_DONORS",
       title: "All Donors",
-      description: "Every registered donor in the database with a phone number",
+      description: "Every registered donor in the database with a verified mobile number",
       icon: Users,
       countKey: "ALL_DONORS",
       badgeColor: "bg-blue-50 text-blue-700 border-blue-200",
@@ -130,22 +158,13 @@ export function StepWAAudience() {
       countKey: "VOLUNTEERS",
       badgeColor: "bg-teal-50 text-teal-700 border-teal-200",
     },
-    {
-      type: "LEADS",
-      title: "Inquiries & Newsletter Leads",
-      description: "Website subscribers, contact form leads, and prospective supporters",
-      icon: Compass,
-      countKey: "LEADS",
-      badgeColor: "bg-indigo-50 text-indigo-700 border-indigo-200",
-    },
   ];
 
   const isCustom = draft.audienceType === "CUSTOM_FILE";
   const canProceed =
     draft.name.trim().length > 0 &&
-    (isCustom
-      ? draft.customRecipients.length > 0
-      : (counts[draft.audienceType as keyof IAudienceCounts] || 0) > 0);
+    draft.customRecipients.length > 0 &&
+    !loadingRecipients;
 
   return (
     <div className="flex flex-col gap-8">
@@ -190,12 +209,7 @@ export function StepWAAudience() {
           </div>
           <div className="flex gap-1.5 p-1 bg-slate-100 rounded-xl">
             <button
-              onClick={() => {
-                updateDraft({
-                  audienceType: "ALL_DONORS",
-                  estimatedRecipientCount: counts.ALL_DONORS,
-                });
-              }}
+              onClick={() => loadSegmentContacts("ALL_DONORS")}
               className={`text-xs font-bold px-4 py-1.5 rounded-lg transition-all ${
                 !isCustom
                   ? "bg-white text-black shadow-sm"
@@ -224,7 +238,8 @@ export function StepWAAudience() {
 
         {/* Database Segment Grid */}
         {!isCustom ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
             {audienceCards.map((card) => {
               const isSelected = draft.audienceType === card.type;
               const count = counts[card.countKey] || 0;
@@ -233,12 +248,7 @@ export function StepWAAudience() {
               return (
                 <div
                   key={card.type}
-                  onClick={() =>
-                    updateDraft({
-                      audienceType: card.type,
-                      estimatedRecipientCount: count,
-                    })
-                  }
+                  onClick={() => loadSegmentContacts(card.type)}
                   className={`p-4 rounded-2xl border-2 text-left cursor-pointer transition-all flex flex-col justify-between ${
                     isSelected
                       ? "border-[#25D366] bg-[#25D366]/[0.03] shadow-sm ring-1 ring-[#25D366]/20"
@@ -296,7 +306,87 @@ export function StepWAAudience() {
               );
             })}
           </div>
-        ) : (
+
+          {/* Loaded Database Contacts Preview Section */}
+          {loadingRecipients ? (
+            <div className="flex flex-col items-center justify-center p-8 bg-slate-50 border border-slate-200 rounded-2xl gap-2 text-xs text-slate-500">
+              <Loader2 size={22} className="animate-spin text-[#25D366]" />
+              <span className="font-semibold text-slate-700">Loading names and phone numbers from database...</span>
+              <span className="text-[11px] text-slate-400">Verifying 10-digit mobile numbers for delivery</span>
+            </div>
+          ) : draft.customRecipients.length > 0 ? (
+            <div className="border border-slate-200 rounded-2xl overflow-hidden bg-white shadow-sm mt-2">
+              <div className="bg-slate-50 px-4 py-3 border-b border-slate-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <div className="w-6 h-6 rounded-lg bg-[#25D366]/10 text-[#25D366] flex items-center justify-center">
+                    <Users size={14} />
+                  </div>
+                  <div>
+                    <span className="text-xs font-bold text-black">
+                      Loaded Database Contacts ({draft.customRecipients.length})
+                    </span>
+                    <p className="text-[10px] text-slate-500">
+                      These verified numbers will receive this WhatsApp broadcast
+                    </p>
+                  </div>
+                </div>
+                <span className="text-[10px] uppercase font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200 flex items-center gap-1 shrink-0">
+                  <CheckCircle2 size={12} /> Ready to Broadcast
+                </span>
+              </div>
+              <div className="max-h-64 overflow-y-auto">
+                <table className="w-full text-left text-xs">
+                  <thead className="bg-slate-50/80 text-slate-500 border-b border-slate-200 sticky top-0">
+                    <tr>
+                      <th className="px-4 py-2 font-bold w-12">#</th>
+                      <th className="px-4 py-2 font-bold">Name</th>
+                      <th className="px-4 py-2 font-bold">WhatsApp Phone Number</th>
+                      <th className="px-4 py-2 font-bold">Segment / Context</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {draft.customRecipients.slice(0, 15).map((r, idx) => (
+                      <tr key={idx} className="hover:bg-slate-50/60">
+                        <td className="px-4 py-2 text-slate-400 font-mono text-[11px]">
+                          {idx + 1}
+                        </td>
+                        <td className="px-4 py-2 font-semibold text-black">
+                          {r.name || "Supporter"}
+                        </td>
+                        <td className="px-4 py-2 font-mono text-slate-700 font-medium">
+                          +{r.phone}
+                        </td>
+                        <td className="px-4 py-2 text-slate-500 font-mono text-[10px]">
+                          {r.variables && Object.keys(r.variables).length > 0
+                            ? Object.entries(r.variables)
+                                .map(([k, v]) => `${k}: ${v}`)
+                                .join(", ")
+                            : draft.audienceType.replace(/_/g, " ")}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              {draft.customRecipients.length > 15 && (
+                <div className="bg-slate-50 px-4 py-2 text-center text-[11px] font-semibold text-slate-500 border-t border-slate-100">
+                  + and {draft.customRecipients.length - 15} more verified contacts loaded
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="bg-amber-50 border border-amber-200 text-amber-800 p-4 rounded-2xl text-xs flex items-center gap-2.5">
+              <AlertTriangle size={18} className="shrink-0 text-amber-600" />
+              <div>
+                <p className="font-bold">No contacts with valid 10-digit phone numbers found</p>
+                <p className="text-[11px] text-amber-700 mt-0.5">
+                  Try selecting another segment, or upload an Excel / CSV contact sheet.
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
+      ) : (
           /* Custom Excel / CSV Upload Area */
           <div className="flex flex-col gap-4">
             <div

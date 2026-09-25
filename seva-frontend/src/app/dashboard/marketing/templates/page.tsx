@@ -148,6 +148,7 @@ function TemplatesContent() {
     category: "DONATION",
     body: "",
   });
+  const [isSavingWa, setIsSavingWa] = useState(false);
 
   // ── Email State: Dynamic Campaign Mails vs Static System Mails ────────────
   const [emailTemplates, setEmailTemplates] = useState<MailTemplate[]>([]);
@@ -238,11 +239,17 @@ function TemplatesContent() {
     }
 
     try {
+      setIsSavingWa(true);
+      const payload = {
+        name: waForm.name.trim(),
+        category: waForm.category,
+        body: waForm.body.trim(),
+      };
       if (editingWaTemplate?._id) {
-        await whatsappAPI.updateTemplate(editingWaTemplate._id, waForm);
+        await whatsappAPI.updateTemplate(editingWaTemplate._id, payload);
         toast.success("WhatsApp template updated successfully!");
       } else {
-        await whatsappAPI.createTemplate(waForm);
+        await whatsappAPI.createTemplate(payload);
         toast.success("WhatsApp template created successfully!");
       }
       setShowWaModal(false);
@@ -250,7 +257,10 @@ function TemplatesContent() {
       setWaForm({ name: "", category: "DONATION", body: "" });
       await loadData();
     } catch (err: any) {
+      console.error("Failed to save WhatsApp template:", err);
       toast.error(err?.response?.data?.message || err.message || "Failed to save template");
+    } finally {
+      setIsSavingWa(false);
     }
   };
 
@@ -330,15 +340,22 @@ function TemplatesContent() {
     try {
       setIsSavingEmail(true);
       const newFullHtml = injectMessage(editingEmailTemplate.htmlContent, editMessage);
-      await axiosInstance.put(endpoint.mail.updateTemplate(editingEmailTemplate._id), {
+      const payload = {
         subject: editSubject,
         htmlContent: newFullHtml,
-      });
+      };
+      try {
+        await axiosInstance.patch(endpoint.mail.updateTemplate(editingEmailTemplate._id), payload);
+      } catch (patchErr) {
+        // Fallback to PUT if PATCH fails
+        await axiosInstance.put(endpoint.mail.updateTemplate(editingEmailTemplate._id), payload);
+      }
       toast.success("Email template saved successfully!");
       setEditingEmailTemplate(null);
       await loadData();
     } catch (err: any) {
-      toast.error(err?.response?.data?.message || "Failed to save email template");
+      console.error("Failed to save email template:", err);
+      toast.error(err?.response?.data?.message || err?.message || "Failed to save email template");
     } finally {
       setIsSavingEmail(false);
     }
@@ -1349,9 +1366,14 @@ function TemplatesContent() {
                     </button>
                     <button
                       type="submit"
-                      className="flex items-center gap-2 px-6 py-2 rounded-xl text-xs font-bold bg-[#25D366] hover:bg-[#1ebe57] text-white shadow-md shadow-green-500/20"
+                      disabled={isSavingWa}
+                      className="flex items-center gap-2 px-6 py-2 rounded-xl text-xs font-bold bg-[#25D366] hover:bg-[#1ebe57] text-white shadow-md shadow-green-500/20 disabled:opacity-50 transition-all"
                     >
-                      <CheckCircle2 size={14} />
+                      {isSavingWa ? (
+                        <Loader2 size={14} className="animate-spin" />
+                      ) : (
+                        <CheckCircle2 size={14} />
+                      )}
                       Save Template
                     </button>
                   </div>

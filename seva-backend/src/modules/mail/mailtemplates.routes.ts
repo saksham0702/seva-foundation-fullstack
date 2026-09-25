@@ -22,6 +22,12 @@ router.patch(
   uploadMailTemplateImage.array("images", 10),
   MailTemplateController.updateMailTemplate
 );
+router.put(
+  "/:id",
+  ...guard,
+  uploadMailTemplateImage.array("images", 10),
+  MailTemplateController.updateMailTemplate
+);
 router.post("/:id/preview", ...guard, MailTemplateController.previewMailTemplate);
 router.delete("/:id", ...guard, MailTemplateController.deleteMailTemplate);
 
