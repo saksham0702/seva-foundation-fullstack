@@ -21,6 +21,7 @@ import {
 import { Campaign, PublicDonor, getCampaignDonors } from "@/app/api/campaign";
 import { Product as APIProduct } from "@/app/api/product";
 import { getImageUrl, resolveRichTextHtml } from "@/lib/image";
+import { richProseClass } from "@/lib/prose";
 import { recordEntityView } from "@/app/api/analytics";
 import ShareModal from "@/components/shared/ShareModal";
 
@@ -390,20 +391,32 @@ export default function CampaignDetailClient({
             </div>
 
             {/* Campaign Rich Text Content */}
-            <div className="bg-white rounded-2xl border border-gray-100 p-6 sm:p-8 shadow-sm">
-              <h2 className="text-lg font-bold text-[#0f2347] mb-5 pb-4 border-b border-gray-100">
+            <div
+              className="bg-white rounded-2xl border border-gray-100 p-6 sm:p-8 shadow-sm"
+              style={{
+                ["--accent" as string]: "#E8542A",
+                ["--heading" as string]: "#0f2347",
+              }}
+            >
+              <h2 className="text-xl font-bold text-[#0f2347] mb-5 pb-4 border-b border-gray-100">
                 About this Campaign
               </h2>
-              {isHtml ? (
-                <div
-                  className="prose prose-slate max-w-none text-gray-600 text-[15px] leading-relaxed [&_img]:rounded-2xl [&_img]:max-w-full [&_img]:my-4 [&_h2]:text-[#0f2347] [&_h2]:font-bold [&_h3]:text-[#0f2347] [&_h3]:font-semibold [&_a]:text-blue-600 [&_a]:underline hover:[&_a]:text-blue-700"
-                  dangerouslySetInnerHTML={{
-                    __html: resolveRichTextHtml(c.description),
-                  }}
-                />
+              {c.description ? (
+                isHtml ? (
+                  <div
+                    className={`${richProseClass()} max-w-none`}
+                    dangerouslySetInnerHTML={{
+                      __html: resolveRichTextHtml(c.description),
+                    }}
+                  />
+                ) : (
+                  <p className="text-gray-700 text-[15px] leading-relaxed whitespace-pre-line">
+                    {c.description}
+                  </p>
+                )
               ) : (
-                <p className="text-gray-600 text-[15px] leading-relaxed whitespace-pre-line">
-                  {c.description}
+                <p className="text-gray-400 text-sm italic">
+                  No detailed description provided for this campaign yet.
                 </p>
               )}
 

@@ -13,8 +13,13 @@ export async function generateMetadata({
   try {
     const campaign = await getCampaignBySlug(slug);
     if (campaign) {
+      const rawDescription = campaign.description || "";
+      const cleanDescription = rawDescription
+        .replace(/<[^>]*>/g, " ")
+        .replace(/\s+/g, " ")
+        .trim();
       const description =
-        campaign.description ||
+        cleanDescription ||
         `Support "${campaign.name}" — a campaign by Seva India Foundation to create positive social change. Donate now with 80G tax benefits.`;
 
       // Use first image from images array if available

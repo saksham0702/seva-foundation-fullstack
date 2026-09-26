@@ -182,13 +182,21 @@ export function RichTextEditor({
     editorProps: {
       attributes: {
         class:
-          "prose prose-sm max-w-none min-h-[280px] px-4 py-3 focus:outline-none text-slate-800 " +
+          "prose prose-sm max-w-none min-h-[280px] px-4 py-3 focus:outline-none text-slate-800 dark:text-slate-100 " +
+          "[&_p]:mb-3 [&_p]:leading-relaxed last:[&_p]:mb-0 " +
           "[&_img]:rounded-xl [&_img]:max-w-full [&_img]:my-3 " +
-          "[&_h2]:text-xl [&_h2]:font-bold [&_h2]:mt-4 [&_h2]:mb-2 [&_h2]:text-slate-900 " +
-          "[&_h3]:text-lg [&_h3]:font-semibold [&_h3]:mt-3 [&_h3]:mb-2 [&_h3]:text-slate-900 " +
-          "[&_ul]:list-disc [&_ul]:pl-5 [&_ul]:my-2 [&_ul]:space-y-1 " +
-          "[&_ol]:list-decimal [&_ol]:pl-5 [&_ol]:my-2 [&_ol]:space-y-1 " +
-          "[&_li]:my-0.5 " +
+          "[&_h2]:text-xl [&_h2]:font-bold [&_h2]:mt-5 [&_h2]:mb-2 [&_h2]:text-slate-900 dark:[&_h2]:text-white " +
+          "[&_h3]:text-lg [&_h3]:font-semibold [&_h3]:mt-4 [&_h3]:mb-2 [&_h3]:text-slate-900 dark:[&_h3]:text-white " +
+          "[&_ul]:list-disc [&_ul]:pl-6 [&_ul]:my-3 [&_ul]:space-y-1.5 [&_ul]:marker:text-blue-500 " +
+          "[&_ol]:list-decimal [&_ol]:pl-6 [&_ol]:my-3 [&_ol]:space-y-1.5 [&_ol]:marker:text-blue-500 [&_ol]:marker:font-semibold " +
+          "[&_li]:pl-1 [&_li>p]:my-0 [&_li>p]:leading-relaxed " +
+          "[&_strong]:font-bold [&_strong]:text-slate-900 dark:[&_strong]:text-white " +
+          "[&_em]:italic " +
+          "[&_u]:underline [&_u]:underline-offset-2 " +
+          "[&_s]:line-through [&_s]:text-slate-400 " +
+          "[&_blockquote]:border-l-4 [&_blockquote]:border-blue-500 [&_blockquote]:pl-3 [&_blockquote]:py-1 [&_blockquote]:italic [&_blockquote]:text-slate-500 dark:[&_blockquote]:text-slate-400 [&_blockquote]:my-3 [&_blockquote_p]:mb-0 " +
+          "[&_hr]:my-4 [&_hr]:border-slate-200 dark:[&_hr]:border-border " +
+          "[&_.has-text-align-center]:text-center [&_.has-text-align-right]:text-right [&_.has-text-align-left]:text-left [&_.has-text-align-justify]:text-justify " +
           "[&_a]:text-blue-600 [&_a]:underline [&_a]:font-medium hover:[&_a]:text-blue-700",
       },
     },
