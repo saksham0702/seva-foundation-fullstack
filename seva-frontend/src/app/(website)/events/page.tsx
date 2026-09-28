@@ -2,8 +2,9 @@ import React from "react";
 import { Metadata } from "next";
 import { Sparkles } from "lucide-react";
 import { getServerCmsItems, getServerCategories } from "@/lib/server-api";
-import { constructMetadata } from "@/lib/seo";
+import { constructMetadata, getWebPageSchema } from "@/lib/seo";
 import MediaHubListingClient from "@/components/website/media/MediaHubListingClient";
+import SeoHead from "@/components/common/SeoHead";
 
 export const metadata: Metadata = constructMetadata({
   title: "Events & Community Drives",
@@ -26,8 +27,20 @@ export default async function EventsListingPage() {
     getServerCategories(),
   ]);
 
+  const eventsSchema = getWebPageSchema({
+    title: "Events & Community Drives | Seva India Foundation",
+    description: "Join healthcare camps, education workshops, blood donation drives, and disaster relief programs organized by Seva India Foundation.",
+    path: "/events",
+  });
+
   return (
     <div className="min-h-screen bg-white">
+      <SeoHead
+        title="Events & Community Drives"
+        description="Join healthcare camps, education workshops, blood donation drives, and disaster relief programs organized by Seva India Foundation."
+        canonicalPath="/events"
+        jsonLd={eventsSchema}
+      />
       {/* ── Hero ── */}
       <section className="relative min-h-[48vh] flex items-center overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-[#0A1A2F] via-[#0e2747] to-[#0A1A2F]">
@@ -50,13 +63,15 @@ export default async function EventsListingPage() {
         </div>
       </section>
 
-      <MediaHubListingClient
-        initialTab="events"
-        blogs={blogs}
-        events={events}
-        news={news}
-        categories={categories}
-      />
+      <div className="scroll-reveal">
+        <MediaHubListingClient
+          initialTab="events"
+          blogs={blogs}
+          events={events}
+          news={news}
+          categories={categories}
+        />
+      </div>
     </div>
   );
 }

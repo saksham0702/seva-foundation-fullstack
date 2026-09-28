@@ -401,7 +401,7 @@ export default function CampaignDetailClient({
 
             {/* Campaign Rich Text Content */}
             <div
-              className="bg-white rounded-2xl border border-gray-100 p-6 sm:p-8 shadow-sm"
+              className="bg-white rounded-2xl border border-gray-100 p-6 sm:p-8 shadow-sm scroll-reveal"
               style={{
                 ["--accent" as string]: "#E8542A",
                 ["--heading" as string]: "#0f2347",
@@ -447,7 +447,7 @@ export default function CampaignDetailClient({
 
             {/* Sponsorship Items */}
             {productsList.length > 0 && (
-              <div className="bg-white rounded-2xl border border-gray-100 p-6 sm:p-8 shadow-sm">
+              <div className="bg-white rounded-2xl border border-gray-100 p-6 sm:p-8 shadow-sm scroll-reveal">
                 <div className="flex items-center gap-2 mb-6">
                   <Package className="text-[#E8542A]" size={20} />
                   <h2 className="text-lg font-bold text-[#0f2347]">

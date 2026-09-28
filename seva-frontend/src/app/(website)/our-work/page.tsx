@@ -6,9 +6,10 @@ import Image from "next/image";
 import { getServerCmsPage } from "@/lib/server-api";
 import { InitiativeData } from "@/components/website/our-work/InitiativeCard";
 import { DEFAULT_INITIATIVES } from "@/components/website/our-work/initiativeDefaults";
-import { constructMetadata } from "@/lib/seo";
+import { constructMetadata, getWebPageSchema } from "@/lib/seo";
 import { getImageUrl } from "@/lib/image";
 import OurWorkClient from "@/components/website/our-work/OurWorkClient";
+import SeoHead from "@/components/common/SeoHead";
 
 export async function generateMetadata(): Promise<Metadata> {
   const cmsPage = await getServerCmsPage("our-work");
@@ -19,10 +20,15 @@ export async function generateMetadata(): Promise<Metadata> {
     cmsPage?.subtitle ||
     "Transforming communities through dedicated grassroots initiatives in education, healthcare, hunger relief, and disaster response across India.";
 
+  const bannerImg = cmsPage?.bannerImage
+    ? getImageUrl(cmsPage.bannerImage)
+    : undefined;
+
   return constructMetadata({
     title,
     description,
     canonicalPath: "/our-work",
+    ogImage: bannerImg,
     keywords: [
       "Our Work NGO India",
       "Vidhya Education",
@@ -51,8 +57,21 @@ export default async function OurWorkPage() {
   const bannerImage = cmsPage?.bannerImage ? getImageUrl(cmsPage.bannerImage) : "";
   const bannerVideo = cmsPage?.bannerVideo ? getImageUrl(cmsPage.bannerVideo) : "";
 
+  const ourWorkSchema = getWebPageSchema({
+    title: pageTitle,
+    description: pageSubtitle,
+    path: "/our-work",
+  });
+
   return (
     <div className="min-h-screen bg-[#FDFBF7] text-slate-900">
+      <SeoHead
+        title={pageTitle}
+        description={pageSubtitle}
+        canonicalPath="/our-work"
+        ogImage={bannerImage}
+        jsonLd={ourWorkSchema}
+      />
       {/* ── Top Hero Header ── */}
       <section className="relative bg-[#0A1A2F] text-white pt-20 pb-16 sm:pt-24 sm:pb-20 overflow-hidden">
         {/* Background Media */}
@@ -118,10 +137,12 @@ export default async function OurWorkPage() {
       </section>
 
       {/* ── Interactive Category Filtering & List ── */}
-      <OurWorkClient initiatives={initiatives} />
+      <div className="scroll-reveal">
+        <OurWorkClient initiatives={initiatives} />
+      </div>
 
       {/* ── Bottom Call to Action ── */}
-      <section className="bg-[#0A1A2F] text-white py-16 sm:py-20 mt-12 border-t border-white/10">
+      <section className="bg-[#0A1A2F] text-white py-16 sm:py-20 mt-12 border-t border-white/10 scroll-reveal">
         <div className="max-w-4xl mx-auto px-4 text-center space-y-6">
           <span className="text-xs font-semibold uppercase tracking-[0.2em] text-[#F5A623]">
             Be A Changemaker

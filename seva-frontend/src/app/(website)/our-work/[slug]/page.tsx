@@ -7,6 +7,10 @@ import {
 } from "@/components/website/our-work/initiativeDefaults";
 import InitiativeDetailClient from "@/components/website/our-work/InitiativeDetailClient";
 
+import { constructMetadata, getInitiativeSchema } from "@/lib/seo";
+import { getImageUrl } from "@/lib/image";
+import SeoHead from "@/components/common/SeoHead";
+
 export const dynamic = "force-dynamic";
 
 interface SingleInitiativePageProps {
@@ -43,15 +47,22 @@ export async function generateMetadata({ params }: SingleInitiativePageProps) {
     initiative?.description ||
     "Empowering communities through grassroots initiatives across Uttarakhand.";
 
-  return {
-    title: `${title} | Seva Foundation Initiatives`,
+  const coverImg = initiative?.image ? getImageUrl(initiative.image) : undefined;
+
+  return constructMetadata({
+    title: `${title} | Initiatives`,
     description,
-    openGraph: {
-      title: `${title} | Seva Foundation`,
-      description,
-      images: initiative?.image ? [initiative.image] : [],
-    },
-  };
+    canonicalPath: `/our-work/${slug}`,
+    ogImage: coverImg,
+    ogType: "article",
+    keywords: [
+      title,
+      "Seva Foundation Initiative",
+      "Grassroots NGO India",
+      "Community Development Uttarakhand",
+      "80G Tax Donation",
+    ],
+  });
 }
 
 export default async function SingleInitiativePage({
@@ -77,11 +88,37 @@ export default async function SingleInitiativePage({
     initiative = findInitiativeBySlug(DEFAULT_INITIATIVES, slug);
   }
 
+  const title = initiative?.title || initiative?.name || slug.toUpperCase();
+  const description =
+    initiative?.subtitle ||
+    initiative?.description ||
+    "Empowering communities through grassroots initiatives across Uttarakhand.";
+  const coverImg = initiative?.image ? getImageUrl(initiative.image) : undefined;
+
+  const initiativeSchema = getInitiativeSchema({
+    title,
+    description,
+    slug,
+    image: coverImg,
+  });
+
   return (
-    <InitiativeDetailClient
-      initialInitiative={initiative}
-      initialAllInitiatives={allInitiatives}
-      slug={slug}
-    />
+    <>
+      <SeoHead
+        title={`${title} | Initiatives`}
+        description={description}
+        canonicalPath={`/our-work/${slug}`}
+        ogImage={coverImg}
+        ogType="article"
+        jsonLd={initiativeSchema}
+      />
+      <div className="scroll-reveal">
+        <InitiativeDetailClient
+          initialInitiative={initiative}
+          initialAllInitiatives={allInitiatives}
+          slug={slug}
+        />
+      </div>
+    </>
   );
 }

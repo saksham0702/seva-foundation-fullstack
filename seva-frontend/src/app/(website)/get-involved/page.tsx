@@ -6,9 +6,10 @@ import {
   getServerCmsPage,
   getServerPublicVolunteerCategories,
 } from "@/lib/server-api";
-import { constructMetadata } from "@/lib/seo";
+import { constructMetadata, getWebPageSchema } from "@/lib/seo";
 import { getImageUrl } from "@/lib/image";
 import GetInvolvedClient from "@/components/website/volunteers/GetInvolvedClient";
+import SeoHead from "@/components/common/SeoHead";
 
 const DEFAULT_IMPACT_NUMBERS = [
   { number: "200+", label: "Active Volunteers", sub: "Across Uttarakhand" },
@@ -56,10 +57,15 @@ export async function generateMetadata(): Promise<Metadata> {
     cmsPage?.subtitle ||
     "Join 200+ volunteers across India. Give your time, skills, and heart to grassroots initiatives in education, health, and hunger relief with Seva India Foundation.";
 
+  const bannerImg = cmsPage?.bannerImage
+    ? getImageUrl(cmsPage.bannerImage)
+    : undefined;
+
   return constructMetadata({
     title,
     description,
     canonicalPath: "/get-involved",
+    ogImage: bannerImg,
     keywords: [
       "Volunteer India",
       "Get Involved Charity",
@@ -96,8 +102,21 @@ export default async function GetInvolvedPage() {
     (cmsPage?.sections?.find((s) => s.key === "faqs")
       ?.items as typeof DEFAULT_FAQS) || DEFAULT_FAQS;
 
+  const getInvolvedSchema = getWebPageSchema({
+    title: heroTitle,
+    description: heroSubtitle,
+    path: "/get-involved",
+  });
+
   return (
     <div className="min-h-screen bg-white">
+      <SeoHead
+        title={heroTitle}
+        description={heroSubtitle}
+        canonicalPath="/get-involved"
+        ogImage={heroBannerUrl}
+        jsonLd={getInvolvedSchema}
+      />
       {/* ── Hero ── */}
       <section className="relative min-h-[70vh] flex items-center overflow-hidden">
         <div className="absolute inset-0 bg-[#0B1120]">
@@ -159,7 +178,7 @@ export default async function GetInvolvedPage() {
       </section>
 
       {/* ── Impact Numbers ── */}
-      <section className="bg-[#0f2347] py-14 -mt-1">
+      <section className="bg-[#0f2347] py-14 -mt-1 scroll-reveal">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12">
             {impactNumbers.map((stat, i) => (
@@ -178,9 +197,11 @@ export default async function GetInvolvedPage() {
       </section>
 
       {/* ── Interactive Selection Grid & Form ── */}
-      <Suspense fallback={<div className="py-20 text-center text-gray-400">Loading volunteer categories...</div>}>
-        <GetInvolvedClient categories={categories} faqs={faqs} />
-      </Suspense>
+      <div className="scroll-reveal">
+        <Suspense fallback={<div className="py-20 text-center text-gray-400">Loading volunteer categories...</div>}>
+          <GetInvolvedClient categories={categories} faqs={faqs} />
+        </Suspense>
+      </div>
     </div>
   );
 }

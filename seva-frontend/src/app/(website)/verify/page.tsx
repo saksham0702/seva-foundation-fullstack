@@ -2,8 +2,9 @@ import React from "react";
 import { Metadata } from "next";
 import Link from "next/link";
 import { ShieldCheck, Award, CheckCircle2 } from "lucide-react";
-import { constructMetadata } from "@/lib/seo";
+import { constructMetadata, getWebPageSchema } from "@/lib/seo";
 import VerifySearchForm from "@/components/website/verify/VerifySearchForm";
+import SeoHead from "@/components/common/SeoHead";
 
 export const metadata: Metadata = constructMetadata({
   title: "Verify Certificate",
@@ -19,9 +20,21 @@ export const metadata: Metadata = constructMetadata({
 });
 
 export default function VerifyCertificateIndexPage() {
+  const verifySchema = getWebPageSchema({
+    title: "Verify Certificate | Seva India Foundation",
+    description: "Verify the authenticity of digital certificates issued by Seva India Foundation.",
+    path: "/verify",
+  });
+
   return (
     <div className="min-h-screen bg-slate-50 py-16 px-4 sm:px-6 lg:px-8 flex items-center justify-center">
-      <div className="max-w-xl w-full">
+      <SeoHead
+        title="Verify Certificate"
+        description="Verify the authenticity of digital certificates issued by Seva India Foundation."
+        canonicalPath="/verify"
+        jsonLd={verifySchema}
+      />
+      <div className="max-w-xl w-full scroll-reveal">
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-amber-100 text-amber-600 mb-4 shadow-sm">
             <ShieldCheck size={36} />

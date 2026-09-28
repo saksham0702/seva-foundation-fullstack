@@ -23,8 +23,17 @@ export default function SeoHead({
   ogType = "website",
   jsonLd,
 }: SeoHeadProps) {
-  const fullTitle = title ? `${title} | ${SITE_NAME}` : `${SITE_NAME} | Care, Compassion & Change`;
+  const fullTitle = title
+    ? (title.includes(SITE_NAME) ? title : `${title} | ${SITE_NAME}`)
+    : `${SITE_NAME} | Care, Compassion & Change`;
+    
   const canonicalUrl = `${SITE_URL}${canonicalPath.startsWith("/") ? canonicalPath : `/${canonicalPath}`}`;
+
+  const resolvedOgImage = ogImage
+    ? ogImage.startsWith("http://") || ogImage.startsWith("https://")
+      ? ogImage
+      : `${SITE_URL}${ogImage.startsWith("/") ? ogImage : `/${ogImage}`}`
+    : DEFAULT_OG_IMAGE;
 
   useEffect(() => {
     if (typeof document !== "undefined") {
@@ -56,8 +65,17 @@ export default function SeoHead({
         document.head.appendChild(ogDesc);
       }
       ogDesc.setAttribute("content", description);
+
+      // Update og:image
+      let ogImgMeta = document.querySelector('meta[property="og:image"]');
+      if (!ogImgMeta) {
+        ogImgMeta = document.createElement("meta");
+        ogImgMeta.setAttribute("property", "og:image");
+        document.head.appendChild(ogImgMeta);
+      }
+      ogImgMeta.setAttribute("content", resolvedOgImage);
     }
-  }, [fullTitle, description]);
+  }, [fullTitle, description, resolvedOgImage]);
 
   return (
     <>
@@ -72,13 +90,13 @@ export default function SeoHead({
       <meta property="og:url" content={canonicalUrl} />
       <meta property="og:site_name" content={SITE_NAME} />
       <meta property="og:type" content={ogType} />
-      <meta property="og:image" content={ogImage} />
+      <meta property="og:image" content={resolvedOgImage} />
 
       {/* Twitter */}
       <meta name="twitter:card" content="summary_large_image" />
       <meta name="twitter:title" content={fullTitle} />
       <meta name="twitter:description" content={description} />
-      <meta name="twitter:image" content={ogImage} />
+      <meta name="twitter:image" content={resolvedOgImage} />
 
       {jsonLd && <JsonLd data={jsonLd} />}
     </>

@@ -2,8 +2,9 @@ import React from "react";
 import { Metadata } from "next";
 import { Newspaper } from "lucide-react";
 import { getServerCmsItems, getServerCategories } from "@/lib/server-api";
-import { constructMetadata } from "@/lib/seo";
+import { constructMetadata, getWebPageSchema } from "@/lib/seo";
 import MediaHubListingClient from "@/components/website/media/MediaHubListingClient";
+import SeoHead from "@/components/common/SeoHead";
 
 export const metadata: Metadata = constructMetadata({
   title: "Press & Media Announcements",
@@ -26,8 +27,20 @@ export default async function NewsListingPage() {
     getServerCategories(),
   ]);
 
+  const newsSchema = getWebPageSchema({
+    title: "Press & Media Announcements | Seva India Foundation",
+    description: "Official statements, media coverage, government recognitions, and press releases from Seva India Foundation.",
+    path: "/news",
+  });
+
   return (
     <div className="min-h-screen bg-white">
+      <SeoHead
+        title="Press & Media Announcements"
+        description="Official statements, media coverage, government recognitions, and press releases from Seva India Foundation."
+        canonicalPath="/news"
+        jsonLd={newsSchema}
+      />
       {/* ── Hero ── */}
       <section className="relative min-h-[45vh] flex items-center overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-[#0A1A2F] via-[#10233d] to-[#0A1A2F]">
@@ -50,13 +63,15 @@ export default async function NewsListingPage() {
         </div>
       </section>
 
-      <MediaHubListingClient
-        initialTab="news"
-        news={newsList}
-        blogs={blogs}
-        events={events}
-        categories={categories}
-      />
+      <div className="scroll-reveal">
+        <MediaHubListingClient
+          initialTab="news"
+          news={newsList}
+          blogs={blogs}
+          events={events}
+          categories={categories}
+        />
+      </div>
     </div>
   );
 }

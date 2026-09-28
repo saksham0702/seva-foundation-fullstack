@@ -11,6 +11,8 @@ import { getImageUrl } from "@/lib/image";
 import JsonLd from "@/components/common/JsonLd";
 import CampaignDetailClient from "@/components/website/campaigns/CampaignDetailClient";
 
+import SeoHead from "@/components/common/SeoHead";
+
 interface PageProps {
   params: Promise<{ slug: string }> | { slug: string };
 }
@@ -72,21 +74,30 @@ export default async function CampaignDetailPage({ params }: PageProps) {
     notFound();
   }
 
+  const coverImg = campaign.images?.[0]
+    ? getImageUrl(String(campaign.images[0]))
+    : undefined;
+
   const campaignSchema = getCampaignSchema({
     name: campaign.name,
     description: (campaign.description || "").replace(/<[^>]*>/g, "").slice(0, 200),
     slug: campaign.slug,
     goal: campaign.goal,
     raisedAmount: campaign.raisedAmount,
-    featuredImage: campaign.images?.[0]
-      ? getImageUrl(String(campaign.images[0]))
-      : undefined,
+    featuredImage: coverImg,
     createdAt: campaign.createdAt,
   });
 
   return (
     <>
-      <JsonLd data={campaignSchema} />
+      <SeoHead
+        title={campaign.name}
+        description={(campaign.description || "").replace(/<[^>]*>/g, "").slice(0, 200)}
+        canonicalPath={`/campaigns/${campaign.slug}`}
+        ogImage={coverImg}
+        ogType="article"
+        jsonLd={campaignSchema}
+      />
       <CampaignDetailClient
         campaign={campaign}
         products={products}

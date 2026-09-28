@@ -225,3 +225,82 @@ export function getWebPageSchema({
     },
   };
 }
+
+export function getInitiativeSchema(initiative: {
+  title: string;
+  description?: string;
+  slug: string;
+  image?: string;
+}) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "Service",
+    name: initiative.title,
+    description: initiative.description || DEFAULT_DESCRIPTION,
+    url: `${SITE_URL}/our-work/${initiative.slug}`,
+    image: initiative.image || DEFAULT_OG_IMAGE,
+    provider: {
+      "@type": "NGO",
+      name: SITE_NAME,
+      url: SITE_URL,
+    },
+    areaServed: {
+      "@type": "Country",
+      name: "India",
+    },
+  };
+}
+
+export function getCampaignsCollectionSchema(campaigns: Array<any> = []) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    name: `Active Grassroots Donation Campaigns | ${SITE_NAME}`,
+    description: "Explore active grassroots donation campaigns by Seva India Foundation with instant 80G tax benefits.",
+    url: `${SITE_URL}/campaigns`,
+    isPartOf: {
+      "@type": "WebSite",
+      name: SITE_NAME,
+      url: SITE_URL,
+    },
+    hasPart: campaigns.slice(0, 10).map((c) => ({
+      "@type": "DonateAction",
+      name: c.name || c.title || "Campaign",
+      description: (c.description || "").replace(/<[^>]*>/g, "").slice(0, 160),
+      url: `${SITE_URL}/campaigns/${c.slug}`,
+      image: typeof c.images?.[0] === "string" ? c.images[0] : DEFAULT_OG_IMAGE,
+      recipient: {
+        "@type": "NGO",
+        name: SITE_NAME,
+        url: SITE_URL,
+      },
+    })),
+  };
+}
+
+export function getAboutPageSchema(description?: string) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "AboutPage",
+    name: `About Us | ${SITE_NAME}`,
+    description: description || DEFAULT_DESCRIPTION,
+    url: `${SITE_URL}/about`,
+    mainEntity: getOrganizationSchema(),
+  };
+}
+
+export function getGallerySchema(imagesCount = 0) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "ImageGallery",
+    name: `Impact Photo Gallery | ${SITE_NAME}`,
+    description: "Visual documentation of Seva India Foundation field operations, medical camps, nutrition programs, and educational drives.",
+    url: `${SITE_URL}/gallery`,
+    isPartOf: {
+      "@type": "WebSite",
+      name: SITE_NAME,
+      url: SITE_URL,
+    },
+  };
+}
+

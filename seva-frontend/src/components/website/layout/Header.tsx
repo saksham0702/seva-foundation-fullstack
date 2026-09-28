@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useSearchParams } from "next/navigation";
+import { Heart } from "lucide-react";
 
 /* ------------------------------------------------------------------ */
 /*  TYPES                                                              */
@@ -294,15 +295,15 @@ const HeaderContent = () => {
           }`}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-20 gap-6">
+          <div className="flex items-center justify-between h-16 sm:h-20 gap-3 sm:gap-6">
             {/* --- Logo lockup --- */}
-            <Link href="/" className="flex items-center gap-2.5 flex-shrink-0">
+            <Link href="/" className="flex items-center flex-shrink-0 py-1" aria-label="Seva India Foundation Home">
               <Image
                 src="/assets/seva-logo.png"
                 alt="Seva India Foundation"
-                width={500}
-                height={500}
-                className="object-cover h-25 w-50 "
+                width={254}
+                height={100}
+                className="h-9 sm:h-12 lg:h-14 w-auto object-contain"
                 priority
               />
             </Link>
@@ -383,44 +384,54 @@ const HeaderContent = () => {
               })}
             </nav>
 
-            {/* --- Right-side actions --- */}
+            {/* --- Right-side actions (Desktop) --- */}
             <div className="hidden lg:flex items-center gap-3 flex-shrink-0">
               <Link
-                href="/donations"
-                className="bg-[#F5A623] hover:bg-[#e0951a] text-white text-[12.5px] rounded-lg font-semibold uppercase tracking-wider px-5 py-2 transition-colors shadow-sm whitespace-nowrap"
+                href="/campaigns"
+                className="bg-[#F5A623] hover:bg-[#e0951a] text-white text-[12.5px] rounded-lg font-semibold uppercase tracking-wider px-5 py-2.5 transition-colors shadow-sm whitespace-nowrap"
               >
                 Donate Now
               </Link>
             </div>
 
-            {/* --- Mobile toggle --- */}
-            <button
-              className="lg:hidden flex items-center justify-center w-9 h-9 text-[#16233F]"
-              onClick={() => setMenuOpen(!menuOpen)}
-              aria-label="Toggle menu"
-            >
-              <svg
-                className="w-6 h-6"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth={2}
-                viewBox="0 0 24 24"
+            {/* --- Mobile actions & toggle --- */}
+            <div className="flex lg:hidden items-center gap-2 sm:gap-3 flex-shrink-0">
+              <Link
+                href="/campaigns"
+                className="bg-[#F5A623] hover:bg-[#e0951a] active:scale-95 text-white text-[11px] sm:text-xs font-semibold uppercase tracking-wider px-3 sm:px-4 py-2 rounded-lg transition-all shadow-xs whitespace-nowrap flex items-center gap-1.5"
               >
-                {menuOpen ? (
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                ) : (
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M4 6h16M4 12h16M4 18h16"
-                  />
-                )}
-              </svg>
-            </button>
+                <Heart size={13} className="fill-white" />
+                <span>Donate Now</span>
+              </Link>
+
+              <button
+                className="flex items-center justify-center w-9 h-9 text-[#16233F] rounded-lg hover:bg-slate-100 transition-colors"
+                onClick={() => setMenuOpen(!menuOpen)}
+                aria-label="Toggle menu"
+              >
+                <svg
+                  className="w-6 h-6"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                  viewBox="0 0 24 24"
+                >
+                  {menuOpen ? (
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  ) : (
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M4 6h16M4 12h16M4 18h16"
+                    />
+                  )}
+                </svg>
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -513,9 +524,9 @@ const HeaderContent = () => {
 
               <div className="pt-4">
                 <Link
-                  href="/donations"
+                  href="/campaigns"
                   onClick={() => setMenuOpen(false)}
-                  className="block w-full text-center bg-[#F5A623] text-white text-[13px] font-semibold uppercase tracking-wider py-3 rounded-lg"
+                  className="block w-full text-center bg-[#F5A623] hover:bg-[#e0951a] text-white text-[13px] font-semibold uppercase tracking-wider py-3 rounded-lg transition-colors shadow-xs"
                 >
                   Donate Now
                 </Link>

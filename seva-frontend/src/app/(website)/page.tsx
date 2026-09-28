@@ -18,6 +18,8 @@ import {
 } from "@/lib/server-api";
 import { InitiativeData } from "@/components/website/our-work/InitiativeCard";
 
+import SeoHead from "@/components/common/SeoHead";
+
 export const metadata = constructMetadata({
   title: "Home",
   description:
@@ -46,32 +48,53 @@ export default async function LandingPage() {
 
   return (
     <>
-      <JsonLd data={orgSchema} />
+      <SeoHead
+        title="Home"
+        description="Seva India Foundation is dedicated to grassroots initiatives in education, healthcare, nutrition, and disaster relief across India. Donate online with 80G tax benefits."
+        canonicalPath="/"
+        jsonLd={orgSchema}
+      />
       <HeroSection section={heroSection} initialCampaigns={campaigns} />
 
       {/* 1. Featured In Marquee */}
-      <FeaturedInMarquee section={featuredInSection} />
+      <div className="scroll-reveal">
+        <FeaturedInMarquee section={featuredInSection} />
+      </div>
 
       {/* 2. Urgent Campaigns */}
-      <CampaignsSection initialCampaigns={campaigns} />
+      <div className="scroll-reveal">
+        <CampaignsSection initialCampaigns={campaigns} />
+      </div>
 
       {/* 3. Core Initiatives */}
-      <InitiativesHomeSection initiatives={initiatives} />
+      <div className="scroll-reveal">
+        <InitiativesHomeSection initiatives={initiatives} />
+      </div>
 
       {/* 4. Principal Patron (Dev Bhoomi Samiti) & About Tease */}
-      <HomePatronSection section={patronSection} />
+      <div className="scroll-reveal">
+        <HomePatronSection section={patronSection} />
+      </div>
 
       {/* 5. Honors & Global Recognition (Excellence in Human Service) */}
-      <HomeExcellenceSection section={excellenceSection} />
+      <div className="scroll-reveal">
+        <HomeExcellenceSection section={excellenceSection} />
+      </div>
 
       {/* 6. Integrity & Compliance (90% Program Support, CIN, Office) */}
-      <HomeIntegritySection section={integritySection} />
+      <div className="scroll-reveal">
+        <HomeIntegritySection section={integritySection} />
+      </div>
 
       {/* 7. Impact Gallery */}
-      <GalleryHomeSection images={galleryImages} />
+      <div className="scroll-reveal">
+        <GalleryHomeSection images={galleryImages} />
+      </div>
 
       {/* 8. Recent Stories & Field Dispatches */}
-      <RecentStoriesHomeSection items={recentStories} />
+      <div className="scroll-reveal">
+        <RecentStoriesHomeSection items={recentStories} />
+      </div>
     </>
   );
 }

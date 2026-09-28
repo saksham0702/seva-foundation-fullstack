@@ -1,8 +1,10 @@
 import React, { Suspense } from "react";
 import { Metadata } from "next";
 import { Loader2 } from "lucide-react";
-import { constructMetadata } from "@/lib/seo";
+import { constructMetadata, SITE_URL, SITE_NAME } from "@/lib/seo";
 import DonateFlowClient from "@/components/website/donations/DonateFlowClient";
+import SeoHead from "@/components/common/SeoHead";
+import { getServerCampaigns } from "@/lib/server-api";
 
 export const metadata: Metadata = constructMetadata({
   title: "Donate Online - 80G Tax Exemption",
@@ -17,8 +19,6 @@ export const metadata: Metadata = constructMetadata({
     "Seva Foundation Donation",
   ],
 });
-
-import { getServerCampaigns } from "@/lib/server-api";
 
 interface DonationsPageProps {
   searchParams?: Promise<{
@@ -36,19 +36,42 @@ export default async function DonationsPage({ searchParams }: DonationsPageProps
     ? campaigns.find((c) => c.slug === campaignSlug) || null
     : null;
 
+  const donateSchema = {
+    "@context": "https://schema.org",
+    "@type": "DonateAction",
+    name: "Donate Online to Seva India Foundation",
+    description: "Make a secure online donation to Seva India Foundation with instant 50% tax exemption under Section 80G.",
+    url: `${SITE_URL}/donations`,
+    recipient: {
+      "@type": "NGO",
+      name: SITE_NAME,
+      url: SITE_URL,
+    },
+  };
+
   return (
-    <Suspense
-      fallback={
-        <div className="min-h-[60vh] flex flex-col items-center justify-center gap-3 text-gray-400">
-          <Loader2 className="animate-spin" size={28} />
-          <p className="text-sm font-medium">Preparing donation portal…</p>
-        </div>
-      }
-    >
-      <DonateFlowClient
-        initialCampaigns={campaigns}
-        initialCampaign={initialCampaign}
+    <>
+      <SeoHead
+        title="Donate Online - 80G Tax Exemption"
+        description="Make a secure online donation to Seva India Foundation. 100% transparent giving with instant 50% tax exemption certificate under Section 80G."
+        canonicalPath="/donations"
+        jsonLd={donateSchema}
       />
-    </Suspense>
+      <Suspense
+        fallback={
+          <div className="min-h-[60vh] flex flex-col items-center justify-center gap-3 text-gray-400">
+            <Loader2 className="animate-spin" size={28} />
+            <p className="text-sm font-medium">Preparing donation portal…</p>
+          </div>
+        }
+      >
+        <div className="scroll-reveal">
+          <DonateFlowClient
+            initialCampaigns={campaigns}
+            initialCampaign={initialCampaign}
+          />
+        </div>
+      </Suspense>
+    </>
   );
 }

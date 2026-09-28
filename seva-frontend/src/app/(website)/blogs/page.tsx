@@ -1,8 +1,9 @@
 import React from "react";
 import { Metadata } from "next";
 import { getServerCmsItems, getServerCategories } from "@/lib/server-api";
-import { constructMetadata } from "@/lib/seo";
+import { constructMetadata, getWebPageSchema } from "@/lib/seo";
 import MediaHubListingClient from "@/components/website/media/MediaHubListingClient";
+import SeoHead from "@/components/common/SeoHead";
 
 export const metadata: Metadata = constructMetadata({
   title: "Official Stories & Blog",
@@ -26,8 +27,20 @@ export default async function BlogListingPage() {
     getServerCategories(),
   ]);
 
+  const blogSchema = getWebPageSchema({
+    title: "Official Stories & Blog | Seva India Foundation",
+    description: "Read inspiring stories of transformation, education, community kitchens, and medical camps across India.",
+    path: "/blogs",
+  });
+
   return (
     <div className="min-h-screen bg-white">
+      <SeoHead
+        title="Official Stories & Blog"
+        description="Read inspiring stories of transformation, education, community kitchens, and medical camps across India from Seva India Foundation."
+        canonicalPath="/blogs"
+        jsonLd={blogSchema}
+      />
       {/* ── Hero ── */}
       <section className="relative min-h-[48vh] flex items-center overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-[#0f2347] via-[#1a3a6b] to-[#0f2347]">
@@ -52,13 +65,15 @@ export default async function BlogListingPage() {
       </section>
 
       {/* Dynamic Tab & Category Media Explorer */}
-      <MediaHubListingClient
-        initialTab="blogs"
-        blogs={blogs}
-        events={events}
-        news={news}
-        categories={categories}
-      />
+      <div className="scroll-reveal">
+        <MediaHubListingClient
+          initialTab="blogs"
+          blogs={blogs}
+          events={events}
+          news={news}
+          categories={categories}
+        />
+      </div>
     </div>
   );
 }

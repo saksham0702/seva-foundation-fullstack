@@ -8,6 +8,8 @@ import { getImageUrl } from "@/lib/image";
 import JsonLd from "@/components/common/JsonLd";
 import { ContentDetail } from "@/components/cms/ContentDetail";
 
+import SeoHead from "@/components/common/SeoHead";
+
 interface PageProps {
   params: Promise<{ slug: string }> | { slug: string };
 }
@@ -32,12 +34,14 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     .replace(/<[^>]*>/g, "")
     .slice(0, 160);
 
+  const ogImg = post.featuredImage ? getImageUrl(post.featuredImage) : undefined;
+
   return constructMetadata({
     title: post.title,
     description: cleanExcerpt || `Read ${post.title} on Seva India Foundation official blog.`,
     canonicalPath: `/blogs/${post.slug}`,
     ogType: "article",
-    ogImage: post.featuredImage ? getImageUrl(post.featuredImage) : undefined,
+    ogImage: ogImg,
     publishedTime: post.publishedAt,
     authors: post.authorName ? [post.authorName] : undefined,
     keywords: [
@@ -64,12 +68,13 @@ export default async function BlogDetailPage({ params }: PageProps) {
   }
 
   const related = allPosts.filter((b) => b.slug !== slug).slice(0, 3);
+  const ogImg = post.featuredImage ? getImageUrl(post.featuredImage) : undefined;
 
   const articleSchema = getArticleSchema({
     title: post.title,
     summary: post.excerpt,
     slug: post.slug,
-    featuredImage: post.featuredImage ? getImageUrl(post.featuredImage) : undefined,
+    featuredImage: ogImg,
     author: post.authorName,
     createdAt: post.publishedAt || post.createdAt,
     updatedAt: post.updatedAt,
@@ -77,8 +82,16 @@ export default async function BlogDetailPage({ params }: PageProps) {
 
   return (
     <>
-      <JsonLd data={articleSchema} />
-      <ContentDetail
+      <SeoHead
+        title={post.title}
+        description={post.excerpt || `Read ${post.title} on Seva India Foundation official blog.`}
+        canonicalPath={`/blogs/${post.slug}`}
+        ogImage={ogImg}
+        ogType="article"
+        jsonLd={articleSchema}
+      />
+      <div className="scroll-reveal">
+        <ContentDetail
         item={post}
         isLoading={false}
         backHref="/blogs"
@@ -127,6 +140,7 @@ export default async function BlogDetailPage({ params }: PageProps) {
           </div>
         }
       />
+      </div>
     </>
   );
 }
