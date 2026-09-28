@@ -356,15 +356,24 @@ export default function CampaignDetailClient({
               </div>
             </div>
 
-            <div className="rounded-2xl overflow-hidden bg-gray-100">
-              <div className="relative h-72 sm:h-96">
+            <div className="rounded-2xl overflow-hidden bg-slate-950 border border-slate-200/40 shadow-sm">
+              <div className="relative w-full aspect-[1200/650] max-h-[650px] overflow-hidden flex items-center justify-center">
+                {/* Ambient backdrop for cinematic feel and edge blend */}
+                <Image
+                  src={getImageUrl(heroImage)}
+                  alt={c.name}
+                  fill
+                  aria-hidden
+                  className="object-cover blur-2xl scale-110 opacity-35 pointer-events-none"
+                />
+                {/* Fully visible hero image in exact 1200x650 canvas */}
                 <Image
                   src={getImageUrl(heroImage)}
                   alt={c.name}
                   fill
                   priority
-                  sizes="(max-width: 1024px) 100vw, 65vw"
-                  className="object-cover"
+                  sizes="(max-width: 1024px) 100vw, 1200px"
+                  className="object-contain relative z-10"
                 />
               </div>
               {images.length > 1 && (

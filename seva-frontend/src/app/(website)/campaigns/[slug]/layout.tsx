@@ -44,6 +44,8 @@ export async function generateMetadata({
         ],
         canonicalPath: `/campaigns/${slug}`,
         ogImage: image,
+        ogImageWidth: 1200,
+        ogImageHeight: 650,
         ogType: "website",
       });
     }

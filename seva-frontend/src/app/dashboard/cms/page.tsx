@@ -39,7 +39,7 @@ import {
   Scale,
   Home as HomeIcon,
 } from "lucide-react";
-import { getCmsPages, getCmsPageBySlug, saveCmsPage, deleteCmsSection, uploadCmsImageFile, uploadCmsMediaFile, CmsPage, CmsSection } from "@/app/api/cms";
+import { getCmsPages, getCmsPageBySlug, saveCmsPage, saveCmsSection, deleteCmsSection, uploadCmsImageFile, uploadCmsMediaFile, CmsPage, CmsSection } from "@/app/api/cms";
 import { getImageUrl } from "@/lib/image";
 import { PermissionGuard } from "@/components/dashboard/PermissionGuard";
 import { RichTextEditor } from "@/components/dashboard/richtexteditor/RichTextEditor";
@@ -530,6 +530,47 @@ export default function CmsDashboardPage() {
     saveMutation.mutate(formData);
   };
 
+  // Section-wise saving states
+  const [savingSectionKey, setSavingSectionKey] = useState<string | null>(null);
+  const [savedSectionKey, setSavedSectionKey] = useState<string | null>(null);
+
+  const handleSaveSection = async (sectionKey: string, sectionTitle?: string) => {
+    setSavingSectionKey(sectionKey);
+    setErrorMessage(null);
+    try {
+      const targetSection = (formData.sections || []).find((s) => s.key === sectionKey);
+      if (!targetSection) {
+        throw new Error(`Section "${sectionKey}" not found in page data.`);
+      }
+
+      let updatedPage: CmsPage;
+      try {
+        updatedPage = await saveCmsSection(activeSlug, sectionKey, targetSection);
+      } catch (subErr) {
+        console.warn("saveCmsSection endpoint fallback to saveCmsPage", subErr);
+        updatedPage = await saveCmsPage(activeSlug, formData);
+      }
+
+      if (updatedPage) {
+        setFormData(updatedPage);
+      }
+      queryClient.invalidateQueries({ queryKey: ["cms-page", activeSlug] });
+      queryClient.invalidateQueries({ queryKey: ["cms-pages"] });
+
+      setSavedSectionKey(sectionKey);
+      setSuccessMessage(`"${sectionTitle || sectionKey}" section saved successfully!`);
+      setTimeout(() => {
+        setSavedSectionKey((curr) => (curr === sectionKey ? null : curr));
+        setSuccessMessage(null);
+      }, 3500);
+    } catch (err: any) {
+      setErrorMessage(err?.response?.data?.message || err?.message || `Failed to save section "${sectionTitle || sectionKey}"`);
+      setTimeout(() => setErrorMessage(null), 5000);
+    } finally {
+      setSavingSectionKey(null);
+    }
+  };
+
   const activeMeta = CMS_PAGES_META.find((p) => p.slug === activeSlug) || CMS_PAGES_META[0];
 
   return (
@@ -709,742 +750,1609 @@ export default function CmsDashboardPage() {
 
                 {/* 2. Page Specific Sections */}
                 {activeSlug === "home" && (
-                  <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-8 text-slate-900">
-                    <div className="border-b border-slate-100 pb-4">
-                      <h3 className="text-sm font-bold text-[#0f2347] flex items-center gap-2">
-                        <HomeIcon size={16} className="text-[#E8542A]" />
-                        Home Page - Live Section-wise Content Manager
-                      </h3>
-                      <p className="text-xs text-slate-500 mt-1">
-                        Control Featured In media marquee, Principal Patron Dev Bhoomi Samiti, Honors &amp; Awards, and Integrity &amp; Compliance sections.
-                      </p>
+                  <div className="space-y-10 text-slate-900">
+                    {/* Top Overview Banner */}
+                    <div className="bg-gradient-to-r from-[#0a1628] via-[#0f2347] to-[#1a3a6b] rounded-2xl p-6 text-white shadow-md flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                      <div>
+                        <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/10 rounded-full text-xs font-semibold text-orange-300 mb-2">
+                          <HomeIcon size={13} className="text-[#E8542A]" />
+                          Home Page Live Content Manager
+                        </div>
+                        <h2 className="text-xl font-bold tracking-tight text-white">
+                          Section-Wise Home Page Controller
+                        </h2>
+                        <p className="text-xs text-white/70 mt-1 max-w-2xl leading-relaxed">
+                          Each section below is visually separated with its own dedicated <span className="font-semibold text-orange-400">Save Section</span> button. You can update and save individual sections independently without affecting other sections.
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-3 py-1.5 rounded-xl font-semibold flex items-center gap-1.5">
+                          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                          5 Sections Active
+                        </span>
+                      </div>
                     </div>
 
-                    {/* Section 1: Featured In Media Marquee */}
-                    <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-4">
-                      <div className="flex items-center justify-between">
-                        <h4 className="text-xs font-bold text-[#0f2347] uppercase tracking-wider flex items-center gap-2">
-                          <Sparkles size={14} className="text-[#E8542A]" />
-                          1. Featured In - Media Marquee Loop
-                        </h4>
-                        <span className="text-[10px] text-slate-400 font-semibold uppercase">Key: featured_in</span>
-                      </div>
-                      <p className="text-xs text-slate-500">
-                        Admin enters media outlet names or uploads logos. Displays as an infinite continuous marquee loop on the home page.
-                      </p>
-
-                      <div>
-                        <label className="block text-xs font-semibold text-slate-700 mb-1">
-                          Section Heading
-                        </label>
-                        <input
-                          type="text"
-                          value={getSection("featured_in")?.title ?? "Featured In"}
-                          onChange={(e) =>
-                            updateSection("featured_in", () => ({
-                              title: e.target.value,
-                            }))
-                          }
-                          placeholder="Featured In"
-                          className="w-full px-4 py-2.5 rounded-xl border border-slate-300 bg-white text-sm font-semibold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#0f2347] focus:ring-1 focus:ring-[#0f2347]"
-                        />
-                      </div>
-
-                      {/* Media Outlets List */}
-                      <div className="space-y-3 pt-2">
-                        <div className="flex items-center justify-between">
-                          <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
-                            Media Outlets &amp; Press Badges
-                          </label>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              const curr = getSection("featured_in")?.items || [];
-                              updateSection("featured_in", () => ({
-                                items: [...curr, { name: "NEW OUTLET", color: "#e11d48", logo: "" }],
-                              }));
-                            }}
-                            className="inline-flex items-center gap-1 px-3 py-1.5 bg-[#0f2347] text-white rounded-lg text-xs font-semibold hover:bg-[#1a3a6b]"
-                          >
-                            <Plus size={12} /> Add Media Outlet
-                          </button>
+                    {/* ─────────────────────────────────────────────────────────────
+                        SECTION 1: HERO SECTION
+                    ────────────────────────────────────────────────────────────── */}
+                    <div className="bg-white rounded-2xl border-2 border-slate-200 overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                      {/* Section Header */}
+                      <div className="bg-gradient-to-r from-[#0a1628] via-[#0f2347] to-[#1a3a6b] p-5 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-xl bg-[#E8542A]/20 border border-[#E8542A]/40 flex items-center justify-center flex-shrink-0">
+                            <Sparkles size={18} className="text-[#E8542A]" />
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs font-bold text-[#E8542A] uppercase tracking-wider">
+                                Section 1
+                              </span>
+                              <span className="text-[10px] bg-white/10 px-2 py-0.5 rounded text-white/70 font-mono">
+                                key: hero
+                              </span>
+                            </div>
+                            <h3 className="text-base font-bold text-white leading-tight">
+                              Hero Section — Left Headline, Live Stats &amp; Bottom Trust Bar
+                            </h3>
+                          </div>
                         </div>
 
-                        <div className="space-y-3">
-                          {(getSection("featured_in")?.items || []).map((m: any, idx: number) => (
-                            <div
-                              key={idx}
-                              className="p-3.5 bg-white rounded-xl border border-slate-200 space-y-3 shadow-sm"
-                            >
-                              <div className="flex items-center justify-between">
-                                <span className="text-[11px] font-bold text-[#E8542A] uppercase">
-                                  Media #{idx + 1}
-                                </span>
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    const curr = [...(getSection("featured_in")?.items || [])];
-                                    curr.splice(idx, 1);
-                                    updateSection("featured_in", () => ({ items: curr }));
-                                  }}
-                                  className="text-slate-400 hover:text-red-500 p-1 rounded-lg"
-                                  title="Remove Media Outlet"
-                                >
-                                  <Trash2 size={14} />
-                                </button>
-                              </div>
+                        <button
+                          type="button"
+                          onClick={() => handleSaveSection("hero", "Hero Section")}
+                          disabled={savingSectionKey === "hero"}
+                          className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-md ${
+                            savedSectionKey === "hero"
+                              ? "bg-emerald-600 text-white"
+                              : "bg-[#E8542A] hover:bg-[#c9431d] text-white"
+                          }`}
+                        >
+                          {savingSectionKey === "hero" ? (
+                            <>
+                              <Loader2 size={13} className="animate-spin" /> Saving...
+                            </>
+                          ) : savedSectionKey === "hero" ? (
+                            <>
+                              <CheckCircle2 size={14} /> Saved!
+                            </>
+                          ) : (
+                            <>
+                              <Save size={13} /> Save Hero Section
+                            </>
+                          )}
+                        </button>
+                      </div>
 
-                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                <div>
-                                  <label className="block text-[11px] font-semibold text-slate-700 mb-1">
-                                    Media Name (e.g. THE BETTER INDIA)
-                                  </label>
-                                  <input
-                                    type="text"
-                                    value={m.name || ""}
-                                    onChange={(e) => {
-                                      const curr = [...(getSection("featured_in")?.items || [])];
-                                      curr[idx] = { ...curr[idx], name: e.target.value };
-                                      updateSection("featured_in", () => ({ items: curr }));
+                      {/* Section Body */}
+                      <div className="p-6 space-y-6 bg-slate-50/50">
+                        <p className="text-xs text-slate-500">
+                          Controls the left-hand text, CTA buttons, live stats ticker amounts (e.g. ₹4.2Cr+ Raised), trust badges, and the bottom trust bar items. The campaign slider on the right automatically features active campaigns.
+                        </p>
+
+                        {/* Top Trust Badge */}
+                        <div className="bg-white p-4 rounded-xl border border-slate-200 space-y-2">
+                          <label className="block text-xs font-bold text-slate-800 uppercase tracking-wider">
+                            Pill Trust Badge (Above Headline)
+                          </label>
+                          <input
+                            type="text"
+                            value={getSection("hero")?.extra?.badgeText ?? "India's Most Trusted Crowdfunding Platform"}
+                            onChange={(e) =>
+                              updateSection("hero", (sec) => ({
+                                extra: { ...sec.extra, badgeText: e.target.value },
+                              }))
+                            }
+                            placeholder="India's Most Trusted Crowdfunding Platform"
+                            className="w-full px-4 py-2.5 rounded-xl border border-slate-300 bg-white text-xs font-semibold text-slate-900 focus:outline-none focus:border-[#0f2347]"
+                          />
+                        </div>
+
+                        {/* Main Headline (2-line split with highlights) */}
+                        <div className="bg-white p-4 rounded-xl border border-slate-200 space-y-3">
+                          <label className="block text-xs font-bold text-slate-800 uppercase tracking-wider">
+                            Hero Main Headline (with Orange Highlights)
+                          </label>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                              <span className="text-[11px] font-semibold text-slate-600 block mb-1">
+                                Line 1 Text (White)
+                              </span>
+                              <input
+                                type="text"
+                                value={getSection("hero")?.extra?.headlinePart1 ?? "Give with"}
+                                onChange={(e) =>
+                                  updateSection("hero", (sec) => ({
+                                    extra: { ...sec.extra, headlinePart1: e.target.value },
+                                  }))
+                                }
+                                placeholder="Give with"
+                                className="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white text-xs font-bold text-slate-900 focus:outline-none focus:border-[#0f2347]"
+                              />
+                            </div>
+                            <div>
+                              <span className="text-[11px] font-semibold text-[#E8542A] block mb-1">
+                                Line 1 Highlight Word (Orange)
+                              </span>
+                              <input
+                                type="text"
+                                value={getSection("hero")?.extra?.headlineHighlight1 ?? "confidence"}
+                                onChange={(e) =>
+                                  updateSection("hero", (sec) => ({
+                                    extra: { ...sec.extra, headlineHighlight1: e.target.value },
+                                  }))
+                                }
+                                placeholder="confidence"
+                                className="w-full px-3 py-2 rounded-lg border border-orange-300 bg-white text-xs font-bold text-[#E8542A] focus:outline-none focus:border-[#E8542A]"
+                              />
+                            </div>
+                            <div>
+                              <span className="text-[11px] font-semibold text-slate-600 block mb-1">
+                                Line 2 Text (White)
+                              </span>
+                              <input
+                                type="text"
+                                value={getSection("hero")?.extra?.headlinePart2 ?? "See the"}
+                                onChange={(e) =>
+                                  updateSection("hero", (sec) => ({
+                                    extra: { ...sec.extra, headlinePart2: e.target.value },
+                                  }))
+                                }
+                                placeholder="See the"
+                                className="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white text-xs font-bold text-slate-900 focus:outline-none focus:border-[#0f2347]"
+                              />
+                            </div>
+                            <div>
+                              <span className="text-[11px] font-semibold text-[#E8542A] block mb-1">
+                                Line 2 Highlight Word (Orange)
+                              </span>
+                              <input
+                                type="text"
+                                value={getSection("hero")?.extra?.headlineHighlight2 ?? "impact"}
+                                onChange={(e) =>
+                                  updateSection("hero", (sec) => ({
+                                    extra: { ...sec.extra, headlineHighlight2: e.target.value },
+                                  }))
+                                }
+                                placeholder="impact"
+                                className="w-full px-3 py-2 rounded-lg border border-orange-300 bg-white text-xs font-bold text-[#E8542A] focus:outline-none focus:border-[#E8542A]"
+                              />
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Narrative / Description */}
+                        <div className="bg-white p-4 rounded-xl border border-slate-200 space-y-2">
+                          <label className="block text-xs font-bold text-slate-800 uppercase tracking-wider">
+                            Narrative Subtitle / Description
+                          </label>
+                          <textarea
+                            rows={3}
+                            value={getSection("hero")?.description ?? "Seva India Foundation connects you directly to verified campaigns in Uttarakhand. Every rupee tracked. Every life changed."}
+                            onChange={(e) =>
+                              updateSection("hero", () => ({
+                                description: e.target.value,
+                              }))
+                            }
+                            placeholder="Seva India Foundation connects you directly to verified campaigns in Uttarakhand..."
+                            className="w-full px-4 py-2.5 rounded-xl border border-slate-300 bg-white text-xs text-slate-900 focus:outline-none focus:border-[#0f2347] leading-relaxed"
+                          />
+                        </div>
+
+                        {/* CTA Buttons */}
+                        <div className="bg-white p-4 rounded-xl border border-slate-200 space-y-3">
+                          <label className="block text-xs font-bold text-slate-800 uppercase tracking-wider">
+                            Call To Action (CTA Buttons)
+                          </label>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                              <span className="text-[11px] font-semibold text-slate-600 block mb-1">
+                                Primary Button Label
+                              </span>
+                              <input
+                                type="text"
+                                value={getSection("hero")?.extra?.primaryCtaText ?? "Browse Campaigns"}
+                                onChange={(e) =>
+                                  updateSection("hero", (sec) => ({
+                                    extra: { ...sec.extra, primaryCtaText: e.target.value },
+                                  }))
+                                }
+                                placeholder="Browse Campaigns"
+                                className="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white text-xs font-bold text-slate-900 focus:outline-none focus:border-[#0f2347]"
+                              />
+                            </div>
+                            <div>
+                              <span className="text-[11px] font-semibold text-slate-600 block mb-1">
+                                Primary Button Link URL
+                              </span>
+                              <input
+                                type="text"
+                                value={getSection("hero")?.extra?.primaryCtaLink ?? "/campaigns"}
+                                onChange={(e) =>
+                                  updateSection("hero", (sec) => ({
+                                    extra: { ...sec.extra, primaryCtaLink: e.target.value },
+                                  }))
+                                }
+                                placeholder="/campaigns"
+                                className="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white text-xs font-medium text-slate-900 focus:outline-none focus:border-[#0f2347]"
+                              />
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Live Stats Ticker Amounts & Metrics */}
+                        <div className="bg-white p-4 rounded-xl border border-slate-200 space-y-3">
+                          <div className="flex items-center justify-between">
+                            <label className="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+                              <Target size={14} className="text-[#E8542A]" />
+                              Live Stats Ticker (Amounts &amp; Metrics)
+                            </label>
+                            <span className="text-[10px] text-slate-400">
+                              Displays on the left bottom ticker
+                            </span>
+                          </div>
+
+                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                            {/* Stat 1 */}
+                            <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-2">
+                              <span className="text-[11px] font-bold text-[#E8542A] uppercase block">
+                                Stat Metric 1
+                              </span>
+                              <div>
+                                <label className="block text-[10px] font-semibold text-slate-600 uppercase">
+                                  Amount / Number
+                                </label>
+                                <input
+                                  type="text"
+                                  value={getSection("hero")?.extra?.stat1Value ?? "₹4.2Cr+"}
+                                  onChange={(e) =>
+                                    updateSection("hero", (sec) => ({
+                                      extra: { ...sec.extra, stat1Value: e.target.value },
+                                    }))
+                                  }
+                                  placeholder="₹4.2Cr+"
+                                  className="w-full px-3 py-1.5 rounded-lg border border-slate-300 bg-white text-xs font-bold text-slate-900 focus:outline-none focus:border-[#0f2347]"
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-[10px] font-semibold text-slate-600 uppercase">
+                                  Metric Label
+                                </label>
+                                <input
+                                  type="text"
+                                  value={getSection("hero")?.extra?.stat1Label ?? "Raised"}
+                                  onChange={(e) =>
+                                    updateSection("hero", (sec) => ({
+                                      extra: { ...sec.extra, stat1Label: e.target.value },
+                                    }))
+                                  }
+                                  placeholder="Raised"
+                                  className="w-full px-3 py-1.5 rounded-lg border border-slate-300 bg-white text-xs font-medium text-slate-900 focus:outline-none focus:border-[#0f2347]"
+                                />
+                              </div>
+                            </div>
+
+                            {/* Stat 2 */}
+                            <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-2">
+                              <span className="text-[11px] font-bold text-[#E8542A] uppercase block">
+                                Stat Metric 2
+                              </span>
+                              <div>
+                                <label className="block text-[10px] font-semibold text-slate-600 uppercase">
+                                  Amount / Number
+                                </label>
+                                <input
+                                  type="text"
+                                  value={getSection("hero")?.extra?.stat2Value ?? "38,000+"}
+                                  onChange={(e) =>
+                                    updateSection("hero", (sec) => ({
+                                      extra: { ...sec.extra, stat2Value: e.target.value },
+                                    }))
+                                  }
+                                  placeholder="38,000+"
+                                  className="w-full px-3 py-1.5 rounded-lg border border-slate-300 bg-white text-xs font-bold text-slate-900 focus:outline-none focus:border-[#0f2347]"
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-[10px] font-semibold text-slate-600 uppercase">
+                                  Metric Label
+                                </label>
+                                <input
+                                  type="text"
+                                  value={getSection("hero")?.extra?.stat2Label ?? "Lives Impacted"}
+                                  onChange={(e) =>
+                                    updateSection("hero", (sec) => ({
+                                      extra: { ...sec.extra, stat2Label: e.target.value },
+                                    }))
+                                  }
+                                  placeholder="Lives Impacted"
+                                  className="w-full px-3 py-1.5 rounded-lg border border-slate-300 bg-white text-xs font-medium text-slate-900 focus:outline-none focus:border-[#0f2347]"
+                                />
+                              </div>
+                            </div>
+
+                            {/* Stat 3 */}
+                            <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-2">
+                              <span className="text-[11px] font-bold text-[#E8542A] uppercase block">
+                                Stat Metric 3
+                              </span>
+                              <div>
+                                <label className="block text-[10px] font-semibold text-slate-600 uppercase">
+                                  Amount / Number
+                                </label>
+                                <input
+                                  type="text"
+                                  value={getSection("hero")?.extra?.stat3Value ?? "120+"}
+                                  onChange={(e) =>
+                                    updateSection("hero", (sec) => ({
+                                      extra: { ...sec.extra, stat3Value: e.target.value },
+                                    }))
+                                  }
+                                  placeholder="120+"
+                                  className="w-full px-3 py-1.5 rounded-lg border border-slate-300 bg-white text-xs font-bold text-slate-900 focus:outline-none focus:border-[#0f2347]"
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-[10px] font-semibold text-slate-600 uppercase">
+                                  Metric Label
+                                </label>
+                                <input
+                                  type="text"
+                                  value={getSection("hero")?.extra?.stat3Label ?? "Campaigns"}
+                                  onChange={(e) =>
+                                    updateSection("hero", (sec) => ({
+                                      extra: { ...sec.extra, stat3Label: e.target.value },
+                                    }))
+                                  }
+                                  placeholder="Campaigns"
+                                  className="w-full px-3 py-1.5 rounded-lg border border-slate-300 bg-white text-xs font-medium text-slate-900 focus:outline-none focus:border-[#0f2347]"
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Trust Signals / Highlights (Max 4 Cards) */}
+                        <div className="bg-white p-4 rounded-xl border border-slate-200 space-y-4">
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                            <div>
+                              <label className="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+                                <Sparkles size={14} className="text-[#E8542A]" />
+                                Hero Highlight Cards (Trust Badges)
+                              </label>
+                              <p className="text-[11px] text-slate-500 mt-0.5">
+                                Displays above the CTA button in a 2-column grid. Currently {(() => {
+                                  const list = getSection("hero")?.extra?.trustSignals || [
+                                    { label: "12A & 80G Certified", sub: "Tax benefits on every donation", icon: "shield" },
+                                    { label: "100% Transparent", sub: "Track where your money goes", icon: "trend" },
+                                    { label: "Dehradun Based", sub: "Serving Uttarakhand since 2012", icon: "location" },
+                                  ];
+                                  return list.length;
+                                })()} of 4 cards (Max 4 allowed).
+                              </p>
+                            </div>
+
+                            {(() => {
+                              const currSignals = getSection("hero")?.extra?.trustSignals || [
+                                { label: "12A & 80G Certified", sub: "Tax benefits on every donation", icon: "shield" },
+                                { label: "100% Transparent", sub: "Track where your money goes", icon: "trend" },
+                                { label: "Dehradun Based", sub: "Serving Uttarakhand since 2012", icon: "location" },
+                              ];
+
+                              if (currSignals.length < 4) {
+                                return (
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      const updated = [
+                                        ...currSignals,
+                                        { label: "Direct Impact", sub: "100% verified grassroots support", icon: "award" },
+                                      ];
+                                      updateSection("hero", (sec) => ({
+                                        extra: { ...sec.extra, trustSignals: updated },
+                                      }));
                                     }}
-                                    placeholder="THE BETTER INDIA"
-                                    className="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white text-xs font-bold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#0f2347]"
-                                  />
-                                </div>
-                                <div>
-                                  <label className="block text-[11px] font-semibold text-slate-700 mb-1">
-                                    Accent Color (Hex)
-                                  </label>
-                                  <div className="flex items-center gap-2">
-                                    <input
-                                      type="color"
-                                      value={m.color || "#e11d48"}
+                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#0f2347] hover:bg-[#1a3a6b] text-white text-xs font-bold rounded-lg transition-colors shadow-sm self-start sm:self-auto"
+                                  >
+                                    <Plus size={13} />
+                                    <span>Add Highlight Card</span>
+                                    <span className="text-[10px] bg-white/20 px-1.5 py-0.5 rounded font-mono">
+                                      {currSignals.length}/4
+                                    </span>
+                                  </button>
+                                );
+                              }
+
+                              return (
+                                <span className="inline-flex items-center gap-1 px-3 py-1 bg-amber-50 text-amber-700 border border-amber-200 text-xs font-semibold rounded-lg self-start sm:self-auto">
+                                  <AlertCircle size={13} /> Max 4 Cards Reached
+                                </span>
+                              );
+                            })()}
+                          </div>
+
+                          {/* Dynamic Highlight Cards Grid */}
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            {(() => {
+                              const currSignals = getSection("hero")?.extra?.trustSignals || [
+                                { label: "12A & 80G Certified", sub: "Tax benefits on every donation", icon: "shield" },
+                                { label: "100% Transparent", sub: "Track where your money goes", icon: "trend" },
+                                { label: "Dehradun Based", sub: "Serving Uttarakhand since 2012", icon: "location" },
+                              ];
+
+                              return currSignals.slice(0, 4).map((signal: any, idx: number) => (
+                                <div
+                                  key={idx}
+                                  className="p-4 bg-slate-50/80 rounded-xl border border-slate-200 space-y-3 shadow-sm hover:border-slate-300 transition-colors"
+                                >
+                                  <div className="flex items-center justify-between">
+                                    <span className="text-[11px] font-bold text-[#E8542A] uppercase tracking-wider flex items-center gap-1.5">
+                                      Highlight Card #{idx + 1}
+                                    </span>
+                                    {currSignals.length > 1 && (
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          const updated = currSignals.filter((_: any, i: number) => i !== idx);
+                                          updateSection("hero", (sec) => ({
+                                            extra: { ...sec.extra, trustSignals: updated },
+                                          }));
+                                        }}
+                                        className="text-slate-400 hover:text-red-500 p-1 rounded-md transition-colors"
+                                        title="Delete Highlight Card"
+                                      >
+                                        <Trash2 size={14} />
+                                      </button>
+                                    )}
+                                  </div>
+
+                                  <div>
+                                    <label className="block text-[10px] font-semibold text-slate-600 uppercase mb-1">
+                                      Icon
+                                    </label>
+                                    <select
+                                      value={signal.icon || (idx === 0 ? "shield" : idx === 1 ? "trend" : "location")}
                                       onChange={(e) => {
-                                        const curr = [...(getSection("featured_in")?.items || [])];
-                                        curr[idx] = { ...curr[idx], color: e.target.value };
-                                        updateSection("featured_in", () => ({ items: curr }));
+                                        const updated = [...currSignals];
+                                        updated[idx] = { ...updated[idx], icon: e.target.value };
+                                        updateSection("hero", (sec) => ({
+                                          extra: { ...sec.extra, trustSignals: updated },
+                                        }));
                                       }}
-                                      className="w-8 h-8 rounded border border-slate-300 cursor-pointer p-0"
-                                    />
+                                      className="w-full px-3 py-1.5 rounded-lg border border-slate-300 bg-white text-xs font-semibold text-slate-900 focus:outline-none focus:border-[#0f2347]"
+                                    >
+                                      <option value="shield">🛡️ Shield / Security (12A &amp; 80G Certified)</option>
+                                      <option value="trend">📈 Trending / Growth (100% Transparent)</option>
+                                      <option value="location">📍 Location / Map (Dehradun Based)</option>
+                                      <option value="award">🏆 Award / Excellence</option>
+                                      <option value="heart">❤️ Heart / Care &amp; Compassion</option>
+                                      <option value="users">👥 Users / Community</option>
+                                      <option value="sparkles">✨ Sparkles / Impact</option>
+                                    </select>
+                                  </div>
+
+                                  <div>
+                                    <label className="block text-[10px] font-semibold text-slate-600 uppercase mb-1">
+                                      Title / Heading
+                                    </label>
                                     <input
                                       type="text"
-                                      value={m.color || "#e11d48"}
+                                      value={signal.label || ""}
+                                      onChange={(e) => {
+                                        const updated = [...currSignals];
+                                        updated[idx] = { ...updated[idx], label: e.target.value };
+                                        updateSection("hero", (sec) => ({
+                                          extra: { ...sec.extra, trustSignals: updated },
+                                        }));
+                                      }}
+                                      placeholder="e.g. 12A & 80G Certified"
+                                      className="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white text-xs font-bold text-slate-900 focus:outline-none focus:border-[#0f2347]"
+                                    />
+                                  </div>
+
+                                  <div>
+                                    <label className="block text-[10px] font-semibold text-slate-600 uppercase mb-1">
+                                      Subtitle / Description
+                                    </label>
+                                    <input
+                                      type="text"
+                                      value={signal.sub || ""}
+                                      onChange={(e) => {
+                                        const updated = [...currSignals];
+                                        updated[idx] = { ...updated[idx], sub: e.target.value };
+                                        updateSection("hero", (sec) => ({
+                                          extra: { ...sec.extra, trustSignals: updated },
+                                        }));
+                                      }}
+                                      placeholder="e.g. Tax benefits on every donation"
+                                      className="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white text-xs text-slate-700 focus:outline-none focus:border-[#0f2347]"
+                                    />
+                                  </div>
+                                </div>
+                              ));
+                            })()}
+                          </div>
+                        </div>
+
+                        {/* Bottom Trust Bar (4 items across full width) */}
+                        <div className="bg-white p-4 rounded-xl border border-slate-200 space-y-3">
+                          <label className="block text-xs font-bold text-slate-800 uppercase tracking-wider">
+                            Bottom Trust Bar (4 Items at Base of Hero)
+                          </label>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            {[0, 1, 2, 3].map((idx) => {
+                              const defaultItems = [
+                                "Verified by Seva India Foundation",
+                                "Zero platform fees on donations",
+                                "12,000+ verified donors",
+                                "80G tax benefit on every donation",
+                              ];
+                              const currentList = getSection("hero")?.extra?.bottomTrustItems || defaultItems;
+                              const val = currentList[idx] ?? defaultItems[idx];
+
+                              return (
+                                <div key={idx} className="flex items-center gap-2">
+                                  <span className="text-[11px] font-bold text-slate-400 w-5">
+                                    #{idx + 1}
+                                  </span>
+                                  <input
+                                    type="text"
+                                    value={val}
+                                    onChange={(e) => {
+                                      const updated = [...currentList];
+                                      updated[idx] = e.target.value;
+                                      updateSection("hero", (sec) => ({
+                                        extra: { ...sec.extra, bottomTrustItems: updated },
+                                      }));
+                                    }}
+                                    className="flex-1 px-3 py-2 rounded-lg border border-slate-300 bg-white text-xs font-medium text-slate-900 focus:outline-none focus:border-[#0f2347]"
+                                  />
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+
+                        {/* Bottom Card Action Footer */}
+                        <div className="pt-2 flex items-center justify-between border-t border-slate-200">
+                          <span className="text-xs text-slate-400">
+                            Updates reflect instantly on the landing page hero section.
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => handleSaveSection("hero", "Hero Section")}
+                            disabled={savingSectionKey === "hero"}
+                            className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#0f2347] hover:bg-[#1a3a6b] text-white rounded-xl text-xs font-bold transition-all shadow-sm"
+                          >
+                            {savingSectionKey === "hero" ? (
+                              <>
+                                <Loader2 size={13} className="animate-spin" /> Saving...
+                              </>
+                            ) : savedSectionKey === "hero" ? (
+                              <>
+                                <CheckCircle2 size={14} className="text-emerald-400" /> Saved!
+                              </>
+                            ) : (
+                              <>
+                                <Save size={13} /> Save Hero Section
+                              </>
+                            )}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* ─────────────────────────────────────────────────────────────
+                        SECTION 2: FEATURED IN MEDIA MARQUEE
+                    ────────────────────────────────────────────────────────────── */}
+                    <div className="bg-white rounded-2xl border-2 border-slate-200 overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                      {/* Section Header */}
+                      <div className="bg-gradient-to-r from-[#1e1b4b] to-[#3730a3] p-5 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center flex-shrink-0">
+                            <Sparkles size={18} className="text-indigo-300" />
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs font-bold text-indigo-300 uppercase tracking-wider">
+                                Section 2
+                              </span>
+                              <span className="text-[10px] bg-white/10 px-2 py-0.5 rounded text-white/70 font-mono">
+                                key: featured_in
+                              </span>
+                            </div>
+                            <h3 className="text-base font-bold text-white leading-tight">
+                              Featured In — Media Marquee Loop
+                            </h3>
+                          </div>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => handleSaveSection("featured_in", "Featured In Media")}
+                          disabled={savingSectionKey === "featured_in"}
+                          className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-md ${
+                            savedSectionKey === "featured_in"
+                              ? "bg-emerald-600 text-white"
+                              : "bg-indigo-600 hover:bg-indigo-700 text-white"
+                          }`}
+                        >
+                          {savingSectionKey === "featured_in" ? (
+                            <>
+                              <Loader2 size={13} className="animate-spin" /> Saving...
+                            </>
+                          ) : savedSectionKey === "featured_in" ? (
+                            <>
+                              <CheckCircle2 size={14} /> Saved!
+                            </>
+                          ) : (
+                            <>
+                              <Save size={13} /> Save Media Marquee
+                            </>
+                          )}
+                        </button>
+                      </div>
+
+                      {/* Section Body */}
+                      <div className="p-6 space-y-4 bg-slate-50/50">
+                        <p className="text-xs text-slate-500">
+                          Admin enters media outlet names or uploads logos. Displays as an infinite continuous marquee loop on the home page.
+                        </p>
+
+                        <div className="bg-white p-4 rounded-xl border border-slate-200">
+                          <label className="block text-xs font-semibold text-slate-700 mb-1">
+                            Section Heading
+                          </label>
+                          <input
+                            type="text"
+                            value={getSection("featured_in")?.title ?? "Featured In"}
+                            onChange={(e) =>
+                              updateSection("featured_in", () => ({
+                                title: e.target.value,
+                              }))
+                            }
+                            placeholder="Featured In"
+                            className="w-full px-4 py-2.5 rounded-xl border border-slate-300 bg-white text-sm font-semibold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#0f2347]"
+                          />
+                        </div>
+
+                        {/* Media Outlets List */}
+                        <div className="space-y-3 pt-2">
+                          <div className="flex items-center justify-between">
+                            <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+                              Media Outlets &amp; Press Badges
+                            </label>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const curr = getSection("featured_in")?.items || [];
+                                updateSection("featured_in", () => ({
+                                  items: [...curr, { name: "NEW OUTLET", color: "#e11d48", logo: "" }],
+                                }));
+                              }}
+                              className="inline-flex items-center gap-1 px-3 py-1.5 bg-[#0f2347] text-white rounded-lg text-xs font-semibold hover:bg-[#1a3a6b]"
+                            >
+                              <Plus size={12} /> Add Media Outlet
+                            </button>
+                          </div>
+
+                          <div className="space-y-3">
+                            {(getSection("featured_in")?.items || []).map((m: any, idx: number) => (
+                              <div
+                                key={idx}
+                                className="p-4 bg-white rounded-xl border border-slate-200 space-y-3 shadow-sm"
+                              >
+                                <div className="flex items-center justify-between">
+                                  <span className="text-[11px] font-bold text-[#E8542A] uppercase">
+                                    Media Outlet #{idx + 1}
+                                  </span>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      const curr = [...(getSection("featured_in")?.items || [])];
+                                      curr.splice(idx, 1);
+                                      updateSection("featured_in", () => ({ items: curr }));
+                                    }}
+                                    className="text-slate-400 hover:text-red-500 p-1 rounded-lg"
+                                    title="Remove Media Outlet"
+                                  >
+                                    <Trash2 size={14} />
+                                  </button>
+                                </div>
+
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                  <div>
+                                    <label className="block text-[11px] font-semibold text-slate-700 mb-1">
+                                      Media Name (e.g. THE BETTER INDIA)
+                                    </label>
+                                    <input
+                                      type="text"
+                                      value={m.name || ""}
                                       onChange={(e) => {
                                         const curr = [...(getSection("featured_in")?.items || [])];
-                                        curr[idx] = { ...curr[idx], color: e.target.value };
+                                        curr[idx] = { ...curr[idx], name: e.target.value };
                                         updateSection("featured_in", () => ({ items: curr }));
                                       }}
-                                      placeholder="#e11d48"
-                                      className="flex-1 px-3 py-2 rounded-lg border border-slate-300 bg-white text-xs font-mono font-bold text-slate-900 focus:outline-none focus:border-[#0f2347]"
+                                      placeholder="THE BETTER INDIA"
+                                      className="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white text-xs font-bold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#0f2347]"
+                                    />
+                                  </div>
+                                  <div>
+                                    <label className="block text-[11px] font-semibold text-slate-700 mb-1">
+                                      Accent Color (Hex)
+                                    </label>
+                                    <div className="flex items-center gap-2">
+                                      <input
+                                        type="color"
+                                        value={m.color || "#e11d48"}
+                                        onChange={(e) => {
+                                          const curr = [...(getSection("featured_in")?.items || [])];
+                                          curr[idx] = { ...curr[idx], color: e.target.value };
+                                          updateSection("featured_in", () => ({ items: curr }));
+                                        }}
+                                        className="w-8 h-8 rounded border border-slate-300 cursor-pointer p-0"
+                                      />
+                                      <input
+                                        type="text"
+                                        value={m.color || "#e11d48"}
+                                        onChange={(e) => {
+                                          const curr = [...(getSection("featured_in")?.items || [])];
+                                          curr[idx] = { ...curr[idx], color: e.target.value };
+                                          updateSection("featured_in", () => ({ items: curr }));
+                                        }}
+                                        placeholder="#e11d48"
+                                        className="flex-1 px-3 py-2 rounded-lg border border-slate-300 bg-white text-xs font-mono font-bold text-slate-900 focus:outline-none focus:border-[#0f2347]"
+                                      />
+                                    </div>
+                                  </div>
+                                </div>
+
+                                <CmsImageField
+                                  label="Optional Outlet Logo Image (Leave blank to use stylized typography)"
+                                  value={m.logo || ""}
+                                  onChange={(url) => {
+                                    const curr = [...(getSection("featured_in")?.items || [])];
+                                    curr[idx] = { ...curr[idx], logo: url };
+                                    updateSection("featured_in", () => ({ items: curr }));
+                                  }}
+                                  recommendedDimensions="240 × 80 px · Transparent PNG recommended"
+                                  placeholder="Upload logo image or enter URL..."
+                                />
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Bottom Card Action Footer */}
+                        <div className="pt-2 flex items-center justify-between border-t border-slate-200">
+                          <span className="text-xs text-slate-400">
+                            Saves the media marquee items array directly.
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => handleSaveSection("featured_in", "Featured In Media")}
+                            disabled={savingSectionKey === "featured_in"}
+                            className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#0f2347] hover:bg-[#1a3a6b] text-white rounded-xl text-xs font-bold transition-all shadow-sm"
+                          >
+                            {savingSectionKey === "featured_in" ? (
+                              <>
+                                <Loader2 size={13} className="animate-spin" /> Saving...
+                              </>
+                            ) : savedSectionKey === "featured_in" ? (
+                              <>
+                                <CheckCircle2 size={14} className="text-emerald-400" /> Saved!
+                              </>
+                            ) : (
+                              <>
+                                <Save size={13} /> Save Media Marquee
+                              </>
+                            )}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* ─────────────────────────────────────────────────────────────
+                        SECTION 3: PRINCIPAL PATRON (DEV BHOOMI SAMITI)
+                    ────────────────────────────────────────────────────────────── */}
+                    <div className="bg-white rounded-2xl border-2 border-slate-200 overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                      {/* Section Header */}
+                      <div className="bg-gradient-to-r from-[#064e3b] to-[#047857] p-5 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center flex-shrink-0">
+                            <ShieldCheck size={18} className="text-emerald-300" />
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs font-bold text-emerald-300 uppercase tracking-wider">
+                                Section 3
+                              </span>
+                              <span className="text-[10px] bg-white/10 px-2 py-0.5 rounded text-white/70 font-mono">
+                                key: patron_samiti
+                              </span>
+                            </div>
+                            <h3 className="text-base font-bold text-white leading-tight">
+                              Principal Patron (Dev Bhoomi Samiti)
+                            </h3>
+                          </div>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => handleSaveSection("patron_samiti", "Principal Patron")}
+                          disabled={savingSectionKey === "patron_samiti"}
+                          className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-md ${
+                            savedSectionKey === "patron_samiti"
+                              ? "bg-emerald-600 text-white"
+                              : "bg-emerald-600 hover:bg-emerald-700 text-white"
+                          }`}
+                        >
+                          {savingSectionKey === "patron_samiti" ? (
+                            <>
+                              <Loader2 size={13} className="animate-spin" /> Saving...
+                            </>
+                          ) : savedSectionKey === "patron_samiti" ? (
+                            <>
+                              <CheckCircle2 size={14} /> Saved!
+                            </>
+                          ) : (
+                            <>
+                              <Save size={13} /> Save Patron Section
+                            </>
+                          )}
+                        </button>
+                      </div>
+
+                      {/* Section Body */}
+                      <div className="p-6 space-y-4 bg-slate-50/50">
+                        <p className="text-xs text-slate-500">
+                          When the user clicks &apos;Learn More&apos; or &apos;Read More&apos;, it links directly to the About Us page section.
+                        </p>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <div className="bg-white p-4 rounded-xl border border-slate-200">
+                            <label className="block text-xs font-semibold text-slate-700 mb-1">
+                              Pill Badge Text
+                            </label>
+                            <input
+                              type="text"
+                              value={getSection("patron_samiti")?.extra?.badgeText ?? "PRINCIPAL PATRON"}
+                              onChange={(e) =>
+                                updateSection("patron_samiti", (sec) => ({
+                                  extra: { ...sec.extra, badgeText: e.target.value },
+                                }))
+                              }
+                              placeholder="PRINCIPAL PATRON"
+                              className="w-full px-4 py-2.5 rounded-xl border border-slate-300 bg-white text-xs font-bold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#0f2347]"
+                            />
+                          </div>
+
+                          <div className="bg-white p-4 rounded-xl border border-slate-200">
+                            <label className="block text-xs font-semibold text-slate-700 mb-1">
+                              Section Main Title
+                            </label>
+                            <input
+                              type="text"
+                              value={getSection("patron_samiti")?.title ?? "DEV BHOOMI SAMITI"}
+                              onChange={(e) =>
+                                updateSection("patron_samiti", () => ({
+                                  title: e.target.value,
+                                }))
+                              }
+                              placeholder="DEV BHOOMI SAMITI"
+                              className="w-full px-4 py-2.5 rounded-xl border border-slate-300 bg-white text-xs font-bold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#0f2347]"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="bg-white p-4 rounded-xl border border-slate-200">
+                          <label className="block text-xs font-semibold text-slate-700 mb-1">
+                            Narrative / Subtitle (Inside Highlight Box)
+                          </label>
+                          <textarea
+                            rows={3}
+                            value={getSection("patron_samiti")?.subtitle ?? ""}
+                            onChange={(e) =>
+                              updateSection("patron_samiti", () => ({
+                                subtitle: e.target.value,
+                              }))
+                            }
+                            placeholder="Dev Bhoomi Samiti is our spiritual and strategic cornerstone..."
+                            className="w-full px-4 py-2.5 rounded-xl border border-slate-300 bg-white text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#0f2347] leading-relaxed"
+                          />
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <div className="bg-white p-4 rounded-xl border border-slate-200">
+                            <label className="block text-xs font-semibold text-slate-700 mb-1">
+                              Button Label (CTA)
+                            </label>
+                            <input
+                              type="text"
+                              value={getSection("patron_samiti")?.extra?.buttonText ?? "Learn More"}
+                              onChange={(e) =>
+                                updateSection("patron_samiti", (sec) => ({
+                                  extra: { ...sec.extra, buttonText: e.target.value },
+                                }))
+                              }
+                              placeholder="Learn More"
+                              className="w-full px-4 py-2.5 rounded-xl border border-slate-300 bg-white text-xs font-bold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#0f2347]"
+                            />
+                          </div>
+                          <div className="bg-white p-4 rounded-xl border border-slate-200">
+                            <label className="block text-xs font-semibold text-slate-700 mb-1">
+                              Button Destination URL
+                            </label>
+                            <input
+                              type="text"
+                              value={getSection("patron_samiti")?.extra?.buttonLink ?? "/about"}
+                              onChange={(e) =>
+                                updateSection("patron_samiti", (sec) => ({
+                                  extra: { ...sec.extra, buttonLink: e.target.value },
+                                }))
+                              }
+                              placeholder="/about"
+                              className="w-full px-4 py-2.5 rounded-xl border border-slate-300 bg-white text-xs font-medium text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#0f2347]"
+                            />
+                          </div>
+                        </div>
+
+                        {/* Right Card Content */}
+                        <div className="p-4 bg-white rounded-xl border border-slate-200 space-y-3">
+                          <span className="text-[11px] font-bold text-[#E8542A] uppercase block">
+                            Right Dark Card Content
+                          </span>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div>
+                              <label className="block text-[11px] font-semibold text-slate-700 mb-1">
+                                Card Eyebrow
+                              </label>
+                              <input
+                                type="text"
+                                value={getSection("patron_samiti")?.extra?.cardEyebrow ?? "OUR VISIONARY BACKBONE"}
+                                onChange={(e) =>
+                                  updateSection("patron_samiti", (sec) => ({
+                                    extra: { ...sec.extra, cardEyebrow: e.target.value },
+                                  }))
+                                }
+                                placeholder="OUR VISIONARY BACKBONE"
+                                className="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white text-xs font-bold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#0f2347]"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-[11px] font-semibold text-slate-700 mb-1">
+                                Card Title
+                              </label>
+                              <input
+                                type="text"
+                                value={getSection("patron_samiti")?.extra?.cardTitle ?? "Spiritual & Social Support"}
+                                onChange={(e) =>
+                                  updateSection("patron_samiti", (sec) => ({
+                                    extra: { ...sec.extra, cardTitle: e.target.value },
+                                  }))
+                                }
+                                placeholder="Spiritual & Social Support"
+                                className="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white text-xs font-bold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#0f2347]"
+                              />
+                            </div>
+                          </div>
+                          <div>
+                            <label className="block text-[11px] font-semibold text-slate-700 mb-1">
+                              Quote Text
+                            </label>
+                            <textarea
+                              rows={2}
+                              value={getSection("patron_samiti")?.extra?.cardQuote ?? ""}
+                              onChange={(e) =>
+                                updateSection("patron_samiti", (sec) => ({
+                                  extra: { ...sec.extra, cardQuote: e.target.value },
+                                }))
+                              }
+                              placeholder='"Uttarakhand, the land of gods, teaches us that service to humanity is the highest form of worship..."'
+                              className="w-full px-3 py-2.5 rounded-lg border border-slate-300 bg-white text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#0f2347] leading-relaxed"
+                            />
+                          </div>
+                        </div>
+
+                        {/* Bottom Card Action Footer */}
+                        <div className="pt-2 flex items-center justify-between border-t border-slate-200">
+                          <span className="text-xs text-slate-400">
+                            Saves the Principal Patron section independently.
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => handleSaveSection("patron_samiti", "Principal Patron")}
+                            disabled={savingSectionKey === "patron_samiti"}
+                            className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#0f2347] hover:bg-[#1a3a6b] text-white rounded-xl text-xs font-bold transition-all shadow-sm"
+                          >
+                            {savingSectionKey === "patron_samiti" ? (
+                              <>
+                                <Loader2 size={13} className="animate-spin" /> Saving...
+                              </>
+                            ) : savedSectionKey === "patron_samiti" ? (
+                              <>
+                                <CheckCircle2 size={14} className="text-emerald-400" /> Saved!
+                              </>
+                            ) : (
+                              <>
+                                <Save size={13} /> Save Patron Section
+                              </>
+                            )}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* ─────────────────────────────────────────────────────────────
+                        SECTION 4: HONORS & GLOBAL RECOGNITION (AWARDS)
+                    ────────────────────────────────────────────────────────────── */}
+                    <div className="bg-white rounded-2xl border-2 border-slate-200 overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                      {/* Section Header */}
+                      <div className="bg-gradient-to-r from-[#78350f] to-[#b45309] p-5 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center flex-shrink-0">
+                            <Award size={18} className="text-amber-300" />
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs font-bold text-amber-300 uppercase tracking-wider">
+                                Section 4
+                              </span>
+                              <span className="text-[10px] bg-white/10 px-2 py-0.5 rounded text-white/70 font-mono">
+                                key: excellence_awards
+                              </span>
+                            </div>
+                            <h3 className="text-base font-bold text-white leading-tight">
+                              Honors &amp; Global Recognition (Awards Cards)
+                            </h3>
+                          </div>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => handleSaveSection("excellence_awards", "Honors & Awards")}
+                          disabled={savingSectionKey === "excellence_awards"}
+                          className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-md ${
+                            savedSectionKey === "excellence_awards"
+                              ? "bg-emerald-600 text-white"
+                              : "bg-amber-600 hover:bg-amber-700 text-white"
+                          }`}
+                        >
+                          {savingSectionKey === "excellence_awards" ? (
+                            <>
+                              <Loader2 size={13} className="animate-spin" /> Saving...
+                            </>
+                          ) : savedSectionKey === "excellence_awards" ? (
+                            <>
+                              <CheckCircle2 size={14} /> Saved!
+                            </>
+                          ) : (
+                            <>
+                              <Save size={13} /> Save Awards Section
+                            </>
+                          )}
+                        </button>
+                      </div>
+
+                      {/* Section Body */}
+                      <div className="p-6 space-y-4 bg-slate-50/50">
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                          <div className="bg-white p-4 rounded-xl border border-slate-200">
+                            <label className="block text-xs font-semibold text-slate-700 mb-1">
+                              Eyebrow Badge
+                            </label>
+                            <input
+                              type="text"
+                              value={getSection("excellence_awards")?.subtitle ?? "HONORS & GLOBAL RECOGNITION"}
+                              onChange={(e) =>
+                                updateSection("excellence_awards", () => ({
+                                  subtitle: e.target.value,
+                                }))
+                              }
+                              placeholder="HONORS & GLOBAL RECOGNITION"
+                              className="w-full px-4 py-2.5 rounded-xl border border-slate-300 bg-white text-xs font-bold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#0f2347]"
+                            />
+                          </div>
+                          <div className="bg-white p-4 rounded-xl border border-slate-200">
+                            <label className="block text-xs font-semibold text-slate-700 mb-1">
+                              Main Heading
+                            </label>
+                            <input
+                              type="text"
+                              value={getSection("excellence_awards")?.title ?? "EXCELLENCE IN HUMAN SERVICE"}
+                              onChange={(e) =>
+                                updateSection("excellence_awards", () => ({
+                                  title: e.target.value,
+                                }))
+                              }
+                              placeholder="EXCELLENCE IN HUMAN SERVICE"
+                              className="w-full px-4 py-2.5 rounded-xl border border-slate-300 bg-white text-xs font-bold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#0f2347]"
+                            />
+                          </div>
+                          <div className="bg-white p-4 rounded-xl border border-slate-200">
+                            <label className="block text-xs font-semibold text-slate-700 mb-1">
+                              Watermark Year Text
+                            </label>
+                            <input
+                              type="text"
+                              value={getSection("excellence_awards")?.extra?.watermarkText ?? "2026"}
+                              onChange={(e) =>
+                                updateSection("excellence_awards", (sec) => ({
+                                  extra: { ...sec.extra, watermarkText: e.target.value },
+                                }))
+                              }
+                              placeholder="2026"
+                              className="w-full px-4 py-2.5 rounded-xl border border-slate-300 bg-white text-xs font-mono font-bold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#0f2347]"
+                            />
+                          </div>
+                        </div>
+
+                        {/* Awards Grid Repeater */}
+                        <div className="space-y-3 pt-2">
+                          <div className="flex items-center justify-between">
+                            <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+                              Honors &amp; Awards Cards ({getSection("excellence_awards")?.items?.length || 0})
+                            </label>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const curr = getSection("excellence_awards")?.items || [];
+                                updateSection("excellence_awards", () => ({
+                                  items: [...curr, { category: "RECOGNITION", title: "NEW AWARD", year: "2026" }],
+                                }));
+                              }}
+                              className="inline-flex items-center gap-1 px-3 py-1.5 bg-[#0f2347] text-white rounded-lg text-xs font-semibold hover:bg-[#1a3a6b]"
+                            >
+                              <Plus size={12} /> Add Award Card
+                            </button>
+                          </div>
+
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            {(getSection("excellence_awards")?.items || []).map((aw: any, idx: number) => (
+                              <div
+                                key={idx}
+                                className="p-4 bg-white rounded-xl border border-slate-200 space-y-2.5 shadow-sm"
+                              >
+                                <div className="flex items-center justify-between">
+                                  <span className="text-[11px] font-bold text-[#E8542A] uppercase">
+                                    Award #{idx + 1}
+                                  </span>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      const curr = [...(getSection("excellence_awards")?.items || [])];
+                                      curr.splice(idx, 1);
+                                      updateSection("excellence_awards", () => ({ items: curr }));
+                                    }}
+                                    className="text-slate-400 hover:text-red-500 p-1 rounded-lg"
+                                    title="Remove Award"
+                                  >
+                                    <Trash2 size={14} />
+                                  </button>
+                                </div>
+
+                                <div className="space-y-2">
+                                  <div>
+                                    <label className="block text-[10px] font-semibold text-slate-600 uppercase">
+                                      Category
+                                    </label>
+                                    <input
+                                      type="text"
+                                      value={aw.category || ""}
+                                      onChange={(e) => {
+                                        const curr = [...(getSection("excellence_awards")?.items || [])];
+                                        curr[idx] = { ...curr[idx], category: e.target.value };
+                                        updateSection("excellence_awards", () => ({ items: curr }));
+                                      }}
+                                      placeholder="OVERALL EXCELLENCE"
+                                      className="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white text-xs font-semibold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#0f2347]"
+                                    />
+                                  </div>
+                                  <div>
+                                    <label className="block text-[10px] font-semibold text-slate-600 uppercase">
+                                      Award Title
+                                    </label>
+                                    <input
+                                      type="text"
+                                      value={aw.title || ""}
+                                      onChange={(e) => {
+                                        const curr = [...(getSection("excellence_awards")?.items || [])];
+                                        curr[idx] = { ...curr[idx], title: e.target.value };
+                                        updateSection("excellence_awards", () => ({ items: curr }));
+                                      }}
+                                      placeholder="BEST NGO OF THE YEAR"
+                                      className="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white text-xs font-bold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#0f2347]"
+                                    />
+                                  </div>
+                                  <div>
+                                    <label className="block text-[10px] font-semibold text-slate-600 uppercase">
+                                      Year
+                                    </label>
+                                    <input
+                                      type="text"
+                                      value={aw.year || ""}
+                                      onChange={(e) => {
+                                        const curr = [...(getSection("excellence_awards")?.items || [])];
+                                        curr[idx] = { ...curr[idx], year: e.target.value };
+                                        updateSection("excellence_awards", () => ({ items: curr }));
+                                      }}
+                                      placeholder="2026"
+                                      className="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white text-xs font-mono font-bold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#0f2347]"
                                     />
                                   </div>
                                 </div>
                               </div>
+                            ))}
+                          </div>
+                        </div>
 
-                              <CmsImageField
-                                label="Optional Outlet Logo Image (Leave blank to use stylized typography)"
-                                value={m.logo || ""}
-                                onChange={(url) => {
-                                  const curr = [...(getSection("featured_in")?.items || [])];
-                                  curr[idx] = { ...curr[idx], logo: url };
-                                  updateSection("featured_in", () => ({ items: curr }));
-                                }}
-                                recommendedDimensions="240 × 80 px · Transparent PNG recommended"
-                                placeholder="Upload logo image or enter URL..."
-                              />
-                            </div>
-                          ))}
+                        {/* Bottom Card Action Footer */}
+                        <div className="pt-2 flex items-center justify-between border-t border-slate-200">
+                          <span className="text-xs text-slate-400">
+                            Saves the honors &amp; awards section independently.
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => handleSaveSection("excellence_awards", "Honors & Awards")}
+                            disabled={savingSectionKey === "excellence_awards"}
+                            className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#0f2347] hover:bg-[#1a3a6b] text-white rounded-xl text-xs font-bold transition-all shadow-sm"
+                          >
+                            {savingSectionKey === "excellence_awards" ? (
+                              <>
+                                <Loader2 size={13} className="animate-spin" /> Saving...
+                              </>
+                            ) : savedSectionKey === "excellence_awards" ? (
+                              <>
+                                <CheckCircle2 size={14} className="text-emerald-400" /> Saved!
+                              </>
+                            ) : (
+                              <>
+                                <Save size={13} /> Save Awards Section
+                              </>
+                            )}
+                          </button>
                         </div>
                       </div>
                     </div>
 
-                    {/* Section 2: Principal Patron (Dev Bhoomi Samiti) */}
-                    <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-4">
-                      <div className="flex items-center justify-between">
-                        <h4 className="text-xs font-bold text-[#0f2347] uppercase tracking-wider flex items-center gap-2">
-                          <ShieldCheck size={14} className="text-[#E8542A]" />
-                          2. Principal Patron (Dev Bhoomi Samiti)
-                        </h4>
-                        <span className="text-[10px] text-slate-400 font-semibold uppercase">Key: patron_samiti</span>
-                      </div>
-                      <p className="text-xs text-slate-500">
-                        When the user clicks &apos;Learn More&apos; or &apos;Read More&apos;, it links directly to the About Us page section.
-                      </p>
-
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                          <label className="block text-xs font-semibold text-slate-700 mb-1">
-                            Pill Badge Text
-                          </label>
-                          <input
-                            type="text"
-                            value={getSection("patron_samiti")?.extra?.badgeText ?? "PRINCIPAL PATRON"}
-                            onChange={(e) =>
-                              updateSection("patron_samiti", (sec) => ({
-                                extra: { ...sec.extra, badgeText: e.target.value },
-                              }))
-                            }
-                            placeholder="PRINCIPAL PATRON"
-                            className="w-full px-4 py-2.5 rounded-xl border border-slate-300 bg-white text-xs font-bold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#0f2347]"
-                          />
-                        </div>
-
-                        <div>
-                          <label className="block text-xs font-semibold text-slate-700 mb-1">
-                            Section Main Title
-                          </label>
-                          <input
-                            type="text"
-                            value={getSection("patron_samiti")?.title ?? "DEV BHOOMI SAMITI"}
-                            onChange={(e) =>
-                              updateSection("patron_samiti", () => ({
-                                title: e.target.value,
-                              }))
-                            }
-                            placeholder="DEV BHOOMI SAMITI"
-                            className="w-full px-4 py-2.5 rounded-xl border border-slate-300 bg-white text-xs font-bold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#0f2347]"
-                          />
-                        </div>
-                      </div>
-
-                      <div>
-                        <label className="block text-xs font-semibold text-slate-700 mb-1">
-                          Narrative / Subtitle (Inside Highlight Box)
-                        </label>
-                        <textarea
-                          rows={3}
-                          value={getSection("patron_samiti")?.subtitle ?? ""}
-                          onChange={(e) =>
-                            updateSection("patron_samiti", () => ({
-                              subtitle: e.target.value,
-                            }))
-                          }
-                          placeholder="Dev Bhoomi Samiti is our spiritual and strategic cornerstone..."
-                          className="w-full px-4 py-2.5 rounded-xl border border-slate-300 bg-white text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#0f2347] leading-relaxed"
-                        />
-                      </div>
-
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                          <label className="block text-xs font-semibold text-slate-700 mb-1">
-                            Button Label (CTA)
-                          </label>
-                          <input
-                            type="text"
-                            value={getSection("patron_samiti")?.extra?.buttonText ?? "Learn More"}
-                            onChange={(e) =>
-                              updateSection("patron_samiti", (sec) => ({
-                                extra: { ...sec.extra, buttonText: e.target.value },
-                              }))
-                            }
-                            placeholder="Learn More"
-                            className="w-full px-4 py-2.5 rounded-xl border border-slate-300 bg-white text-xs font-bold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#0f2347]"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-xs font-semibold text-slate-700 mb-1">
-                            Button Destination URL
-                          </label>
-                          <input
-                            type="text"
-                            value={getSection("patron_samiti")?.extra?.buttonLink ?? "/about"}
-                            onChange={(e) =>
-                              updateSection("patron_samiti", (sec) => ({
-                                extra: { ...sec.extra, buttonLink: e.target.value },
-                              }))
-                            }
-                            placeholder="/about"
-                            className="w-full px-4 py-2.5 rounded-xl border border-slate-300 bg-white text-xs font-medium text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#0f2347]"
-                          />
-                        </div>
-                      </div>
-
-                      {/* Right Card Content */}
-                      <div className="p-4 bg-white rounded-xl border border-slate-200 space-y-3">
-                        <span className="text-[11px] font-bold text-[#E8542A] uppercase block">
-                          Right Dark Card Content
-                        </span>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {/* ─────────────────────────────────────────────────────────────
+                        SECTION 5: INTEGRITY & COMPLIANCE (LEGAL & TRANSPARENCY)
+                    ────────────────────────────────────────────────────────────── */}
+                    <div className="bg-white rounded-2xl border-2 border-slate-200 overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                      {/* Section Header */}
+                      <div className="bg-gradient-to-r from-[#0f172a] to-[#334155] p-5 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center flex-shrink-0">
+                            <ShieldCheck size={18} className="text-blue-300" />
+                          </div>
                           <div>
-                            <label className="block text-[11px] font-semibold text-slate-700 mb-1">
-                              Card Eyebrow
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs font-bold text-blue-300 uppercase tracking-wider">
+                                Section 5
+                              </span>
+                              <span className="text-[10px] bg-white/10 px-2 py-0.5 rounded text-white/70 font-mono">
+                                key: integrity_compliance
+                              </span>
+                            </div>
+                            <h3 className="text-base font-bold text-white leading-tight">
+                              Integrity &amp; Compliance (Legal, Office &amp; Allocations)
+                            </h3>
+                          </div>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => handleSaveSection("integrity_compliance", "Integrity & Compliance")}
+                          disabled={savingSectionKey === "integrity_compliance"}
+                          className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-md ${
+                            savedSectionKey === "integrity_compliance"
+                              ? "bg-emerald-600 text-white"
+                              : "bg-slate-700 hover:bg-slate-800 text-white"
+                          }`}
+                        >
+                          {savingSectionKey === "integrity_compliance" ? (
+                            <>
+                              <Loader2 size={13} className="animate-spin" /> Saving...
+                            </>
+                          ) : savedSectionKey === "integrity_compliance" ? (
+                            <>
+                              <CheckCircle2 size={14} /> Saved!
+                            </>
+                          ) : (
+                            <>
+                              <Save size={13} /> Save Compliance Section
+                            </>
+                          )}
+                        </button>
+                      </div>
+
+                      {/* Section Body */}
+                      <div className="p-6 space-y-4 bg-slate-50/50">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <div className="bg-white p-4 rounded-xl border border-slate-200">
+                            <label className="block text-xs font-semibold text-slate-700 mb-1">
+                              Main Title
                             </label>
                             <input
                               type="text"
-                              value={getSection("patron_samiti")?.extra?.cardEyebrow ?? "OUR VISIONARY BACKBONE"}
+                              value={getSection("integrity_compliance")?.title ?? "INTEGRITY & COMPLIANCE"}
                               onChange={(e) =>
-                                updateSection("patron_samiti", (sec) => ({
-                                  extra: { ...sec.extra, cardEyebrow: e.target.value },
+                                updateSection("integrity_compliance", () => ({
+                                  title: e.target.value,
                                 }))
                               }
-                              placeholder="OUR VISIONARY BACKBONE"
-                              className="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white text-xs font-bold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#0f2347]"
+                              placeholder="INTEGRITY & COMPLIANCE"
+                              className="w-full px-4 py-2.5 rounded-xl border border-slate-300 bg-white text-xs font-bold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#0f2347]"
                             />
                           </div>
-                          <div>
-                            <label className="block text-[11px] font-semibold text-slate-700 mb-1">
-                              Card Title
+
+                          <div className="bg-white p-4 rounded-xl border border-slate-200">
+                            <label className="block text-xs font-semibold text-slate-700 mb-1">
+                              Registered Office Title
                             </label>
                             <input
                               type="text"
-                              value={getSection("patron_samiti")?.extra?.cardTitle ?? "Spiritual & Social Support"}
+                              value={getSection("integrity_compliance")?.extra?.officeTitle ?? "REGISTERED OFFICE"}
                               onChange={(e) =>
-                                updateSection("patron_samiti", (sec) => ({
-                                  extra: { ...sec.extra, cardTitle: e.target.value },
+                                updateSection("integrity_compliance", (sec) => ({
+                                  extra: { ...sec.extra, officeTitle: e.target.value },
                                 }))
                               }
-                              placeholder="Spiritual & Social Support"
-                              className="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white text-xs font-bold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#0f2347]"
+                              placeholder="REGISTERED OFFICE"
+                              className="w-full px-4 py-2.5 rounded-xl border border-slate-300 bg-white text-xs font-bold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#0f2347]"
                             />
                           </div>
                         </div>
-                        <div>
-                          <label className="block text-[11px] font-semibold text-slate-700 mb-1">
-                            Quote Text
+
+                        <div className="bg-white p-4 rounded-xl border border-slate-200">
+                          <label className="block text-xs font-semibold text-slate-700 mb-1">
+                            Introductory Narrative
                           </label>
                           <textarea
                             rows={2}
-                            value={getSection("patron_samiti")?.extra?.cardQuote ?? ""}
-                            onChange={(e) =>
-                              updateSection("patron_samiti", (sec) => ({
-                                extra: { ...sec.extra, cardQuote: e.target.value },
-                              }))
-                            }
-                            placeholder='"Uttarakhand, the land of gods, teaches us that service to humanity is the highest form of worship..."'
-                            className="w-full px-3 py-2.5 rounded-lg border border-slate-300 bg-white text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#0f2347] leading-relaxed"
-                          />
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Section 3: Honors & Global Recognition */}
-                    <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-4">
-                      <div className="flex items-center justify-between">
-                        <h4 className="text-xs font-bold text-[#0f2347] uppercase tracking-wider flex items-center gap-2">
-                          <Award size={14} className="text-[#E8542A]" />
-                          3. Honors &amp; Global Recognition
-                        </h4>
-                        <span className="text-[10px] text-slate-400 font-semibold uppercase">Key: excellence_awards</span>
-                      </div>
-
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                        <div>
-                          <label className="block text-xs font-semibold text-slate-700 mb-1">
-                            Eyebrow Badge
-                          </label>
-                          <input
-                            type="text"
-                            value={getSection("excellence_awards")?.subtitle ?? "HONORS & GLOBAL RECOGNITION"}
-                            onChange={(e) =>
-                              updateSection("excellence_awards", () => ({
-                                subtitle: e.target.value,
-                              }))
-                            }
-                            placeholder="HONORS & GLOBAL RECOGNITION"
-                            className="w-full px-4 py-2.5 rounded-xl border border-slate-300 bg-white text-xs font-bold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#0f2347]"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-xs font-semibold text-slate-700 mb-1">
-                            Main Heading
-                          </label>
-                          <input
-                            type="text"
-                            value={getSection("excellence_awards")?.title ?? "EXCELLENCE IN HUMAN SERVICE"}
-                            onChange={(e) =>
-                              updateSection("excellence_awards", () => ({
-                                title: e.target.value,
-                              }))
-                            }
-                            placeholder="EXCELLENCE IN HUMAN SERVICE"
-                            className="w-full px-4 py-2.5 rounded-xl border border-slate-300 bg-white text-xs font-bold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#0f2347]"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-xs font-semibold text-slate-700 mb-1">
-                            Watermark Year Text
-                          </label>
-                          <input
-                            type="text"
-                            value={getSection("excellence_awards")?.extra?.watermarkText ?? "2026"}
-                            onChange={(e) =>
-                              updateSection("excellence_awards", (sec) => ({
-                                extra: { ...sec.extra, watermarkText: e.target.value },
-                              }))
-                            }
-                            placeholder="2026"
-                            className="w-full px-4 py-2.5 rounded-xl border border-slate-300 bg-white text-xs font-mono font-bold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#0f2347]"
-                          />
-                        </div>
-                      </div>
-
-                      {/* Awards Grid Repeater */}
-                      <div className="space-y-3 pt-2">
-                        <div className="flex items-center justify-between">
-                          <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
-                            Honors &amp; Awards Cards ({getSection("excellence_awards")?.items?.length || 0})
-                          </label>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              const curr = getSection("excellence_awards")?.items || [];
-                              updateSection("excellence_awards", () => ({
-                                items: [...curr, { category: "RECOGNITION", title: "NEW AWARD", year: "2026" }],
-                              }));
-                            }}
-                            className="inline-flex items-center gap-1 px-3 py-1.5 bg-[#0f2347] text-white rounded-lg text-xs font-semibold hover:bg-[#1a3a6b]"
-                          >
-                            <Plus size={12} /> Add Award Card
-                          </button>
-                        </div>
-
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                          {(getSection("excellence_awards")?.items || []).map((aw: any, idx: number) => (
-                            <div
-                              key={idx}
-                              className="p-3.5 bg-white rounded-xl border border-slate-200 space-y-2.5 shadow-sm"
-                            >
-                              <div className="flex items-center justify-between">
-                                <span className="text-[11px] font-bold text-[#E8542A] uppercase">
-                                  Award #{idx + 1}
-                                </span>
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    const curr = [...(getSection("excellence_awards")?.items || [])];
-                                    curr.splice(idx, 1);
-                                    updateSection("excellence_awards", () => ({ items: curr }));
-                                  }}
-                                  className="text-slate-400 hover:text-red-500 p-1 rounded-lg"
-                                  title="Remove Award"
-                                >
-                                  <Trash2 size={14} />
-                                </button>
-                              </div>
-
-                              <div className="space-y-2">
-                                <div>
-                                  <label className="block text-[10px] font-semibold text-slate-600 uppercase">
-                                    Category
-                                  </label>
-                                  <input
-                                    type="text"
-                                    value={aw.category || ""}
-                                    onChange={(e) => {
-                                      const curr = [...(getSection("excellence_awards")?.items || [])];
-                                      curr[idx] = { ...curr[idx], category: e.target.value };
-                                      updateSection("excellence_awards", () => ({ items: curr }));
-                                    }}
-                                    placeholder="OVERALL EXCELLENCE"
-                                    className="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white text-xs font-semibold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#0f2347]"
-                                  />
-                                </div>
-                                <div>
-                                  <label className="block text-[10px] font-semibold text-slate-600 uppercase">
-                                    Award Title
-                                  </label>
-                                  <input
-                                    type="text"
-                                    value={aw.title || ""}
-                                    onChange={(e) => {
-                                      const curr = [...(getSection("excellence_awards")?.items || [])];
-                                      curr[idx] = { ...curr[idx], title: e.target.value };
-                                      updateSection("excellence_awards", () => ({ items: curr }));
-                                    }}
-                                    placeholder="BEST NGO OF THE YEAR"
-                                    className="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white text-xs font-bold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#0f2347]"
-                                  />
-                                </div>
-                                <div>
-                                  <label className="block text-[10px] font-semibold text-slate-600 uppercase">
-                                    Year
-                                  </label>
-                                  <input
-                                    type="text"
-                                    value={aw.year || ""}
-                                    onChange={(e) => {
-                                      const curr = [...(getSection("excellence_awards")?.items || [])];
-                                      curr[idx] = { ...curr[idx], year: e.target.value };
-                                      updateSection("excellence_awards", () => ({ items: curr }));
-                                    }}
-                                    placeholder="2026"
-                                    className="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white text-xs font-mono font-bold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#0f2347]"
-                                  />
-                                </div>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Section 4: Integrity & Compliance */}
-                    <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-4">
-                      <div className="flex items-center justify-between">
-                        <h4 className="text-xs font-bold text-[#0f2347] uppercase tracking-wider flex items-center gap-2">
-                          <ShieldCheck size={14} className="text-[#E8542A]" />
-                          4. Integrity &amp; Compliance Section
-                        </h4>
-                        <span className="text-[10px] text-slate-400 font-semibold uppercase">Key: integrity_compliance</span>
-                      </div>
-
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                          <label className="block text-xs font-semibold text-slate-700 mb-1">
-                            Main Title
-                          </label>
-                          <input
-                            type="text"
-                            value={getSection("integrity_compliance")?.title ?? "INTEGRITY & COMPLIANCE"}
+                            value={getSection("integrity_compliance")?.description ?? ""}
                             onChange={(e) =>
                               updateSection("integrity_compliance", () => ({
-                                title: e.target.value,
+                                description: e.target.value,
                               }))
                             }
-                            placeholder="INTEGRITY & COMPLIANCE"
-                            className="w-full px-4 py-2.5 rounded-xl border border-slate-300 bg-white text-xs font-bold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#0f2347]"
+                            placeholder="At Seva India Foundation, trust isn't a promise—it's a practice..."
+                            className="w-full px-4 py-2.5 rounded-xl border border-slate-300 bg-white text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#0f2347] leading-relaxed"
                           />
                         </div>
 
-                        <div>
-                          <label className="block text-xs font-semibold text-slate-700 mb-1">
-                            Registered Office Title
-                          </label>
-                          <input
-                            type="text"
-                            value={getSection("integrity_compliance")?.extra?.officeTitle ?? "REGISTERED OFFICE"}
-                            onChange={(e) =>
-                              updateSection("integrity_compliance", (sec) => ({
-                                extra: { ...sec.extra, officeTitle: e.target.value },
-                              }))
-                            }
-                            placeholder="REGISTERED OFFICE"
-                            className="w-full px-4 py-2.5 rounded-xl border border-slate-300 bg-white text-xs font-bold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#0f2347]"
-                          />
-                        </div>
-                      </div>
-
-                      <div>
-                        <label className="block text-xs font-semibold text-slate-700 mb-1">
-                          Introductory Narrative
-                        </label>
-                        <textarea
-                          rows={2}
-                          value={getSection("integrity_compliance")?.description ?? ""}
-                          onChange={(e) =>
-                            updateSection("integrity_compliance", () => ({
-                              description: e.target.value,
-                            }))
-                          }
-                          placeholder="At Seva India Foundation, trust isn't a promise—it's a practice..."
-                          className="w-full px-4 py-2.5 rounded-xl border border-slate-300 bg-white text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#0f2347] leading-relaxed"
-                        />
-                      </div>
-
-                      {/* Percentage Allocations */}
-                      <div className="p-4 bg-white rounded-xl border border-slate-200 space-y-3">
-                        <span className="text-[11px] font-bold text-[#E8542A] uppercase block">
-                          Fund Allocation Progress Bars
-                        </span>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                          <div className="space-y-2">
-                            <div>
-                              <label className="block text-[11px] font-semibold text-slate-700 mb-1">
-                                Program Support Label
-                              </label>
-                              <input
-                                type="text"
-                                value={getSection("integrity_compliance")?.extra?.programSupportLabel ?? "DIRECT PROGRAM SUPPORT"}
-                                onChange={(e) =>
-                                  updateSection("integrity_compliance", (sec) => ({
-                                    extra: { ...sec.extra, programSupportLabel: e.target.value },
-                                  }))
-                                }
-                                placeholder="DIRECT PROGRAM SUPPORT"
-                                className="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white text-xs font-bold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#0f2347]"
-                              />
+                        {/* Percentage Allocations */}
+                        <div className="p-4 bg-white rounded-xl border border-slate-200 space-y-3">
+                          <span className="text-[11px] font-bold text-[#E8542A] uppercase block">
+                            Fund Allocation Progress Bars
+                          </span>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                              <div>
+                                <label className="block text-[11px] font-semibold text-slate-700 mb-1">
+                                  Program Support Label
+                                </label>
+                                <input
+                                  type="text"
+                                  value={getSection("integrity_compliance")?.extra?.programSupportLabel ?? "DIRECT PROGRAM SUPPORT"}
+                                  onChange={(e) =>
+                                    updateSection("integrity_compliance", (sec) => ({
+                                      extra: { ...sec.extra, programSupportLabel: e.target.value },
+                                    }))
+                                  }
+                                  placeholder="DIRECT PROGRAM SUPPORT"
+                                  className="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white text-xs font-bold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#0f2347]"
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-[11px] font-semibold text-slate-700 mb-1">
+                                  Program Support % (e.g. 90%)
+                                </label>
+                                <input
+                                  type="text"
+                                  value={getSection("integrity_compliance")?.extra?.programSupportPercent ?? "90%"}
+                                  onChange={(e) =>
+                                    updateSection("integrity_compliance", (sec) => ({
+                                      extra: { ...sec.extra, programSupportPercent: e.target.value },
+                                    }))
+                                  }
+                                  placeholder="90%"
+                                  className="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white text-xs font-mono font-bold text-amber-600 placeholder:text-slate-400 focus:outline-none focus:border-[#0f2347]"
+                                />
+                              </div>
                             </div>
-                            <div>
-                              <label className="block text-[11px] font-semibold text-slate-700 mb-1">
-                                Program Support % (e.g. 90%)
-                              </label>
-                              <input
-                                type="text"
-                                value={getSection("integrity_compliance")?.extra?.programSupportPercent ?? "90%"}
-                                onChange={(e) =>
-                                  updateSection("integrity_compliance", (sec) => ({
-                                    extra: { ...sec.extra, programSupportPercent: e.target.value },
-                                  }))
-                                }
-                                placeholder="90%"
-                                className="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white text-xs font-mono font-bold text-amber-600 placeholder:text-slate-400 focus:outline-none focus:border-[#0f2347]"
-                              />
+
+                            <div className="space-y-2">
+                              <div>
+                                <label className="block text-[11px] font-semibold text-slate-700 mb-1">
+                                  Admin &amp; Fundraising Label
+                                </label>
+                                <input
+                                  type="text"
+                                  value={getSection("integrity_compliance")?.extra?.adminLabel ?? "FUNDRAISING & ADMIN"}
+                                  onChange={(e) =>
+                                    updateSection("integrity_compliance", (sec) => ({
+                                      extra: { ...sec.extra, adminLabel: e.target.value },
+                                    }))
+                                  }
+                                  placeholder="FUNDRAISING & ADMIN"
+                                  className="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white text-xs font-bold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#0f2347]"
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-[11px] font-semibold text-slate-700 mb-1">
+                                  Admin &amp; Fundraising % (e.g. 10%)
+                                </label>
+                                <input
+                                  type="text"
+                                  value={getSection("integrity_compliance")?.extra?.adminPercent ?? "10%"}
+                                  onChange={(e) =>
+                                    updateSection("integrity_compliance", (sec) => ({
+                                      extra: { ...sec.extra, adminPercent: e.target.value },
+                                    }))
+                                  }
+                                  placeholder="10%"
+                                  className="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white text-xs font-mono font-bold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#0f2347]"
+                                />
+                              </div>
                             </div>
                           </div>
+                        </div>
 
-                          <div className="space-y-2">
+                        {/* Government IDs */}
+                        <div className="p-4 bg-white rounded-xl border border-slate-200 space-y-3">
+                          <span className="text-[11px] font-bold text-[#E8542A] uppercase block">
+                            Legal &amp; Regulatory Numbers
+                          </span>
+                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                             <div>
                               <label className="block text-[11px] font-semibold text-slate-700 mb-1">
-                                Admin &amp; Fundraising Label
+                                NGO Darpan ID
                               </label>
                               <input
                                 type="text"
-                                value={getSection("integrity_compliance")?.extra?.adminLabel ?? "FUNDRAISING & ADMIN"}
+                                value={getSection("integrity_compliance")?.extra?.darpanId ?? "UK/2026/0993905"}
                                 onChange={(e) =>
                                   updateSection("integrity_compliance", (sec) => ({
-                                    extra: { ...sec.extra, adminLabel: e.target.value },
+                                    extra: { ...sec.extra, darpanId: e.target.value },
                                   }))
                                 }
-                                placeholder="FUNDRAISING & ADMIN"
-                                className="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white text-xs font-bold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#0f2347]"
-                              />
-                            </div>
-                            <div>
-                              <label className="block text-[11px] font-semibold text-slate-700 mb-1">
-                                Admin &amp; Fundraising % (e.g. 10%)
-                              </label>
-                              <input
-                                type="text"
-                                value={getSection("integrity_compliance")?.extra?.adminPercent ?? "10%"}
-                                onChange={(e) =>
-                                  updateSection("integrity_compliance", (sec) => ({
-                                    extra: { ...sec.extra, adminPercent: e.target.value },
-                                  }))
-                                }
-                                placeholder="10%"
+                                placeholder="UK/2026/0993905"
                                 className="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white text-xs font-mono font-bold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#0f2347]"
                               />
                             </div>
+
+                            <div>
+                              <label className="block text-[11px] font-semibold text-slate-700 mb-1">
+                                CIN Number
+                              </label>
+                              <input
+                                type="text"
+                                value={getSection("integrity_compliance")?.extra?.cin ?? "U88900UT2026NPL020825"}
+                                onChange={(e) =>
+                                  updateSection("integrity_compliance", (sec) => ({
+                                    extra: { ...sec.extra, cin: e.target.value },
+                                  }))
+                                }
+                                placeholder="U88900UT2026NPL020825"
+                                className="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white text-xs font-mono font-bold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#0f2347]"
+                              />
+                            </div>
+
+                            <div>
+                              <label className="block text-[11px] font-semibold text-slate-700 mb-1">
+                                Section 8 License
+                              </label>
+                              <input
+                                type="text"
+                                value={getSection("integrity_compliance")?.extra?.licenseNo ?? "No. 179973"}
+                                onChange={(e) =>
+                                  updateSection("integrity_compliance", (sec) => ({
+                                    extra: { ...sec.extra, licenseNo: e.target.value },
+                                  }))
+                                }
+                                placeholder="No. 179973"
+                                className="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white text-xs font-mono font-bold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#0f2347]"
+                              />
+                            </div>
+
+                            <div>
+                              <label className="block text-[11px] font-semibold text-slate-700 mb-1">
+                                PAN Number
+                              </label>
+                              <input
+                                type="text"
+                                value={getSection("integrity_compliance")?.extra?.panNumber ?? "ABSCS7219M"}
+                                onChange={(e) =>
+                                  updateSection("integrity_compliance", (sec) => ({
+                                    extra: { ...sec.extra, panNumber: e.target.value },
+                                  }))
+                                }
+                                placeholder="ABSCS7219M"
+                                className="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white text-xs font-mono font-bold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#0f2347]"
+                              />
+                            </div>
+
+                            <div>
+                              <label className="block text-[11px] font-semibold text-slate-700 mb-1">
+                                TAN Number
+                              </label>
+                              <input
+                                type="text"
+                                value={getSection("integrity_compliance")?.extra?.tanNumber ?? "MRTS38379F"}
+                                onChange={(e) =>
+                                  updateSection("integrity_compliance", (sec) => ({
+                                    extra: { ...sec.extra, tanNumber: e.target.value },
+                                  }))
+                                }
+                                placeholder="MRTS38379F"
+                                className="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white text-xs font-mono font-bold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#0f2347]"
+                              />
+                            </div>
+
+                            <div>
+                              <label className="block text-[11px] font-semibold text-slate-700 mb-1">
+                                Compliance Documents Link
+                              </label>
+                              <input
+                                type="text"
+                                value={getSection("integrity_compliance")?.extra?.complianceDocLink ?? "/about"}
+                                onChange={(e) =>
+                                  updateSection("integrity_compliance", (sec) => ({
+                                    extra: { ...sec.extra, complianceDocLink: e.target.value },
+                                  }))
+                                }
+                                placeholder="/about"
+                                className="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white text-xs font-medium text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#0f2347]"
+                              />
+                            </div>
                           </div>
                         </div>
-                      </div>
 
-                      {/* Government IDs */}
-                      <div className="p-4 bg-white rounded-xl border border-slate-200 space-y-3">
-                        <span className="text-[11px] font-bold text-[#E8542A] uppercase block">
-                          Legal &amp; Regulatory Numbers
-                        </span>
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                          <div>
-                            <label className="block text-[11px] font-semibold text-slate-700 mb-1">
-                              NGO Darpan ID
-                            </label>
-                            <input
-                              type="text"
-                              value={getSection("integrity_compliance")?.extra?.darpanId ?? "UK/2026/0993905"}
-                              onChange={(e) =>
-                                updateSection("integrity_compliance", (sec) => ({
-                                  extra: { ...sec.extra, darpanId: e.target.value },
-                                }))
-                              }
-                              placeholder="UK/2026/0993905"
-                              className="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white text-xs font-mono font-bold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#0f2347]"
-                            />
-                          </div>
-
-                          <div>
-                            <label className="block text-[11px] font-semibold text-slate-700 mb-1">
-                              CIN Number
-                            </label>
-                            <input
-                              type="text"
-                              value={getSection("integrity_compliance")?.extra?.cin ?? "U88900UT2026NPL020825"}
-                              onChange={(e) =>
-                                updateSection("integrity_compliance", (sec) => ({
-                                  extra: { ...sec.extra, cin: e.target.value },
-                                }))
-                              }
-                              placeholder="U88900UT2026NPL020825"
-                              className="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white text-xs font-mono font-bold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#0f2347]"
-                            />
-                          </div>
-
-                          <div>
-                            <label className="block text-[11px] font-semibold text-slate-700 mb-1">
-                              Section 8 License
-                            </label>
-                            <input
-                              type="text"
-                              value={getSection("integrity_compliance")?.extra?.licenseNo ?? "No. 179973"}
-                              onChange={(e) =>
-                                updateSection("integrity_compliance", (sec) => ({
-                                  extra: { ...sec.extra, licenseNo: e.target.value },
-                                }))
-                              }
-                              placeholder="No. 179973"
-                              className="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white text-xs font-mono font-bold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#0f2347]"
-                            />
-                          </div>
-
-                          <div>
-                            <label className="block text-[11px] font-semibold text-slate-700 mb-1">
-                              PAN Number
-                            </label>
-                            <input
-                              type="text"
-                              value={getSection("integrity_compliance")?.extra?.panNumber ?? "ABSCS7219M"}
-                              onChange={(e) =>
-                                updateSection("integrity_compliance", (sec) => ({
-                                  extra: { ...sec.extra, panNumber: e.target.value },
-                                }))
-                              }
-                              placeholder="ABSCS7219M"
-                              className="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white text-xs font-mono font-bold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#0f2347]"
-                            />
-                          </div>
-
-                          <div>
-                            <label className="block text-[11px] font-semibold text-slate-700 mb-1">
-                              TAN Number
-                            </label>
-                            <input
-                              type="text"
-                              value={getSection("integrity_compliance")?.extra?.tanNumber ?? "MRTS38379F"}
-                              onChange={(e) =>
-                                updateSection("integrity_compliance", (sec) => ({
-                                  extra: { ...sec.extra, tanNumber: e.target.value },
-                                }))
-                              }
-                              placeholder="MRTS38379F"
-                              className="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white text-xs font-mono font-bold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#0f2347]"
-                            />
-                          </div>
-
-                          <div>
-                            <label className="block text-[11px] font-semibold text-slate-700 mb-1">
-                              Compliance Documents Link
-                            </label>
-                            <input
-                              type="text"
-                              value={getSection("integrity_compliance")?.extra?.complianceDocLink ?? "/about"}
-                              onChange={(e) =>
-                                updateSection("integrity_compliance", (sec) => ({
-                                  extra: { ...sec.extra, complianceDocLink: e.target.value },
-                                }))
-                              }
-                              placeholder="/about"
-                              className="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white text-xs font-medium text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#0f2347]"
-                            />
-                          </div>
+                        {/* Registered Office Address */}
+                        <div className="bg-white p-4 rounded-xl border border-slate-200">
+                          <label className="block text-xs font-semibold text-slate-700 mb-1">
+                            Registered Office Full Physical Address
+                          </label>
+                          <textarea
+                            rows={2}
+                            value={getSection("integrity_compliance")?.extra?.officeAddress ?? ""}
+                            onChange={(e) =>
+                              updateSection("integrity_compliance", (sec) => ({
+                                extra: { ...sec.extra, officeAddress: e.target.value },
+                              }))
+                            }
+                            placeholder="20, Sahastradhara Road, Rishinagar Upper Adhoiwala, Dehradun, Uttarakhand - 248001"
+                            className="w-full px-4 py-2.5 rounded-xl border border-slate-300 bg-white text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#0f2347] leading-relaxed"
+                          />
                         </div>
-                      </div>
 
-                      {/* Registered Office Address */}
-                      <div>
-                        <label className="block text-xs font-semibold text-slate-700 mb-1">
-                          Registered Office Full Physical Address
-                        </label>
-                        <textarea
-                          rows={2}
-                          value={getSection("integrity_compliance")?.extra?.officeAddress ?? ""}
-                          onChange={(e) =>
-                            updateSection("integrity_compliance", (sec) => ({
-                              extra: { ...sec.extra, officeAddress: e.target.value },
-                            }))
-                          }
-                          placeholder="20, Sahastradhara Road, Rishinagar Upper Adhoiwala, Dehradun, Uttarakhand - 248001"
-                          className="w-full px-4 py-2.5 rounded-xl border border-slate-300 bg-white text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#0f2347] leading-relaxed"
-                        />
+                        {/* Bottom Card Action Footer */}
+                        <div className="pt-2 flex items-center justify-between border-t border-slate-200">
+                          <span className="text-xs text-slate-400">
+                            Saves the legal and compliance credentials directly.
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => handleSaveSection("integrity_compliance", "Integrity & Compliance")}
+                            disabled={savingSectionKey === "integrity_compliance"}
+                            className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#0f2347] hover:bg-[#1a3a6b] text-white rounded-xl text-xs font-bold transition-all shadow-sm"
+                          >
+                            {savingSectionKey === "integrity_compliance" ? (
+                              <>
+                                <Loader2 size={13} className="animate-spin" /> Saving...
+                              </>
+                            ) : savedSectionKey === "integrity_compliance" ? (
+                              <>
+                                <CheckCircle2 size={14} className="text-emerald-400" /> Saved!
+                              </>
+                            ) : (
+                              <>
+                                <Save size={13} /> Save Compliance Section
+                              </>
+                            )}
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>

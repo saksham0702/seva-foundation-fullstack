@@ -1,4 +1,4 @@
-import { CmsPageModel, ICmsPage } from "./cms.model";
+import { CmsPageModel, ICmsPage, ICmsSection } from "./cms.model";
 
 const DEFAULT_PAGES: Partial<ICmsPage>[] = [
   {
@@ -7,6 +7,41 @@ const DEFAULT_PAGES: Partial<ICmsPage>[] = [
     title: "Seva India Foundation - Transforming Lives at Grassroots",
     subtitle: "A registered Section 8 NGO empowering marginalized families across Uttarakhand and India.",
     sections: [
+      {
+        key: "hero",
+        name: "Hero Section",
+        title: "Give with confidence. See the impact.",
+        subtitle: "India's Most Trusted Crowdfunding Platform",
+        description: "Seva India Foundation connects you directly to verified campaigns in Uttarakhand. Every rupee tracked. Every life changed.",
+        extra: {
+          badgeText: "India's Most Trusted Crowdfunding Platform",
+          headlinePart1: "Give with",
+          headlineHighlight1: "confidence",
+          headlinePart2: "See the",
+          headlineHighlight2: "impact",
+          primaryCtaText: "Browse Campaigns",
+          primaryCtaLink: "/campaigns",
+          secondaryCtaText: "",
+          secondaryCtaLink: "",
+          stat1Value: "₹4.2Cr+",
+          stat1Label: "Raised",
+          stat2Value: "38,000+",
+          stat2Label: "Lives Impacted",
+          stat3Value: "120+",
+          stat3Label: "Campaigns",
+          trustSignals: [
+            { label: "12A & 80G Certified", sub: "Tax benefits on every donation" },
+            { label: "100% Transparent", sub: "Track where your money goes" },
+            { label: "Dehradun Based", sub: "Serving Uttarakhand since 2012" }
+          ],
+          bottomTrustItems: [
+            "Verified by Seva India Foundation",
+            "Zero platform fees on donations",
+            "12,000+ verified donors",
+            "80G tax benefit on every donation"
+          ]
+        }
+      },
       {
         key: "featured_in",
         name: "Featured In Media Marquee",
@@ -534,7 +569,11 @@ const seedDefaultsIfEmpty = async () => {
       for (const defSec of page.sections) {
         const found = existingSections.some((s) => s.key === defSec.key);
         if (!found) {
-          existingSections.push(defSec as any);
+          if (defSec.key === "hero") {
+            existingSections.unshift(defSec as any);
+          } else {
+            existingSections.push(defSec as any);
+          }
           modified = true;
         }
       }
@@ -568,7 +607,11 @@ const getPageBySlug = async (slug: string) => {
       for (const defSec of defaultPage.sections) {
         const found = existingSections.some((s) => s.key === defSec.key);
         if (!found) {
-          existingSections.push(defSec as any);
+          if (defSec.key === "hero") {
+            existingSections.unshift(defSec as any);
+          } else {
+            existingSections.push(defSec as any);
+          }
           modified = true;
         }
       }
@@ -603,6 +646,60 @@ const savePage = async (slug: string, payload: Partial<ICmsPage>, userId?: strin
   return result;
 };
 
+const saveSection = async (
+  slug: string,
+  sectionKey: string,
+  sectionPayload: Partial<ICmsSection>,
+  userId?: string
+) => {
+  const cleanSlug = slug.toLowerCase().trim();
+  let page = await CmsPageModel.findOne({ pageSlug: cleanSlug, isDeleted: false });
+  if (!page) {
+    page = await getPageBySlug(cleanSlug);
+  }
+  if (!page) {
+    return null;
+  }
+
+  const cleanKey = sectionKey.toLowerCase().trim();
+  const existingSections: any[] = page.sections || [];
+  const idx = existingSections.findIndex(
+    (s: any) => (s.key || "").toLowerCase() === cleanKey
+  );
+
+  const prevSec = idx >= 0 ? (existingSections[idx]?.toObject?.() || existingSections[idx]) : {};
+
+  const mergedSection: any = {
+    ...prevSec,
+    ...sectionPayload,
+    key: prevSec.key || sectionKey || cleanKey,
+    extra: {
+      ...(prevSec.extra || {}),
+      ...(sectionPayload.extra || {}),
+    },
+  };
+
+  if (idx >= 0) {
+    existingSections[idx] = mergedSection;
+  } else {
+    if (cleanKey === "hero") {
+      existingSections.unshift(mergedSection);
+    } else {
+      existingSections.push(mergedSection);
+    }
+  }
+
+  page.sections = existingSections;
+  page.markModified("sections");
+
+  if (userId) {
+    page.updatedBy = userId as any;
+  }
+
+  await page.save();
+  return page;
+};
+
 const deleteSection = async (slug: string, sectionKey: string, userId?: string) => {
   const cleanSlug = slug.toLowerCase().trim();
   const page = await CmsPageModel.findOne({ pageSlug: cleanSlug, isDeleted: false });
@@ -634,6 +731,7 @@ export const CmsService = {
   getAllPages,
   getPageBySlug,
   savePage,
+  saveSection,
   deleteSection,
   deletePage,
 };

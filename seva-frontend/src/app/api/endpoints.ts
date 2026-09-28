@@ -135,6 +135,7 @@ export const endpoint = {
     getPages: "/cms/pages",
     getPage: (slug: string) => `/cms/pages/${slug}`,
     savePage: (slug: string) => `/cms/pages/${slug}`,
+    saveSection: (slug: string, sectionKey: string) => `/cms/pages/${slug}/sections/${sectionKey}`,
     deletePage: (slug: string) => `/cms/pages/${slug}`,
     deleteSection: (slug: string, sectionKey: string) => `/cms/pages/${slug}/sections/${sectionKey}`,
     uploadImage: "/cms/upload-image",

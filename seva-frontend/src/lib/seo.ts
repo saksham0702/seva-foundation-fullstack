@@ -13,6 +13,8 @@ interface SeoOptions {
   keywords?: string[];
   canonicalPath?: string;
   ogImage?: string;
+  ogImageWidth?: number;
+  ogImageHeight?: number;
   ogType?: "website" | "article";
   publishedTime?: string;
   modifiedTime?: string;
@@ -36,6 +38,8 @@ export function constructMetadata({
   ],
   canonicalPath = "",
   ogImage = DEFAULT_OG_IMAGE,
+  ogImageWidth = 1200,
+  ogImageHeight = 630,
   ogType = "website",
   publishedTime,
   modifiedTime,
@@ -50,8 +54,8 @@ export function constructMetadata({
 
   const imageObj = {
     url: ogImage,
-    width: 1200,
-    height: 630,
+    width: ogImageWidth,
+    height: ogImageHeight,
     alt: title || SITE_NAME,
   };
 

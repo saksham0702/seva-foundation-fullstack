@@ -45,6 +45,8 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       `Support the ${campaign.name} campaign by Seva India Foundation.`,
     canonicalPath: `/campaigns/${campaign.slug}`,
     ogImage: ogImg,
+    ogImageWidth: 1200,
+    ogImageHeight: 650,
     keywords: [
       campaign.name,
       "Donate Online",

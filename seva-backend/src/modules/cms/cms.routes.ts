@@ -27,6 +27,7 @@ router.post("/upload-image", ...guard, uploadCmsImage.single("image"), CmsContro
 router.post("/upload-media", ...guard, uploadCmsMedia.single("file"), CmsController.uploadMedia);
 router.post("/pages/:slug", ...guard, CmsController.savePage);
 router.put("/pages/:slug", ...guard, CmsController.savePage);
+router.put("/pages/:slug/sections/:sectionKey", ...guard, CmsController.saveSection);
 router.delete("/pages/:slug/sections/:sectionKey", ...guard, CmsController.deleteSection);
 router.delete("/pages/:slug", ...guard, CmsController.deletePage);
 

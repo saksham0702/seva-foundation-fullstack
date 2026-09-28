@@ -62,6 +62,18 @@ export const saveCmsPage = async (
   return response.data?.data || response.data;
 };
 
+export const saveCmsSection = async (
+  slug: string,
+  sectionKey: string,
+  payload: Partial<CmsSection>
+): Promise<CmsPage> => {
+  const response = await axiosInstance.put(
+    endpoint.cms.saveSection(slug, sectionKey),
+    payload
+  );
+  return response.data?.data || response.data;
+};
+
 export const deleteCmsPage = async (slug: string): Promise<void> => {
   await axiosInstance.delete(endpoint.cms.deletePage(slug));
 };

@@ -38,6 +38,7 @@ export default async function LandingPage() {
 
   const initiatives = (ourWorkCms?.sections as InitiativeData[]) || [];
 
+  const heroSection = homeCms?.sections?.find((s) => s.key === "hero");
   const featuredInSection = homeCms?.sections?.find((s) => s.key === "featured_in");
   const patronSection = homeCms?.sections?.find((s) => s.key === "patron_samiti");
   const excellenceSection = homeCms?.sections?.find((s) => s.key === "excellence_awards");
@@ -46,7 +47,7 @@ export default async function LandingPage() {
   return (
     <>
       <JsonLd data={orgSchema} />
-      <HeroSection />
+      <HeroSection section={heroSection} initialCampaigns={campaigns} />
 
       {/* 1. Featured In Marquee */}
       <FeaturedInMarquee section={featuredInSection} />

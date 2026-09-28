@@ -129,13 +129,36 @@ const deleteSection = asyncHandler(async (req: Request, res: Response) => {
   });
 });
 
+const saveSection = asyncHandler(async (req: Request, res: Response) => {
+  const { slug, sectionKey } = req.params as { slug: string; sectionKey: string };
+  const adminId = (req as any).user?.userId;
+  const result = await CmsService.saveSection(slug, sectionKey, req.body, adminId);
+
+  if (!result) {
+    return sendResponse(res, {
+      statusCode: 404,
+      success: false,
+      message: "Page not found",
+    });
+  }
+
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: `Section "${sectionKey}" saved successfully`,
+    data: result,
+  });
+});
+
 export const CmsController = {
   getAllPages,
   getPageBySlug,
   savePage,
+  saveSection,
   deleteSection,
   deletePage,
   uploadImage,
   uploadMedia,
 };
+
 

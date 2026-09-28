@@ -88,8 +88,45 @@ const fmt = (n: number) =>
     ? `₹${(n / 100000).toFixed(1)}L`
     : `₹${n.toLocaleString("en-IN")}`;
 
-export default function HeroSection() {
-  const [campaignsList, setCampaignsList] = useState<any[]>([]);
+interface HeroSectionProps {
+  section?: any;
+  initialCampaigns?: any[];
+}
+
+export default function HeroSection({ section, initialCampaigns }: HeroSectionProps) {
+  // Helper to format initial campaigns if provided
+  const parseCampaign = (c: any) => ({
+    id: c._id || c.id,
+    slug: c.slug,
+    image: c.images?.[0] || "",
+    category: typeof c.category === "object" ? (c.category as any)?.name : (c.category || "General"),
+    title: c.name || c.title,
+    raised: c.raisedAmount ?? c.raised ?? 0,
+    goal: c.goal || 100000,
+    donors: c.donorCount ?? c.donors ?? 0,
+    daysLeft: c.endDate
+      ? Math.max(1, Math.ceil((new Date(c.endDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
+      : 30,
+    urgent: c.urgent || false,
+    location: c.location || "Uttarakhand, India",
+  });
+
+  const [campaignsList, setCampaignsList] = useState<any[]>(() => {
+    if (Array.isArray(initialCampaigns) && initialCampaigns.length > 0) {
+      const activeOnly = initialCampaigns
+        .filter((c) => !c.isDeleted && c.status !== "completed" && (c.status === "active" || !c.status))
+        .sort((a, b) => {
+          const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+          const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+          return dateB - dateA;
+        })
+        .slice(0, 3)
+        .map(parseCampaign);
+      if (activeOnly.length > 0) return activeOnly;
+    }
+    return [];
+  });
+
   const [current, setCurrent] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const [hoveredCard, setHoveredCard] = useState<number | null>(null);
@@ -108,27 +145,13 @@ export default function HeroSection() {
               return dateB - dateA;
             })
             .slice(0, 3)
-            .map((c) => ({
-              id: c._id,
-              slug: c.slug,
-              image: c.images?.[0] || "",
-              category: typeof c.category === "object" ? (c.category as any)?.name : "General",
-              title: c.name,
-              raised: c.raisedAmount || 0,
-              goal: c.goal || 100000,
-              donors: c.donorCount || 0,
-              daysLeft: c.endDate
-                ? Math.max(1, Math.ceil((new Date(c.endDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
-                : 30,
-              urgent: c.urgent || false,
-              location: c.location || "Uttarakhand, India",
-            }));
+            .map(parseCampaign);
           if (activeOnly.length > 0) {
             setCampaignsList(activeOnly);
           }
         }
       } catch (err) {
-        // Fallback to DEFAULT_HERO_CAMPAIGNS
+        // Fallback to initial or DEFAULT_HERO_CAMPAIGNS
       }
     })();
     return () => {
@@ -154,6 +177,71 @@ export default function HeroSection() {
     Math.round(((campaign.raised || 0) / (campaign.goal || 1)) * 100),
   );
 
+  // ── Dynamic CMS Content & Fallbacks ──────────────────────────────────────
+  const badgeText =
+    section?.extra?.badgeText ||
+    section?.subtitle ||
+    "India's Most Trusted Crowdfunding Platform";
+
+  const headlinePart1 = section?.extra?.headlinePart1 ?? "Give with";
+  const headlineHighlight1 = section?.extra?.headlineHighlight1 ?? "confidence";
+  const headlinePart2 = section?.extra?.headlinePart2 ?? "See the";
+  const headlineHighlight2 = section?.extra?.headlineHighlight2 ?? "impact";
+  const customTitle = section?.title;
+
+  const description =
+    section?.description ||
+    "Seva India Foundation connects you directly to verified campaigns in Uttarakhand. Every rupee tracked. Every life changed.";
+
+  // Trust signals array from CMS or default
+  const rawSignals: Array<{ label: string; sub: string; icon?: string }> =
+    Array.isArray(section?.extra?.trustSignals) && section.extra.trustSignals.length > 0
+      ? section.extra.trustSignals
+      : [
+          {
+            label: "12A & 80G Certified",
+            sub: "Tax benefits on every donation",
+          },
+          {
+            label: "100% Transparent",
+            sub: "Track where your money goes",
+          },
+          {
+            label: "Dehradun Based",
+            sub: "Serving Uttarakhand since 2012",
+          },
+        ];
+
+  const getSignalIcon = (idx: number, iconKey?: string) => {
+    const key = (iconKey || "").toLowerCase();
+    if (key.includes("shield") || key.includes("cert") || key === "shield") return ShieldCheck;
+    if (key.includes("trend") || key.includes("transp") || key === "trend") return TrendingUp;
+    if (key.includes("map") || key.includes("loc") || key === "location") return MapPin;
+    if (key.includes("heart")) return Heart;
+    if (key.includes("award")) return Award;
+    if (key.includes("user")) return Users;
+    if (key.includes("check")) return ShieldCheck;
+    if (key.includes("sparkle") || key.includes("star")) return Sparkles;
+    if (idx === 0) return ShieldCheck;
+    if (idx === 1) return TrendingUp;
+    if (idx === 2) return MapPin;
+    return ShieldCheck;
+  };
+
+  // CTA buttons
+  const primaryCtaText = section?.extra?.primaryCtaText || "Browse Campaigns";
+  const primaryCtaLink = section?.extra?.primaryCtaLink || "/campaigns";
+  const secondaryCtaText = section?.extra?.secondaryCtaText || "";
+  const secondaryCtaLink = section?.extra?.secondaryCtaLink || "";
+
+  // Live stats ticker
+  const stat1Value = section?.extra?.stat1Value || "₹4.2Cr+";
+  const stat1Label = section?.extra?.stat1Label || "Raised";
+  const stat2Value = section?.extra?.stat2Value || "38,000+";
+  const stat2Label = section?.extra?.stat2Label || "Lives Impacted";
+  const stat3Value = section?.extra?.stat3Value || "120+";
+  const stat3Label = section?.extra?.stat3Label || "Campaigns";
+
   return (
     <section className="relative w-full bg-[#0a1628] overflow-hidden">
       {/* ── Background ambient glow ── */}
@@ -168,84 +256,93 @@ export default function HeroSection() {
             <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/5 backdrop-blur-sm border border-white/10 rounded-full">
               <Sparkles size={14} className="text-[#E8542A]" />
               <span className="text-xs font-semibold text-white/80 tracking-wide">
-                India's Most Trusted Crowdfunding Platform
+                {badgeText}
               </span>
             </div>
 
             {/* Headline */}
             <div>
-              <h1 className="text-4xl sm:text-5xl lg:text-[3.4rem] font-semibold text-white leading-[1.1] mb-5">
-                Give with <span className="text-[#E8542A]">confidence</span>.
-                <br />
-                See the <span className="text-[#E8542A]">impact</span>.
-              </h1>
+              {customTitle && (!headlinePart1 && !headlineHighlight1) ? (
+                <h1 className="text-4xl sm:text-5xl lg:text-[3.4rem] font-semibold text-white leading-[1.1] mb-5">
+                  {customTitle}
+                </h1>
+              ) : (
+                <h1 className="text-4xl sm:text-5xl lg:text-[3.4rem] font-semibold text-white leading-[1.1] mb-5">
+                  {headlinePart1} <span className="text-[#E8542A]">{headlineHighlight1}</span>.
+                  <br />
+                  {headlinePart2} <span className="text-[#E8542A]">{headlineHighlight2}</span>.
+                </h1>
+              )}
               <p className="text-base sm:text-lg text-white/50 leading-relaxed max-w-md">
-                Seva India Foundation connects you directly to verified
-                campaigns in Uttarakhand. Every rupee tracked. Every life
-                changed.
+                {description}
               </p>
             </div>
 
-            {/* Trust signals */}
-            <div className="flex flex-wrap gap-3">
-              {TRUST_SIGNALS.map((signal, i) => (
-                <div
-                  key={i}
-                  className="flex items-center gap-2.5 px-4 py-3 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 transition-colors cursor-default"
-                >
-                  <signal.icon size={18} className="text-[#E8542A]" />
-                  <div>
-                    <p className="text-xs font-bold text-white">
-                      {signal.label}
-                    </p>
-                    <p className="text-[10px] text-white/40">{signal.sub}</p>
+            {/* Trust signals / Highlights (max 4, 2x2 grid layout) */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-lg">
+              {rawSignals.slice(0, 4).map((signal, i) => {
+                const IconComponent = getSignalIcon(i, signal.icon);
+                return (
+                  <div
+                    key={i}
+                    className="flex items-center gap-3 px-4 py-3 bg-white/5 border border-white/10 rounded-2xl hover:bg-white/10 hover:border-white/20 transition-all cursor-default shadow-sm"
+                  >
+                    <IconComponent size={20} className="text-[#E8542A] flex-shrink-0" />
+                    <div className="min-w-0">
+                      <p className="text-xs font-bold text-white truncate">
+                        {signal.label}
+                      </p>
+                      <p className="text-[10px] text-white/50 truncate">{signal.sub}</p>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
             {/* CTAs */}
             <div className="flex flex-wrap items-center gap-4">
               <Link
-                href="/campaigns"
+                href={primaryCtaLink}
                 className="group inline-flex items-center gap-2 bg-[#E8542A] hover:bg-[#c9431d] text-white font-bold px-7 py-4 rounded-xl text-sm transition-all duration-200 shadow-lg shadow-[#E8542A]/25 hover:shadow-[#E8542A]/40"
               >
-                Browse Campaigns
+                {primaryCtaText}
                 <ArrowRight
                   size={16}
                   className="group-hover:translate-x-0.5 transition-transform"
                 />
               </Link>
-              {/* <Link
-                href="/donate"
-                className="inline-flex items-center gap-2 text-white/70 hover:text-white font-semibold text-sm transition-colors"
-              >
-                <Heart size={16} className="text-[#E8542A]" />
-                Start a Campaign
-                <ArrowUpRight size={14} />
-              </Link> */}
+              {secondaryCtaText && secondaryCtaLink && (
+                <Link
+                  href={secondaryCtaLink}
+                  className="inline-flex items-center gap-2 text-white/70 hover:text-white font-semibold text-sm transition-colors px-4 py-3 rounded-xl border border-white/10 hover:border-white/20 bg-white/5"
+                >
+                  <Heart size={16} className="text-[#E8542A]" />
+                  {secondaryCtaText}
+                  <ArrowUpRight size={14} />
+                </Link>
+              )}
             </div>
 
             {/* Live stats ticker */}
             <div className="flex items-center gap-6 pt-4 border-t border-white/10">
               <div>
-                <p className="text-2xl font-bold text-white">₹4.2Cr+</p>
+                <p className="text-2xl font-bold text-white">{stat1Value}</p>
                 <p className="text-[11px] text-white/40 uppercase tracking-wider">
-                  Raised
+                  {stat1Label}
                 </p>
               </div>
               <div className="w-px h-10 bg-white/10" />
               <div>
-                <p className="text-2xl font-bold text-white">38,000+</p>
+                <p className="text-2xl font-bold text-white">{stat2Value}</p>
                 <p className="text-[11px] text-white/40 uppercase tracking-wider">
-                  Lives Impacted
+                  {stat2Label}
                 </p>
               </div>
               <div className="w-px h-10 bg-white/10" />
               <div>
-                <p className="text-2xl font-bold text-white">120+</p>
+                <p className="text-2xl font-bold text-white">{stat3Value}</p>
                 <p className="text-[11px] text-white/40 uppercase tracking-wider">
-                  Campaigns
+                  {stat3Label}
                 </p>
               </div>
             </div>
@@ -454,22 +551,36 @@ export default function HeroSection() {
       <div className="border-t border-white/5">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
           <div className="flex flex-wrap items-center justify-center gap-8 sm:gap-12">
-            <div className="flex items-center gap-2 text-white/30 text-xs">
-              <ShieldCheck size={14} />
-              <span>Verified by Seva India Foundation</span>
-            </div>
-            <div className="flex items-center gap-2 text-white/30 text-xs">
-              <IndianRupee size={14} />
-              <span>Zero platform fees on donations</span>
-            </div>
-            <div className="flex items-center gap-2 text-white/30 text-xs">
-              <Users size={14} />
-              <span>12,000+ verified donors</span>
-            </div>
-            <div className="flex items-center gap-2 text-white/30 text-xs">
-              <Award size={14} />
-              <span>80G tax benefit on every donation</span>
-            </div>
+            {((Array.isArray(section?.extra?.bottomTrustItems) && section.extra.bottomTrustItems.length > 0)
+              ? section.extra.bottomTrustItems
+              : [
+                  "Verified by Seva India Foundation",
+                  "Zero platform fees on donations",
+                  "12,000+ verified donors",
+                  "80G tax benefit on every donation",
+                ]
+            ).map((item: any, idx: number) => {
+              const text = typeof item === "string" ? item : (item.text || item.label || "");
+              const iconKey = typeof item === "object" ? (item.icon || "") : "";
+              const lower = (iconKey || text).toLowerCase();
+              let Icon = ShieldCheck;
+              if (lower.includes("rupee") || lower.includes("fee") || lower.includes("cost") || idx === 1) {
+                Icon = IndianRupee;
+              } else if (lower.includes("donor") || lower.includes("user") || lower.includes("people") || idx === 2) {
+                Icon = Users;
+              } else if (lower.includes("80g") || lower.includes("award") || lower.includes("tax") || idx === 3) {
+                Icon = Award;
+              } else if (lower.includes("shield") || idx === 0) {
+                Icon = ShieldCheck;
+              }
+
+              return (
+                <div key={idx} className="flex items-center gap-2 text-white/40 text-xs font-medium">
+                  <Icon size={14} className="text-[#E8542A]/80 flex-shrink-0" />
+                  <span>{text}</span>
+                </div>
+              );
+            })}
           </div>
         </div>
       </div>
