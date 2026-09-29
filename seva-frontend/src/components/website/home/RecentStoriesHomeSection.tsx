@@ -20,51 +20,6 @@ interface RecentStoriesHomeSectionProps {
   items?: CmsItem[];
 }
 
-const DEFAULT_STORIES: CmsItem[] = [
-  {
-    id: "1",
-    type: "blog",
-    title: "How Rural Bridge Schools are Transforming Lives in Uttarakhand",
-    slug: "rural-bridge-schools-transforming-lives",
-    status: "published",
-    category: "Education (Vidhya)",
-    publishedAt: "18 Sep 2026",
-    featuredImage: "https://images.unsplash.com/photo-1497633762265-9d179a990aa6?w=800&auto=format&fit=crop&q=80",
-    excerpt: "Discover how Seva Foundation is bridging the educational gap for over 10,000 children across remote Himalayan villages.",
-    content: "",
-    authorName: "Dr. Ananya Sharma",
-    readTime: "4 min read",
-  },
-  {
-    id: "2",
-    type: "blog",
-    title: "Mobile Medical Vans: Bringing Lifesaving Care to Mountain Hamlets",
-    slug: "mobile-medical-vans-mountain-hamlets",
-    status: "published",
-    category: "Healthcare (Arogya)",
-    publishedAt: "15 Sep 2026",
-    featuredImage: "https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?w=800&auto=format&fit=crop&q=80",
-    excerpt: "Our mobile healthcare teams travel through terrain to provide primary diagnosis, medicines, and free surgeries.",
-    content: "",
-    authorName: "SEVA Medical Team",
-    readTime: "3 min read",
-  },
-  {
-    id: "3",
-    type: "event",
-    title: "Annual Health & Eye Care Camp Dehradun 2026",
-    slug: "annual-health-eye-care-camp-2026",
-    status: "published",
-    category: "Healthcare (Arogya)",
-    publishedAt: "Upcoming Event",
-    featuredImage: "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=800&auto=format&fit=crop&q=80",
-    excerpt: "Join our comprehensive medical and eye care camp providing free consultations, spectacles, and medicine distribution.",
-    content: "",
-    eventDate: "30 Sep 2026",
-    eventLocation: "Community Center, Sahastradhara Road, Dehradun",
-  },
-];
-
 const TYPE_CONFIG: Record<
   string,
   { label: string; badge: string; icon: any; linkPrefix: string }
@@ -92,8 +47,11 @@ const TYPE_CONFIG: Record<
 export default function RecentStoriesHomeSection({
   items,
 }: RecentStoriesHomeSectionProps) {
-  const displayItems =
-    items && items.length > 0 ? items.slice(0, 3) : DEFAULT_STORIES;
+  if (!items || items.length === 0) {
+    return null;
+  }
+
+  const displayItems = items.slice(0, 3);
 
   return (
     <section className="bg-white py-16 sm:py-24 border-b border-slate-200/60 relative overflow-hidden">

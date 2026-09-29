@@ -4,6 +4,8 @@ import { RefreshCw, CheckCircle, ShieldCheck } from "lucide-react";
 import { getServerCmsPage } from "@/lib/server-api";
 import { constructMetadata } from "@/lib/seo";
 
+export const dynamic = "force-dynamic";
+
 export async function generateMetadata(): Promise<Metadata> {
   const pageData = await getServerCmsPage("refund-policy");
   const title = pageData?.seo?.metaTitle || pageData?.title || "Refund & Cancellation Policy";

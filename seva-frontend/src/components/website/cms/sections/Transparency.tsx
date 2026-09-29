@@ -3,15 +3,17 @@ import { Shield } from "lucide-react";
 import { ICmsSection } from "@/types/cms";
 
 export default function Transparency({ section }: { section?: ICmsSection }) {
-  const extra = section?.extra || {};
-  const darpanId = extra.darpanId || "UK/2026/0993905";
-  const cin = extra.cin || "U88900UT2026NPL020825";
-  const taxExemption = extra.taxExemption || "80G & 12A";
-  const legalStatus = extra.legalStatus || "Section 8 Company";
-  const title = section?.title || "100% TRANSPARENT & ACCOUNTABLE";
-  const description =
-    section?.description ||
-    "At Seva India Foundation, trust isn't a promise—it's a practice. As a registered Section 8 NGO, we protect your trust through meticulous accountability and radical transparency.";
+  if (!section) {
+    return null;
+  }
+
+  const extra = section.extra || {};
+  const darpanId = extra.darpanId || "";
+  const cin = extra.cin || "";
+  const taxExemption = extra.taxExemption || "";
+  const legalStatus = extra.legalStatus || "";
+  const title = section.title || "100% TRANSPARENT & ACCOUNTABLE";
+  const description = section.description || "";
 
   return (
     <section

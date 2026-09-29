@@ -10,15 +10,11 @@ function getImageUrl(path?: string | null): string | null {
   return `${base}${path.startsWith("/") ? "" : "/"}${path}`;
 }
 
-const DEFAULT_STORY = `In 2026, when we were just school students, something powerful and life-changing happened. We witnessed a heart-wrenching sight — a poor man, desperately trying to feed himself by eating scraps from a garbage heap. That moment changed us forever. We couldn't just stand by and watch the world go on as if nothing was wrong. In that instant, we made a promise to ourselves — we would never let another soul go hungry, no matter what.`;
+export default function SacredPromise({ section }: { section?: ICmsSection }) {
+  if (!section || (!section.description && !section.title)) {
+    return null;
+  }
 
-const DEFAULT_PARAS = [
-  `With a fire in our hearts and no resources to start with, we went from shop to shop in our city, humbly asking for donations — ration, money, anything that could help. Some people opened their hearts and gave generously, while others turned us away. But even rejection couldn't stop us. We took whatever we had, and with it, we fed those who were starving.`,
-  `From that day, we've never looked back. Since that first meal, we have nourished thousands of hungry souls, and the Seva India Foundation has grown beyond our wildest dreams. We are still here, still fighting to ensure that no one in our community has to suffer from hunger again.`,
-  `Seva India Foundation is a non-profit non-government organization (NGO) based in Uttarakhand, India. It was founded in 2026 with the aim of empowering underprivileged children, youth, and women through relevant education, innovative healthcare, and market-focused livelihood programs.`,
-];
-
-export default function SacredPromise({ section }: { section: ICmsSection }) {
   const sectionImage = getImageUrl(section.image);
   const year = section.extra?.year || "2026";
   const badgeText = section.extra?.badgeText || "Born of Student Empathy";
@@ -34,25 +30,12 @@ export default function SacredPromise({ section }: { section: ICmsSection }) {
         <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-start">
           {/* LEFT: Story */}
           <div className="space-y-6">
-            {customStory ? (
+            {customStory && (
               <div className="bg-gray-50 border-l-4 border-blue-500 rounded-r-xl p-6 md:p-8">
                 <p className="text-[#0B1120] italic leading-relaxed text-base md:text-lg whitespace-pre-wrap">
                   {customStory}
                 </p>
               </div>
-            ) : (
-              <>
-                <div className="bg-gray-50 border-l-4 border-blue-500 rounded-r-xl p-6 md:p-8">
-                  <p className="text-[#0B1120] italic leading-relaxed text-base md:text-lg">
-                    &ldquo;{DEFAULT_STORY}&rdquo;
-                  </p>
-                </div>
-                {DEFAULT_PARAS.map((para, i) => (
-                  <p key={i} className="text-[#4f46e5] leading-relaxed text-base md:text-lg">
-                    {para}
-                  </p>
-                ))}
-              </>
             )}
           </div>
 

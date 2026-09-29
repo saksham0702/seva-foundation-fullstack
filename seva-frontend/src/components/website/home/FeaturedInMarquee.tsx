@@ -2,18 +2,14 @@ import React from "react";
 import { ICmsSection } from "@/types/cms";
 import { getImageUrl } from "@/lib/image";
 
-const DEFAULT_MEDIA = [
-  { name: "THE BETTER INDIA", color: "#e11d48", logo: "" },
-  { name: "THE INDIAN EXPRESS", color: "#0f172a", logo: "" },
-  { name: "YOURSTORY", color: "#dc2626", logo: "" },
-  { name: "ANI", color: "#ea580c", logo: "" },
-  { name: "NDTV", color: "#ef4444", logo: "" },
-  { name: "TIMES OF INDIA", color: "#1e293b", logo: "" },
-];
-
 export default function FeaturedInMarquee({ section }: { section?: ICmsSection }) {
-  const title = section?.title || "Featured In";
-  const rawItems = section?.items && section.items.length > 0 ? section.items : DEFAULT_MEDIA;
+  // If section does not exist or has no items, do not render static mock data
+  if (!section || !section.items || section.items.length === 0) {
+    return null;
+  }
+
+  const title = section.title || "Featured In";
+  const rawItems = section.items;
 
   // Duplicate items for continuous seamless loop
   const marqueeItems = [...rawItems, ...rawItems, ...rawItems];

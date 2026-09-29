@@ -2,13 +2,13 @@
 import { Eye, Target } from "lucide-react";
 import { ICmsSection } from "@/types/cms";
 
-export default function VisionMission({ section }: { section: ICmsSection }) {
-  const visionText =
-    section?.extra?.vision ||
-    "Seva India Foundation envisions a Uttarakhand where poverty is eradicated, and every individual, especially women, senior citizens, and youth, is an empowered and respected member of society. We aspire to a state where inclusive development is deeply rooted, ensuring a dignified life for all citizens.";
-  const missionText =
-    section?.extra?.mission ||
-    "Aligned with the vision of a poverty-free India, Seva India Foundation is committed to empowering women, senior citizens, and youth. Our mission is to integrate these marginalized groups into the mainstream of society through comprehensive programs, education, vocational training, and support.";
+export default function VisionMission({ section }: { section?: ICmsSection }) {
+  if (!section || (!section.extra?.vision && !section.extra?.mission)) {
+    return null;
+  }
+
+  const visionText = section.extra?.vision || "";
+  const missionText = section.extra?.mission || "";
 
   return (
     <section className="py-20 lg:py-28 bg-[#0B1120]">

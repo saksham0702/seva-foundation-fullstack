@@ -3,6 +3,8 @@ import Header from "@/components/website/layout/Header";
 import Footer from "@/components/website/layout/Footer";
 import PageTransition from "@/components/website/layout/PageTransition";
 
+export const dynamic = "force-dynamic";
+
 export default function WebsiteLayout({
   children,
 }: {

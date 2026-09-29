@@ -5,7 +5,6 @@ import { Heart, Sparkles, ArrowRight } from "lucide-react";
 import Image from "next/image";
 import { getServerCmsPage } from "@/lib/server-api";
 import { InitiativeData } from "@/components/website/our-work/InitiativeCard";
-import { DEFAULT_INITIATIVES } from "@/components/website/our-work/initiativeDefaults";
 import { constructMetadata, getWebPageSchema } from "@/lib/seo";
 import { getImageUrl } from "@/lib/image";
 import OurWorkClient from "@/components/website/our-work/OurWorkClient";
@@ -41,13 +40,15 @@ export async function generateMetadata(): Promise<Metadata> {
   });
 }
 
+export const dynamic = "force-dynamic";
+
 export default async function OurWorkPage() {
   const cmsPage = await getServerCmsPage("our-work");
 
   const initiatives: InitiativeData[] =
-    cmsPage?.sections && cmsPage.sections.length > 0
+    cmsPage?.sections && Array.isArray(cmsPage.sections)
       ? (cmsPage.sections as InitiativeData[])
-      : DEFAULT_INITIATIVES;
+      : [];
 
   const pageTitle = cmsPage?.title || "OUR WORK & IMPACT";
   const pageSubtitle =

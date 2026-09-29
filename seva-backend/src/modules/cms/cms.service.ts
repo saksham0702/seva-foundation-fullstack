@@ -529,6 +529,8 @@ const DEFAULT_PAGES: Partial<ICmsPage>[] = [
         enabled: true,
         text: "80G Tax Exemption available on all donations. Claim 50% deduction on your income tax.",
       },
+      googleAnalyticsId: "",
+      googleConsoleCode: "",
     },
   },
   {
@@ -563,24 +565,6 @@ const seedDefaultsIfEmpty = async () => {
         isPublished: true,
         isDeleted: false,
       });
-    } else if (page.sections && page.sections.length > 0) {
-      let modified = false;
-      const existingSections = existing.sections || [];
-      for (const defSec of page.sections) {
-        const found = existingSections.some((s) => s.key === defSec.key);
-        if (!found) {
-          if (defSec.key === "hero") {
-            existingSections.unshift(defSec as any);
-          } else {
-            existingSections.push(defSec as any);
-          }
-          modified = true;
-        }
-      }
-      if (modified) {
-        existing.sections = existingSections;
-        await existing.save();
-      }
     }
   }
 };
@@ -596,29 +580,13 @@ const getPageBySlug = async (slug: string) => {
   const cleanSlug = slug.toLowerCase().trim();
   let page = await CmsPageModel.findOne({ pageSlug: cleanSlug, isDeleted: false });
   if (!page) {
-    await seedDefaultsIfEmpty();
-    page = await CmsPageModel.findOne({ pageSlug: cleanSlug, isDeleted: false });
-  } else {
-    // Check if missing default sections
     const defaultPage = DEFAULT_PAGES.find((p) => p.pageSlug === cleanSlug);
-    if (defaultPage?.sections && defaultPage.sections.length > 0) {
-      let modified = false;
-      const existingSections = page.sections || [];
-      for (const defSec of defaultPage.sections) {
-        const found = existingSections.some((s) => s.key === defSec.key);
-        if (!found) {
-          if (defSec.key === "hero") {
-            existingSections.unshift(defSec as any);
-          } else {
-            existingSections.push(defSec as any);
-          }
-          modified = true;
-        }
-      }
-      if (modified) {
-        page.sections = existingSections;
-        await page.save();
-      }
+    if (defaultPage) {
+      page = await CmsPageModel.create({
+        ...defaultPage,
+        isPublished: true,
+        isDeleted: false,
+      });
     }
   }
   return page;

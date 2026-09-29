@@ -4,10 +4,12 @@ import { ShieldCheck, HeartHandshake, ArrowRight } from "lucide-react";
 import { ICmsSection } from "@/types/cms";
 
 export default function AlliesInImpact({ section }: { section?: ICmsSection }) {
-  const title = section?.title || "ALLIES IN IMPACT";
-  const subtitle =
-    section?.subtitle ||
-    "Powered by organizations that prioritize direct, ground-level action over corporate lip-service.";
+  if (!section || (!section.title && !section.subtitle && !section.extra?.partnerName)) {
+    return null;
+  }
+
+  const title = section.title || "ALLIES IN IMPACT";
+  const subtitle = section.subtitle || "";
 
   const extra = section?.extra || {};
   const partnerName = extra.partnerName || "DEV BHOOMI SAMITI";

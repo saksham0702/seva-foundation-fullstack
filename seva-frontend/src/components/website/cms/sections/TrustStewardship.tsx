@@ -3,11 +3,13 @@ import { ShieldCheck } from "lucide-react";
 import { ICmsSection } from "@/types/cms";
 
 export default function TrustStewardship({ section }: { section?: ICmsSection }) {
-  const extra = section?.extra || {};
-  const title = section?.title || "THE STEWARDSHIP OF YOUR TRUST";
-  const description =
-    section?.description ||
-    "At Seva India Foundation, trust isn't a promise—it's a practice. Your donation is 100% safe with us, and we ensure it reaches the ground where it is needed most, with 100% updates sent to you via WhatsApp and email.";
+  if (!section || (!section.title && !section.description && !section.extra?.programSupportPercent)) {
+    return null;
+  }
+
+  const extra = section.extra || {};
+  const title = section.title || "THE STEWARDSHIP OF YOUR TRUST";
+  const description = section.description || "";
 
   const programPercent = extra.programSupportPercent || "90%";
   const programTitle = extra.programSupportTitle || "DIRECT PROGRAM SUPPORT";

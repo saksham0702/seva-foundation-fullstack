@@ -15,17 +15,17 @@ const API_URL =
  */
 async function safeServerFetch<T>(
   endpoint: string,
-  revalidateSeconds: number = 60,
+  revalidateSeconds: number = 0,
   tags: string[] = []
 ): Promise<T | null> {
   try {
     const url = `${API_URL}${endpoint.startsWith("/") ? endpoint : `/${endpoint}`}`;
-    const res = await fetch(url, {
-      next: {
-        revalidate: revalidateSeconds,
-        tags,
-      },
-    });
+    const fetchOptions: RequestInit =
+      revalidateSeconds > 0
+        ? { next: { revalidate: revalidateSeconds, tags } }
+        : { cache: "no-store" };
+
+    const res = await fetch(url, fetchOptions);
 
     if (!res.ok) return null;
     const json = await res.json();

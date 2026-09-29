@@ -23,47 +23,7 @@ import {
 import { getCampaigns } from "@/app/api/campaign";
 import { getImageUrl } from "@/lib/image";
 
-const DEFAULT_HERO_CAMPAIGNS = [
-  {
-    id: "1",
-    slug: "nepal-flood-relief",
-    image: "",
-    category: "Disaster Relief",
-    title: "Nepal Flood Relief Emergency Fund",
-    raised: 420000,
-    goal: 1000000,
-    donors: 1420,
-    daysLeft: 18,
-    urgent: true,
-    location: "Kathmandu & Terai, Nepal",
-  },
-  {
-    id: "2",
-    slug: "kerala-flood-relief",
-    image: "",
-    category: "Disaster Relief",
-    title: "Kerala Flood Relief - Wayanad & Thrissur",
-    raised: 750000,
-    goal: 1500000,
-    donors: 2890,
-    daysLeft: 14,
-    urgent: true,
-    location: "Wayanad & Thrissur, Kerala",
-  },
-  {
-    id: "3",
-    slug: "books-uniforms-hill-children",
-    image: "",
-    category: "Education",
-    title: "Books & Uniforms for 200 Hill Children",
-    raised: 178000,
-    goal: 250000,
-    donors: 856,
-    daysLeft: 24,
-    urgent: false,
-    location: "Tehri Garhwal, Uttarakhand",
-  },
-];
+
 
 const TRUST_SIGNALS = [
   {
@@ -146,12 +106,10 @@ export default function HeroSection({ section, initialCampaigns }: HeroSectionPr
             })
             .slice(0, 3)
             .map(parseCampaign);
-          if (activeOnly.length > 0) {
-            setCampaignsList(activeOnly);
-          }
+          setCampaignsList(activeOnly);
         }
       } catch (err) {
-        // Fallback to initial or DEFAULT_HERO_CAMPAIGNS
+        // Leave current campaignsList
       }
     })();
     return () => {
@@ -159,23 +117,23 @@ export default function HeroSection({ section, initialCampaigns }: HeroSectionPr
     };
   }, []);
 
-  const featuredCampaigns = campaignsList.length > 0 ? campaignsList : DEFAULT_HERO_CAMPAIGNS;
+  const featuredCampaigns = campaignsList;
 
   const next = useCallback(() => {
+    if (featuredCampaigns.length <= 1) return;
     setCurrent((p) => (p + 1) % featuredCampaigns.length);
   }, [featuredCampaigns.length]);
 
   useEffect(() => {
-    if (isPaused) return;
+    if (isPaused || featuredCampaigns.length <= 1) return;
     const timer = setInterval(next, 5000);
     return () => clearInterval(timer);
-  }, [isPaused, next]);
+  }, [isPaused, next, featuredCampaigns.length]);
 
-  const campaign = featuredCampaigns[current] || featuredCampaigns[0];
-  const pct = Math.min(
-    100,
-    Math.round(((campaign.raised || 0) / (campaign.goal || 1)) * 100),
-  );
+  const campaign = featuredCampaigns.length > 0 ? (featuredCampaigns[current] || featuredCampaigns[0]) : null;
+  const pct = campaign
+    ? Math.min(100, Math.round(((campaign.raised || 0) / (campaign.goal || 1)) * 100))
+    : 0;
 
   // ── Dynamic CMS Content & Fallbacks ──────────────────────────────────────
   const badgeText =
@@ -193,24 +151,9 @@ export default function HeroSection({ section, initialCampaigns }: HeroSectionPr
     section?.description ||
     "Seva India Foundation connects you directly to verified campaigns in Uttarakhand. Every rupee tracked. Every life changed.";
 
-  // Trust signals array from CMS or default
+  // Trust signals array from CMS (only render if dynamic data exists)
   const rawSignals: Array<{ label: string; sub: string; icon?: string }> =
-    Array.isArray(section?.extra?.trustSignals) && section.extra.trustSignals.length > 0
-      ? section.extra.trustSignals
-      : [
-          {
-            label: "12A & 80G Certified",
-            sub: "Tax benefits on every donation",
-          },
-          {
-            label: "100% Transparent",
-            sub: "Track where your money goes",
-          },
-          {
-            label: "Dehradun Based",
-            sub: "Serving Uttarakhand since 2012",
-          },
-        ];
+    Array.isArray(section?.extra?.trustSignals) ? section.extra.trustSignals : [];
 
   const getSignalIcon = (idx: number, iconKey?: string) => {
     const key = (iconKey || "").toLowerCase();
@@ -235,12 +178,13 @@ export default function HeroSection({ section, initialCampaigns }: HeroSectionPr
   const secondaryCtaLink = section?.extra?.secondaryCtaLink || "";
 
   // Live stats ticker
-  const stat1Value = section?.extra?.stat1Value || "₹4.2Cr+";
+  const stat1Value = section?.extra?.stat1Value || "";
   const stat1Label = section?.extra?.stat1Label || "Raised";
-  const stat2Value = section?.extra?.stat2Value || "38,000+";
+  const stat2Value = section?.extra?.stat2Value || "";
   const stat2Label = section?.extra?.stat2Label || "Lives Impacted";
-  const stat3Value = section?.extra?.stat3Value || "120+";
+  const stat3Value = section?.extra?.stat3Value || "";
   const stat3Label = section?.extra?.stat3Label || "Campaigns";
+  const hasStats = Boolean(stat1Value || stat2Value || stat3Value);
 
   return (
     <section className="relative w-full bg-[#0a1628] overflow-hidden">
@@ -323,46 +267,76 @@ export default function HeroSection({ section, initialCampaigns }: HeroSectionPr
               )}
             </div>
 
-            {/* Live stats ticker */}
-            <div className="flex items-center gap-6 pt-4 border-t border-white/10">
-              <div>
-                <p className="text-2xl font-bold text-white">{stat1Value}</p>
-                <p className="text-[11px] text-white/40 uppercase tracking-wider">
-                  {stat1Label}
-                </p>
+            {/* Live stats ticker (only if configured) */}
+            {hasStats && (
+              <div className="flex items-center gap-6 pt-4 border-t border-white/10">
+                {stat1Value && (
+                  <div>
+                    <p className="text-2xl font-bold text-white">{stat1Value}</p>
+                    <p className="text-[11px] text-white/40 uppercase tracking-wider">
+                      {stat1Label}
+                    </p>
+                  </div>
+                )}
+                {stat1Value && stat2Value && <div className="w-px h-10 bg-white/10" />}
+                {stat2Value && (
+                  <div>
+                    <p className="text-2xl font-bold text-white">{stat2Value}</p>
+                    <p className="text-[11px] text-white/40 uppercase tracking-wider">
+                      {stat2Label}
+                    </p>
+                  </div>
+                )}
+                {stat2Value && stat3Value && <div className="w-px h-10 bg-white/10" />}
+                {stat3Value && (
+                  <div>
+                    <p className="text-2xl font-bold text-white">{stat3Value}</p>
+                    <p className="text-[11px] text-white/40 uppercase tracking-wider">
+                      {stat3Label}
+                    </p>
+                  </div>
+                )}
               </div>
-              <div className="w-px h-10 bg-white/10" />
-              <div>
-                <p className="text-2xl font-bold text-white">{stat2Value}</p>
-                <p className="text-[11px] text-white/40 uppercase tracking-wider">
-                  {stat2Label}
-                </p>
-              </div>
-              <div className="w-px h-10 bg-white/10" />
-              <div>
-                <p className="text-2xl font-bold text-white">{stat3Value}</p>
-                <p className="text-[11px] text-white/40 uppercase tracking-wider">
-                  {stat3Label}
-                </p>
-              </div>
-            </div>
+            )}
           </div>
 
-          {/* ── RIGHT: Featured Campaign Card ── */}
+          {/* ── RIGHT: Featured Campaign Card or Mission Card ── */}
           <div className="lg:col-span-7 relative">
-            {/* Card */}
-            <div
-              className="relative bg-white rounded-3xl overflow-hidden shadow-2xl shadow-black/30"
-              onMouseEnter={() => setIsPaused(true)}
-              onMouseLeave={() => setIsPaused(false)}
-            >
-              {/* Image */}
-              <div className="relative h-64 sm:h-80 bg-slate-900 group/img">
-                <Link
-                  href={`/campaigns/${campaign.slug || campaign.id}`}
-                  className="absolute inset-0 z-0 block cursor-pointer"
-                  title={`View campaign: ${campaign.title}`}
+            {!campaign ? (
+              <div className="relative bg-white/5 border border-white/10 rounded-3xl p-8 sm:p-12 text-center space-y-6 backdrop-blur-md shadow-2xl">
+                <div className="w-16 h-16 rounded-2xl bg-[#E8542A]/20 border border-[#E8542A]/40 flex items-center justify-center mx-auto text-[#E8542A]">
+                  <ShieldCheck size={32} />
+                </div>
+                <h3 className="text-2xl sm:text-3xl font-bold text-white font-serif">
+                  100% Transparent Grassroots Impact
+                </h3>
+                <p className="text-slate-300 text-sm sm:text-base max-w-md mx-auto leading-relaxed">
+                  {description}
+                </p>
+                <div className="pt-2 flex justify-center gap-4">
+                  <Link
+                    href={primaryCtaLink}
+                    className="px-8 py-3.5 bg-[#E8542A] hover:bg-[#c9431d] text-white font-bold rounded-xl text-sm transition-all shadow-lg shadow-orange-500/20"
+                  >
+                    {primaryCtaText}
+                  </Link>
+                </div>
+              </div>
+            ) : (
+              <>
+                {/* Card */}
+                <div
+                  className="relative bg-white rounded-3xl overflow-hidden shadow-2xl shadow-black/30"
+                  onMouseEnter={() => setIsPaused(true)}
+                  onMouseLeave={() => setIsPaused(false)}
                 >
+                  {/* Image */}
+                  <div className="relative h-64 sm:h-80 bg-slate-900 group/img">
+                    <Link
+                      href={`/campaigns/${campaign.slug || campaign.id}`}
+                      className="absolute inset-0 z-0 block cursor-pointer"
+                      title={`View campaign: ${campaign.title}`}
+                    >
                   {featuredCampaigns.map((c, i) => {
                     const resolvedImg = getImageUrl(c.image);
                     return (
@@ -543,47 +517,43 @@ export default function HeroSection({ section, initialCampaigns }: HeroSectionPr
                 </span>
               </div>
             )}
+              </>
+            )}
           </div>
         </div>
       </div>
 
-      {/* ── Bottom trust bar ── */}
-      <div className="border-t border-white/5">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
-          <div className="flex flex-wrap items-center justify-center gap-8 sm:gap-12">
-            {((Array.isArray(section?.extra?.bottomTrustItems) && section.extra.bottomTrustItems.length > 0)
-              ? section.extra.bottomTrustItems
-              : [
-                  "Verified by Seva India Foundation",
-                  "Zero platform fees on donations",
-                  "12,000+ verified donors",
-                  "80G tax benefit on every donation",
-                ]
-            ).map((item: any, idx: number) => {
-              const text = typeof item === "string" ? item : (item.text || item.label || "");
-              const iconKey = typeof item === "object" ? (item.icon || "") : "";
-              const lower = (iconKey || text).toLowerCase();
-              let Icon = ShieldCheck;
-              if (lower.includes("rupee") || lower.includes("fee") || lower.includes("cost") || idx === 1) {
-                Icon = IndianRupee;
-              } else if (lower.includes("donor") || lower.includes("user") || lower.includes("people") || idx === 2) {
-                Icon = Users;
-              } else if (lower.includes("80g") || lower.includes("award") || lower.includes("tax") || idx === 3) {
-                Icon = Award;
-              } else if (lower.includes("shield") || idx === 0) {
-                Icon = ShieldCheck;
-              }
+      {/* ── Bottom trust bar (only if configured) ── */}
+      {Array.isArray(section?.extra?.bottomTrustItems) && section.extra.bottomTrustItems.length > 0 && (
+        <div className="border-t border-white/5">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
+            <div className="flex flex-wrap items-center justify-center gap-8 sm:gap-12">
+              {section.extra.bottomTrustItems.map((item: any, idx: number) => {
+                const text = typeof item === "string" ? item : (item.text || item.label || "");
+                const iconKey = typeof item === "object" ? (item.icon || "") : "";
+                const lower = (iconKey || text).toLowerCase();
+                let Icon = ShieldCheck;
+                if (lower.includes("rupee") || lower.includes("fee") || lower.includes("cost") || idx === 1) {
+                  Icon = IndianRupee;
+                } else if (lower.includes("donor") || lower.includes("user") || lower.includes("people") || idx === 2) {
+                  Icon = Users;
+                } else if (lower.includes("80g") || lower.includes("award") || lower.includes("tax") || idx === 3) {
+                  Icon = Award;
+                } else if (lower.includes("shield") || idx === 0) {
+                  Icon = ShieldCheck;
+                }
 
-              return (
-                <div key={idx} className="flex items-center gap-2 text-white/40 text-xs font-medium">
-                  <Icon size={14} className="text-[#E8542A]/80 flex-shrink-0" />
-                  <span>{text}</span>
-                </div>
-              );
-            })}
+                return (
+                  <div key={idx} className="flex items-center gap-2 text-white/40 text-xs font-medium">
+                    <Icon size={14} className="text-[#E8542A]/80 flex-shrink-0" />
+                    <span>{text}</span>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </div>
-      </div>
+      )}
     </section>
   );
 }

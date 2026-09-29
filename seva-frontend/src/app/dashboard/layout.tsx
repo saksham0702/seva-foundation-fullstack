@@ -3,6 +3,7 @@ import Sidebar from "@/components/dashboard/layout/Sidebar";
 import Navbar from "@/components/dashboard/layout/Navbar";
 import { AuthGuard } from "@/components/dashboard/AuthGuard";
 import DashboardTopLoader from "@/components/dashboard/layout/DashboardTopLoader";
+import DashboardMain from "@/components/dashboard/layout/DashboardMain";
 
 export default function DashboardLayout({
   children,
@@ -18,13 +19,7 @@ export default function DashboardLayout({
         <Sidebar />
         <div className="flex-1 flex flex-col overflow-hidden">
           <Navbar />
-          <main className="flex-1 overflow-auto py-6 px-6 pb-8 bg-navy relative">
-            {/* Subtle top glow effect */}
-            <div className="absolute top-0 left-0 right-0 h-64 bg-gradient-to-b from-gold/[0.03] to-transparent pointer-events-none" />
-            <div className="relative">
-              {children}
-            </div>
-          </main>
+          <DashboardMain>{children}</DashboardMain>
         </div>
       </div>
     </AuthGuard>

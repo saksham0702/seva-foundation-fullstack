@@ -36,6 +36,8 @@ export async function generateMetadata(): Promise<Metadata> {
   });
 }
 
+export const dynamic = "force-dynamic";
+
 export default async function AboutPage() {
   const [cmsData, galleryImages] = await Promise.all([
     getCmsPageServer("about"),
@@ -58,12 +60,16 @@ export default async function AboutPage() {
         jsonLd={aboutSchema}
       />
       <HeroSection data={cmsData} />
-      <div className="scroll-reveal">
-        <SectionRenderer sections={cmsData?.sections || []} />
-      </div>
-      <div className="scroll-reveal">
-        <GalleryHomeSection images={galleryImages} />
-      </div>
+      {cmsData?.sections && cmsData.sections.length > 0 && (
+        <div className="scroll-reveal">
+          <SectionRenderer sections={cmsData.sections} />
+        </div>
+      )}
+      {galleryImages && galleryImages.length > 0 && (
+        <div className="scroll-reveal">
+          <GalleryHomeSection images={galleryImages} />
+        </div>
+      )}
     </main>
   );
 }

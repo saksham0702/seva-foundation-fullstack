@@ -6,7 +6,7 @@ import { ArrowLeft, Sparkles, AlertCircle, Compass } from "lucide-react";
 import InitiativeCard, { InitiativeData } from "./InitiativeCard";
 import InitiativeDonationSection from "@/components/website/donations/InitiativeDonationSection";
 import { getCmsPageBySlug } from "@/app/api/cms";
-import { findInitiativeBySlug, DEFAULT_INITIATIVES } from "./initiativeDefaults";
+import { findInitiativeBySlug } from "./initiativeDefaults";
 
 interface InitiativeDetailClientProps {
   initialInitiative: InitiativeData | null;
@@ -16,16 +16,12 @@ interface InitiativeDetailClientProps {
 
 export default function InitiativeDetailClient({
   initialInitiative,
-  initialAllInitiatives = DEFAULT_INITIATIVES,
+  initialAllInitiatives = [],
   slug,
 }: InitiativeDetailClientProps) {
-  const [initiative, setInitiative] = useState<InitiativeData | null>(
-    initialInitiative || findInitiativeBySlug(DEFAULT_INITIATIVES, slug)
-  );
+  const [initiative, setInitiative] = useState<InitiativeData | null>(initialInitiative);
   const [allInitiatives, setAllInitiatives] = useState<InitiativeData[]>(
-    initialAllInitiatives && initialAllInitiatives.length > 0
-      ? initialAllInitiatives
-      : DEFAULT_INITIATIVES
+    initialAllInitiatives || []
   );
   const [loading, setLoading] = useState(false);
 
@@ -87,7 +83,7 @@ export default function InitiativeDetailClient({
   }
 
   const cleanKey = (initiative.key || slug).toLowerCase().trim();
-  const otherInitiatives = (allInitiatives || DEFAULT_INITIATIVES).filter(
+  const otherInitiatives = (allInitiatives || []).filter(
     (i) => (i.key || "").toLowerCase().trim() !== cleanKey
   );
 

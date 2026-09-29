@@ -4,11 +4,13 @@ import { ShieldCheck, MapPin, ArrowRight } from "lucide-react";
 import { ICmsSection } from "@/types/cms";
 
 export default function HomeIntegritySection({ section }: { section?: ICmsSection }) {
-  const extra = section?.extra || {};
-  const title = section?.title || "INTEGRITY & COMPLIANCE";
-  const description =
-    section?.description ||
-    "At Seva India Foundation, trust isn't a promise—it's a practice. As a registered Section 8 NGO, we protect your trust through meticulous accountability and radical transparency.";
+  if (!section) {
+    return null;
+  }
+
+  const extra = section.extra || {};
+  const title = section.title || "INTEGRITY & COMPLIANCE";
+  const description = section.description || "";
 
   const programPercent = extra.programSupportPercent || "90%";
   const programLabel = extra.programSupportLabel || "DIRECT PROGRAM SUPPORT";

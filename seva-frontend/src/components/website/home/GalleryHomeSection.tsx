@@ -21,56 +21,14 @@ interface GalleryHomeSectionProps {
   images?: GalleryItem[];
 }
 
-const DEFAULT_GALLERY_IMAGES = [
-  {
-    _id: "def-1",
-    imageUrl: "https://images.unsplash.com/photo-1497633762265-9d179a990aa6?w=800&auto=format&fit=crop&q=80",
-    title: "Rural Bridge School Classes - Education Initiative",
-    category: "Education",
-    alt: "Children in bridge schools studying with smile",
-  },
-  {
-    _id: "def-2",
-    imageUrl: "https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?w=800&auto=format&fit=crop&q=80",
-    title: "Mobile Health Camp & Diagnostics in Mountain Hamlets",
-    category: "Healthcare",
-    alt: "Medical team examining patient",
-  },
-  {
-    _id: "def-3",
-    imageUrl: "https://images.unsplash.com/photo-1593113598332-cd288d649433?w=800&auto=format&fit=crop&q=80",
-    title: "Daily Nutritious Meal Distribution & Community Kitchens",
-    category: "Hunger Relief",
-    alt: "Warm meals served to children and families",
-  },
-  {
-    _id: "def-4",
-    imageUrl: "https://images.unsplash.com/photo-1531545514256-b1400bc00f31?w=800&auto=format&fit=crop&q=80",
-    title: "Elderly Care Visits & Essential Dignity Kits",
-    category: "Elderly Care",
-    alt: "Volunteers sharing smiles with elderly beneficiaries",
-  },
-  {
-    _id: "def-5",
-    imageUrl: "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=800&auto=format&fit=crop&q=80",
-    title: "Free Eye Checkup & Vision Aid Camp",
-    category: "Healthcare",
-    alt: "Doctor providing eye care glasses",
-  },
-  {
-    _id: "def-6",
-    imageUrl: "https://images.unsplash.com/photo-1542810634-71277d95dcbb?w=800&auto=format&fit=crop&q=80",
-    title: "Rapid Disaster Relief & Essential Food Packet Supply",
-    category: "Disaster Relief",
-    alt: "Relief supplies distributed during emergencies",
-  },
-];
-
 export default function GalleryHomeSection({
   images,
 }: GalleryHomeSectionProps) {
-  const displayImages =
-    images && images.length > 0 ? images.slice(0, 6) : (DEFAULT_GALLERY_IMAGES as any[]);
+  if (!images || images.length === 0) {
+    return null;
+  }
+
+  const displayImages = images.slice(0, 6);
 
   const [activeModalIndex, setActiveModalIndex] = useState<number | null>(null);
 

@@ -13,7 +13,6 @@ import {
   GraduationCap,
   Users,
   Award,
-  Sparkles,
   ArrowRight,
 } from "lucide-react";
 import { getImageUrl } from "@/lib/image";
@@ -55,25 +54,15 @@ export default function InitiativeCard({
   const rawImage = initiative.image || "";
   const resolvedImage = rawImage ? getImageUrl(rawImage) : "";
   const altText = initiative.extra?.alt || `${title} initiative helping communities`;
-  const features = initiative.extra?.features || [
-    "COMMUNITY EMPOWERMENT",
-    "DIRECT GRASSROOTS ACTION",
-    "LONG-TERM SUSTAINABILITY",
-    "TRANSPARENT REPORTING",
-  ];
-  const faqs = initiative.extra?.faqs || [
-    {
-      question: "HOW DOES THIS INITIATIVE CREATE LASTING CHANGE?",
-      answer:
-        "We collaborate directly with local village councils, deploying dedicated field teams and ensuring long-term community participation and monitoring.",
-    },
-  ];
-  const impactMetrics = initiative.extra?.impactMetrics || [
-    { value: "10,000+", label: "LIVES IMPACTED" },
-    { value: "100%", label: "FIELD TRANSPARENCY" },
-    { value: "50+", label: "VILLAGES REACHED" },
-    { value: "365", label: "DAYS ACTIVE" },
-  ];
+
+  const features = initiative.extra?.features || [];
+  const faqs = initiative.extra?.faqs || [];
+  const impactMetrics = initiative.extra?.impactMetrics || [];
+
+  const hasImage = !!resolvedImage && !imgError;
+  const hasImpactMetrics = impactMetrics.length > 0;
+  const hasFaqs = faqs.length > 0;
+  const hasFeatures = features.length > 0;
 
   const shareUrl =
     typeof window !== "undefined"
@@ -98,7 +87,7 @@ export default function InitiativeCard({
         {/* ── Top Row: Text Header & Visual Image ── */}
         <div className="grid lg:grid-cols-12 gap-8 lg:gap-12 items-start">
           {/* Left Info Column */}
-          <div className="lg:col-span-7 space-y-6">
+          <div className={`${hasImage ? "lg:col-span-7" : "lg:col-span-12"} space-y-6`}>
             <div className="flex items-start justify-between gap-4">
               <div>
                 <span className="text-[12px] font-semibold uppercase tracking-[0.2em] text-[#4C6FFF] block mb-2">
@@ -135,9 +124,9 @@ export default function InitiativeCard({
           </div>
 
           {/* Right Visual / Image Column */}
-          <div className="lg:col-span-5">
-            <div className="bg-[#F8EFE0] p-3 sm:p-4 rounded-[32px] sm:rounded-[40px] shadow-sm">
-              {resolvedImage && !imgError ? (
+          {hasImage && (
+            <div className="lg:col-span-5">
+              <div className="bg-[#F8EFE0] p-3 sm:p-4 rounded-[32px] sm:rounded-[40px] shadow-sm">
                 <div className="relative w-full aspect-[4/3] rounded-[24px] sm:rounded-[32px] overflow-hidden bg-slate-100">
                   <Image
                     src={resolvedImage}
@@ -148,31 +137,17 @@ export default function InitiativeCard({
                     className="object-cover object-center transition-transform duration-700 hover:scale-105"
                   />
                 </div>
-              ) : (
-                /* Fallback showing Alt Tag for SEO when no image exists or load fails */
-                <div className="w-full aspect-[4/3] rounded-[24px] sm:rounded-[32px] bg-white border border-dashed border-amber-300 flex flex-col items-center justify-center p-6 text-center">
-                  <Sparkles className="w-10 h-10 text-[#F5A623] mb-3 opacity-70" />
-                  <span className="text-[11px] font-bold uppercase tracking-widest text-[#E8542A] mb-1">
-                    SEO Alt Representation
-                  </span>
-                  <p className="text-xs sm:text-sm font-semibold text-slate-700 max-w-xs leading-snug">
-                    &ldquo;{altText}&rdquo;
-                  </p>
-                  <span className="text-[10px] text-slate-400 mt-2">
-                    Image placeholder enabled
-                  </span>
-                </div>
-              )}
+              </div>
             </div>
-          </div>
+          )}
         </div>
 
         {/* ── Bottom Row: Questions & Actions + Impact Metrics ── */}
         <div className="mt-10 pt-8 border-t border-gray-100 grid lg:grid-cols-12 gap-8 lg:gap-12 items-start">
           {/* Left Column: FAQs, Feature Pills, and CTA Buttons */}
-          <div className="lg:col-span-7 space-y-6">
+          <div className={`${hasImpactMetrics ? "lg:col-span-7" : "lg:col-span-12"} space-y-6`}>
             {/* Common Questions Accordion */}
-            {faqs.length > 0 && (
+            {hasFaqs && (
               <div className="space-y-3">
                 <div className="flex items-center gap-2 text-[#0A1A2F]">
                   <HelpCircle size={18} className="text-[#F5A623]" />
@@ -214,7 +189,7 @@ export default function InitiativeCard({
             )}
 
             {/* Key Feature Pills */}
-            {features.length > 0 && (
+            {hasFeatures && (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
                 {features.map((feat, idx) => (
                   <div
@@ -232,7 +207,7 @@ export default function InitiativeCard({
               </div>
             )}
 
-            {/* Action Buttons - Pure In-Page Experience */}
+            {/* Action Buttons */}
             <div className="flex flex-wrap gap-3 pt-4">
               <button
                 type="button"
@@ -265,32 +240,34 @@ export default function InitiativeCard({
           </div>
 
           {/* Right Column: IMPACT METRICS Navy Card */}
-          <div className="lg:col-span-5">
-            <div className="bg-[#0A1628] rounded-[28px] sm:rounded-[36px] p-6 sm:p-8 text-white shadow-xl">
-              <h3 className="text-xl sm:text-2xl font-serif font-semibold uppercase tracking-wider text-white mb-6">
-                Impact Metrics
-              </h3>
+          {hasImpactMetrics && (
+            <div className="lg:col-span-5">
+              <div className="bg-[#0A1628] rounded-[28px] sm:rounded-[36px] p-6 sm:p-8 text-white shadow-xl">
+                <h3 className="text-xl sm:text-2xl font-serif font-semibold uppercase tracking-wider text-white mb-6">
+                  Impact Metrics
+                </h3>
 
-              <div className="grid grid-cols-2 gap-y-6 gap-x-4">
-                {impactMetrics.map((metric, mIdx) => {
-                  const IconComponent = metricIcons[mIdx % metricIcons.length];
-                  return (
-                    <div key={mIdx} className="space-y-1">
-                      <div className="flex items-center gap-1.5">
-                        <IconComponent size={14} className="text-[#F5A623]" />
-                        <span className="text-2xl sm:text-3xl font-semibold text-[#F5A623] tracking-tight">
-                          {metric.value}
-                        </span>
+                <div className="grid grid-cols-2 gap-y-6 gap-x-4">
+                  {impactMetrics.map((metric, mIdx) => {
+                    const IconComponent = metricIcons[mIdx % metricIcons.length];
+                    return (
+                      <div key={mIdx} className="space-y-1">
+                        <div className="flex items-center gap-1.5">
+                          <IconComponent size={14} className="text-[#F5A623]" />
+                          <span className="text-2xl sm:text-3xl font-semibold text-[#F5A623] tracking-tight">
+                            {metric.value}
+                          </span>
+                        </div>
+                        <p className="text-[11px] font-medium uppercase tracking-wider text-white/70 leading-snug">
+                          {metric.label}
+                        </p>
                       </div>
-                      <p className="text-[11px] font-medium uppercase tracking-wider text-white/70 leading-snug">
-                        {metric.label}
-                      </p>
-                    </div>
-                  );
-                })}
+                    );
+                  })}
+                </div>
               </div>
             </div>
-          </div>
+          )}
         </div>
       </article>
 

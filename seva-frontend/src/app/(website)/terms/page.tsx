@@ -5,6 +5,8 @@ import { getServerCmsPage } from "@/lib/server-api";
 import { constructMetadata, getWebPageSchema } from "@/lib/seo";
 import SeoHead from "@/components/common/SeoHead";
 
+export const dynamic = "force-dynamic";
+
 export async function generateMetadata(): Promise<Metadata> {
   const pageData = await getServerCmsPage("terms");
   const title = pageData?.seo?.metaTitle || pageData?.title || "Terms & Conditions";

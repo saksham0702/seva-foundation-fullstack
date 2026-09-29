@@ -2,16 +2,13 @@ import React from "react";
 import { Award } from "lucide-react";
 import { ICmsSection } from "@/types/cms";
 
-const DEFAULT_AWARDS = [
-  { title: "BEST NGO FOR EDUCATION" },
-  { title: "EXCELLENCE IN HEALTHCARE DELIVERY" },
-  { title: "TRANSPARENCY IN GOVERNANCE AWARD" },
-  { title: "SOCIAL IMPACT PIONEER" },
-];
-
 export default function AwardsRecognition({ section }: { section?: ICmsSection }) {
-  const title = section?.title || "Awards & Recognition";
-  const rawItems = section?.items && section.items.length > 0 ? section.items : DEFAULT_AWARDS;
+  if (!section || !section.items || section.items.length === 0) {
+    return null;
+  }
+
+  const title = section.title || "Awards & Recognition";
+  const rawItems = section.items;
 
   const awards = rawItems.map((item: any) => ({
     title: item.title || item.name || "Award",

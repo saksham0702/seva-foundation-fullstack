@@ -4,20 +4,20 @@ import { ShieldCheck, ArrowRight, Heart } from "lucide-react";
 import { ICmsSection } from "@/types/cms";
 
 export default function HomePatronSection({ section }: { section?: ICmsSection }) {
-  const title = section?.title || "DEV BHOOMI SAMITI";
-  const subtitle =
-    section?.subtitle ||
-    "Dev Bhoomi Samiti is our spiritual and strategic cornerstone. Deeply interwoven with the social fabric of Uttarakhand, the Samiti provides the visionary leadership and structural backbone that makes our mission possible.";
+  if (!section || (!section.title && !section.subtitle && !section.description)) {
+    return null;
+  }
 
-  const extra = section?.extra || {};
+  const title = section.title || "Dev Bhoomi Samiti";
+  const subtitle = section.subtitle || section.description || "";
+
+  const extra = section.extra || {};
   const badgeText = extra.badgeText || "PRINCIPAL PATRON";
   const buttonText = extra.buttonText || "Learn More";
   const buttonLink = extra.buttonLink || "/about";
   const cardEyebrow = extra.cardEyebrow || "OUR VISIONARY BACKBONE";
   const cardTitle = extra.cardTitle || "Spiritual & Social Support";
-  const cardQuote =
-    extra.cardQuote ||
-    '"Uttarakhand, the land of gods, teaches us that service to humanity is the highest form of worship. Seva India Foundation carries this torch forward."';
+  const cardQuote = extra.cardQuote || "";
 
   const words = title.split(" ");
   const lastWord = words.length > 1 ? words.pop() : "";

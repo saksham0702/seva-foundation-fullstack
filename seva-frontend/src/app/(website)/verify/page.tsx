@@ -19,6 +19,8 @@ export const metadata: Metadata = constructMetadata({
   ],
 });
 
+export const dynamic = "force-dynamic";
+
 export default function VerifyCertificateIndexPage() {
   const verifySchema = getWebPageSchema({
     title: "Verify Certificate | Seva India Foundation",

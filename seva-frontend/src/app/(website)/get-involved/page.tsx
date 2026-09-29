@@ -11,39 +11,7 @@ import { getImageUrl } from "@/lib/image";
 import GetInvolvedClient from "@/components/website/volunteers/GetInvolvedClient";
 import SeoHead from "@/components/common/SeoHead";
 
-const DEFAULT_IMPACT_NUMBERS = [
-  { number: "200+", label: "Active Volunteers", sub: "Across Uttarakhand" },
-  { number: "45,000+", label: "Hours Contributed", sub: "In the last 12 months" },
-  { number: "12,000+", label: "Lives Touched", sub: "Through volunteer efforts" },
-  { number: "8", label: "Cities Represented", sub: "Volunteers from across India" },
-];
-
-const DEFAULT_FAQS = [
-  {
-    q: "Do I need to be from Dehradun to volunteer?",
-    a: "Not at all. We have volunteers from Delhi, Mumbai, Bangalore, and even abroad who visit for week-long intensives. Remote roles like design, content, and tech are fully location-independent.",
-  },
-  {
-    q: "How much time do I need to commit?",
-    a: "As little as 2 hours a week or as much as full-time. Teaching roles need 4-6 hours weekly. Kitchen shifts are 2-3 hours. Health camps are full-day commitments. You choose what fits your life.",
-  },
-  {
-    q: "Is there any training provided?",
-    a: "Yes. Every volunteer attends an orientation at our Rajpur Road office. Field roles get additional safety briefings. Teaching volunteers receive our curriculum guide and mentor support.",
-  },
-  {
-    q: "Can I volunteer as a group or company?",
-    a: "Absolutely. We regularly host corporate CSR days, college groups, and family volunteering weekends. Contact us at corporate@sevaindia.org for group bookings.",
-  },
-  {
-    q: "Will I get a certificate?",
-    a: "Yes. All volunteers receive a digital certificate after 20 hours of service. Long-term volunteers get a recommendation letter and are invited to our annual volunteer meet.",
-  },
-  {
-    q: "What if I can only help remotely?",
-    a: "We have plenty of remote roles — content writing, graphic design, social media, website maintenance, data entry, and fundraising. You can make a real impact from your laptop.",
-  },
-];
+export const dynamic = "force-dynamic";
 
 export async function generateMetadata(): Promise<Metadata> {
   const cmsPage = await getServerCmsPage("get-involved");
@@ -55,7 +23,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const description =
     cmsPage?.seo?.metaDescription ||
     cmsPage?.subtitle ||
-    "Join 200+ volunteers across India. Give your time, skills, and heart to grassroots initiatives in education, health, and hunger relief with Seva India Foundation.";
+    "Join our volunteers across India. Give your time, skills, and heart to grassroots initiatives in education, health, and hunger relief with Seva India Foundation.";
 
   const bannerImg = cmsPage?.bannerImage
     ? getImageUrl(cmsPage.bannerImage)
@@ -95,12 +63,10 @@ export default async function GetInvolvedPage() {
     : "";
 
   const impactNumbers =
-    (cmsPage?.sections?.find((s) => s.key === "impact_numbers")
-      ?.items as typeof DEFAULT_IMPACT_NUMBERS) || DEFAULT_IMPACT_NUMBERS;
+    (cmsPage?.sections?.find((s) => s.key === "impact_numbers")?.items as any[]) || [];
 
   const faqs =
-    (cmsPage?.sections?.find((s) => s.key === "faqs")
-      ?.items as typeof DEFAULT_FAQS) || DEFAULT_FAQS;
+    (cmsPage?.sections?.find((s) => s.key === "faqs")?.items as any[]) || [];
 
   const getInvolvedSchema = getWebPageSchema({
     title: heroTitle,
@@ -178,23 +144,25 @@ export default async function GetInvolvedPage() {
       </section>
 
       {/* ── Impact Numbers ── */}
-      <section className="bg-[#0f2347] py-14 -mt-1 scroll-reveal">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12">
-            {impactNumbers.map((stat, i) => (
-              <div key={i} className="text-center">
-                <div className="text-3xl sm:text-4xl font-bold text-white mb-1">
-                  {stat.number}
+      {impactNumbers.length > 0 && (
+        <section className="bg-[#0f2347] py-14 -mt-1 scroll-reveal">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12">
+              {impactNumbers.map((stat, i) => (
+                <div key={i} className="text-center">
+                  <div className="text-3xl sm:text-4xl font-bold text-white mb-1">
+                    {stat.number}
+                  </div>
+                  <div className="text-sm font-semibold text-gray-300 mb-0.5">
+                    {stat.label}
+                  </div>
+                  <div className="text-xs text-gray-500">{stat.sub}</div>
                 </div>
-                <div className="text-sm font-semibold text-gray-300 mb-0.5">
-                  {stat.label}
-                </div>
-                <div className="text-xs text-gray-500">{stat.sub}</div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* ── Interactive Selection Grid & Form ── */}
       <div className="scroll-reveal">

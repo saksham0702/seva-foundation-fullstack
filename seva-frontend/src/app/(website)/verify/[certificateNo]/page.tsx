@@ -8,6 +8,8 @@ interface PageProps {
   params: Promise<{ certificateNo: string }> | { certificateNo: string };
 }
 
+export const dynamic = "force-dynamic";
+
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const resolved = await Promise.resolve(params);
   const certificateNo = resolved?.certificateNo;

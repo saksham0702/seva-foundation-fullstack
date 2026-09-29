@@ -31,56 +31,60 @@ export default function OurWorkClient({ initiatives }: OurWorkClientProps) {
   return (
     <>
       {/* ── Category Filter Bar ── */}
-      <section className="sticky top-20 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-sm py-3.5 text-slate-900">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1">
-            <button
-              type="button"
-              onClick={() => handleCategorySelect("all")}
-              className={`flex-shrink-0 px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${
-                selectedCategory === "all"
-                  ? "bg-[#0A1A2F] text-white shadow-sm"
-                  : "bg-slate-100 text-slate-800 hover:bg-slate-200 border border-slate-200/80"
-              }`}
-            >
-              All Categories ({initiatives.length})
-            </button>
+      {initiatives.length > 0 && (
+        <section className="sticky top-20 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-sm py-3.5 text-slate-900">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1">
+              <button
+                type="button"
+                onClick={() => handleCategorySelect("all")}
+                className={`flex-shrink-0 px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${
+                  selectedCategory === "all"
+                    ? "bg-[#0A1A2F] text-white shadow-sm"
+                    : "bg-slate-100 text-slate-800 hover:bg-slate-200 border border-slate-200/80"
+                }`}
+              >
+                All Categories ({initiatives.length})
+              </button>
 
-            {initiatives.map((init) => {
-              const isSelected =
-                selectedCategory.toLowerCase() === init.key.toLowerCase();
-              return (
-                <button
-                  key={init.key}
-                  type="button"
-                  onClick={() => handleCategorySelect(init.key)}
-                  className={`flex-shrink-0 px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${
-                    isSelected
-                      ? "bg-[#F5A623] text-white shadow-sm shadow-amber-500/20"
-                      : "bg-slate-100 text-slate-800 hover:bg-slate-200 border border-slate-200/80"
-                  }`}
-                >
-                  {init.title || init.name || init.key}
-                </button>
-              );
-            })}
+              {initiatives.map((init) => {
+                const isSelected =
+                  selectedCategory.toLowerCase() === init.key.toLowerCase();
+                return (
+                  <button
+                    key={init.key}
+                    type="button"
+                    onClick={() => handleCategorySelect(init.key)}
+                    className={`flex-shrink-0 px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${
+                      isSelected
+                        ? "bg-[#F5A623] text-white shadow-sm shadow-amber-500/20"
+                        : "bg-slate-100 text-slate-800 hover:bg-slate-200 border border-slate-200/80"
+                    }`}
+                  >
+                    {init.title || init.name || init.key}
+                  </button>
+                );
+              })}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* ── Initiatives List: One by one with full rich content ── */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 space-y-12 sm:space-y-16">
         {filteredInitiatives.length === 0 ? (
           <div className="text-center py-16 bg-white rounded-3xl border border-slate-200 p-8">
             <p className="text-sm text-slate-700">
-              No initiatives found under this category.
+              No initiatives currently available.
             </p>
-            <button
-              onClick={() => setSelectedCategory("all")}
-              className="mt-3 text-xs font-bold text-[#F5A623] hover:underline"
-            >
-              View all initiatives
-            </button>
+            {selectedCategory !== "all" && (
+              <button
+                onClick={() => setSelectedCategory("all")}
+                className="mt-3 text-xs font-bold text-[#F5A623] hover:underline"
+              >
+                View all initiatives
+              </button>
+            )}
           </div>
         ) : (
           filteredInitiatives.map((initiative) => (

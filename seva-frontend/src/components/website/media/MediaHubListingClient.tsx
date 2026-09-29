@@ -302,10 +302,10 @@ export default function MediaHubListingClient({
 
   // Client-side hydration to ensure data is always fresh and loaded
   useEffect(() => {
-    if (blogs.length > 0) setBlogsList(blogs);
-    if (events.length > 0) setEventsList(events);
-    if (news.length > 0) setNewsList(news);
-    if (categories.length > 0) setCategoriesList(categories);
+    setBlogsList(blogs);
+    setEventsList(events);
+    setNewsList(news);
+    setCategoriesList(categories);
 
     (async () => {
       try {
@@ -316,16 +316,16 @@ export default function MediaHubListingClient({
           cmsAPI.getItems("news"),
         ]);
 
-        if (catsRes.status === "fulfilled" && Array.isArray(catsRes.value) && catsRes.value.length > 0) {
+        if (catsRes.status === "fulfilled" && Array.isArray(catsRes.value)) {
           setCategoriesList(catsRes.value);
         }
-        if (blogsRes.status === "fulfilled" && Array.isArray(blogsRes.value) && blogsRes.value.length > 0) {
+        if (blogsRes.status === "fulfilled" && Array.isArray(blogsRes.value)) {
           setBlogsList(blogsRes.value);
         }
-        if (eventsRes.status === "fulfilled" && Array.isArray(eventsRes.value) && eventsRes.value.length > 0) {
+        if (eventsRes.status === "fulfilled" && Array.isArray(eventsRes.value)) {
           setEventsList(eventsRes.value);
         }
-        if (newsRes.status === "fulfilled" && Array.isArray(newsRes.value) && newsRes.value.length > 0) {
+        if (newsRes.status === "fulfilled" && Array.isArray(newsRes.value)) {
           setNewsList(newsRes.value);
         }
       } catch (err) {

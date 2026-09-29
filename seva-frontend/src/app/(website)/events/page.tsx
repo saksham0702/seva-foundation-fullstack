@@ -19,6 +19,8 @@ export const metadata: Metadata = constructMetadata({
   ],
 });
 
+export const dynamic = "force-dynamic";
+
 export default async function EventsListingPage() {
   const [events, blogs, news, categories] = await Promise.all([
     getServerCmsItems("event"),

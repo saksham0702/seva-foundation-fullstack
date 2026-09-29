@@ -20,6 +20,8 @@ export const metadata: Metadata = constructMetadata({
   ],
 });
 
+export const dynamic = "force-dynamic";
+
 export default async function CampaignsPage() {
   const [campaigns, categories] = await Promise.all([
     getServerCampaigns(),

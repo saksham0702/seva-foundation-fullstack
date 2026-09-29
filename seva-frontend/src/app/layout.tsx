@@ -4,6 +4,7 @@ import "./globals.css";
 import QueryProvider from "@/lib/query-provider";
 import { ToastProvider } from "@/lib/toast";
 import { AuthProvider } from "@/context/AuthContext";
+import HeaderScripts from "@/components/website/layout/HeaderScripts";
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -57,6 +58,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={`${poppins.variable} h-full antialiased`} suppressHydrationWarning>
+      <head>
+        <HeaderScripts />
+      </head>
       <body className="font-sans min-h-screen">
         <QueryProvider>
           <ToastProvider>

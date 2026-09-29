@@ -15,9 +15,10 @@ export const metadata: Metadata = constructMetadata({
     "Charity Blog",
     "Social Impact Stories",
     "Seva Foundation Blog",
-    "Community Work Updates",
   ],
 });
+
+export const dynamic = "force-dynamic";
 
 export default async function BlogListingPage() {
   const [blogs, events, news, categories] = await Promise.all([

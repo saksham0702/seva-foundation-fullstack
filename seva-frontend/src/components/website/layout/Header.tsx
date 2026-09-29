@@ -22,19 +22,7 @@ type NavItem = {
   children?: NavChild[];
 };
 
-/* ------------------------------------------------------------------ */
-/*  DATA                                                               */
-/* ------------------------------------------------------------------ */
-
-export const DEFAULT_OUR_WORK_ITEMS: NavChild[] = [
-  { label: "VIDHYA (EDUCATION)", href: "/our-work/vidhya" },
-  { label: "AROGYA (HEALTHCARE)", href: "/our-work/arogya" },
-  { label: "SAMMAAN (ELDERLY CARE)", href: "/our-work/sammaan" },
-  { label: "SHAKTI (WOMEN)", href: "/our-work/shakti" },
-  { label: "ANNAPURNA (HUNGER)", href: "/our-work/annapurna" },
-  { label: "GRAMODAYA (RURAL)", href: "/our-work/gramodaya" },
-  { label: "RAKSHAK (DISASTER)", href: "/our-work/rakshak" },
-];
+export const DEFAULT_OUR_WORK_ITEMS: NavChild[] = [];
 
 export const DEFAULT_GET_INVOLVED_ITEMS: NavChild[] = [
   { label: "VOLUNTEER APPLICATION", href: "/get-involved?tab=volunteer" },
@@ -176,12 +164,8 @@ const HeaderContent = () => {
           setCmsSettings(hfRes.value.settings);
         }
 
-        if (
-          ourWorkRes.status === "fulfilled" &&
-          ourWorkRes.value?.sections &&
-          ourWorkRes.value.sections.length > 0
-        ) {
-          const items: NavChild[] = ourWorkRes.value.sections.map((s: any) => ({
+        if (ourWorkRes.status === "fulfilled" && ourWorkRes.value?.sections) {
+          const items: NavChild[] = (ourWorkRes.value.sections || []).map((s: any) => ({
             label: s.name || s.title || s.key.toUpperCase(),
             href: `/our-work/${s.key}`,
           }));
@@ -199,7 +183,7 @@ const HeaderContent = () => {
 
   const navLinks: NavItem[] = defaultNavLinks.map((item) => {
     if (item.href === "/our-work") {
-      return { ...item, children: ourWorkItems };
+      return { ...item, children: ourWorkItems.length > 0 ? ourWorkItems : undefined };
     }
     return item;
   });

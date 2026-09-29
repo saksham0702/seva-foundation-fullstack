@@ -20,6 +20,8 @@ export const metadata: Metadata = constructMetadata({
   ],
 });
 
+export const dynamic = "force-dynamic";
+
 interface DonationsPageProps {
   searchParams?: Promise<{
     campaign?: string;

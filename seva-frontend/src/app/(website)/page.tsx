@@ -20,6 +20,8 @@ import { InitiativeData } from "@/components/website/our-work/InitiativeCard";
 
 import SeoHead from "@/components/common/SeoHead";
 
+export const dynamic = "force-dynamic";
+
 export const metadata = constructMetadata({
   title: "Home",
   description:
@@ -57,44 +59,60 @@ export default async function LandingPage() {
       <HeroSection section={heroSection} initialCampaigns={campaigns} />
 
       {/* 1. Featured In Marquee */}
-      <div className="scroll-reveal">
-        <FeaturedInMarquee section={featuredInSection} />
-      </div>
+      {featuredInSection && featuredInSection.items && featuredInSection.items.length > 0 && (
+        <div className="scroll-reveal">
+          <FeaturedInMarquee section={featuredInSection} />
+        </div>
+      )}
 
       {/* 2. Urgent Campaigns */}
-      <div className="scroll-reveal">
-        <CampaignsSection initialCampaigns={campaigns} />
-      </div>
+      {campaigns && campaigns.length > 0 && (
+        <div className="scroll-reveal">
+          <CampaignsSection initialCampaigns={campaigns} />
+        </div>
+      )}
 
       {/* 3. Core Initiatives */}
-      <div className="scroll-reveal">
-        <InitiativesHomeSection initiatives={initiatives} />
-      </div>
+      {initiatives && initiatives.length > 0 && (
+        <div className="scroll-reveal">
+          <InitiativesHomeSection initiatives={initiatives} />
+        </div>
+      )}
 
       {/* 4. Principal Patron (Dev Bhoomi Samiti) & About Tease */}
-      <div className="scroll-reveal">
-        <HomePatronSection section={patronSection} />
-      </div>
+      {patronSection && (patronSection.title || patronSection.subtitle) && (
+        <div className="scroll-reveal">
+          <HomePatronSection section={patronSection} />
+        </div>
+      )}
 
       {/* 5. Honors & Global Recognition (Excellence in Human Service) */}
-      <div className="scroll-reveal">
-        <HomeExcellenceSection section={excellenceSection} />
-      </div>
+      {excellenceSection && excellenceSection.items && excellenceSection.items.length > 0 && (
+        <div className="scroll-reveal">
+          <HomeExcellenceSection section={excellenceSection} />
+        </div>
+      )}
 
       {/* 6. Integrity & Compliance (90% Program Support, CIN, Office) */}
-      <div className="scroll-reveal">
-        <HomeIntegritySection section={integritySection} />
-      </div>
+      {integritySection && (
+        <div className="scroll-reveal">
+          <HomeIntegritySection section={integritySection} />
+        </div>
+      )}
 
       {/* 7. Impact Gallery */}
-      <div className="scroll-reveal">
-        <GalleryHomeSection images={galleryImages} />
-      </div>
+      {galleryImages && galleryImages.length > 0 && (
+        <div className="scroll-reveal">
+          <GalleryHomeSection images={galleryImages} />
+        </div>
+      )}
 
       {/* 8. Recent Stories & Field Dispatches */}
-      <div className="scroll-reveal">
-        <RecentStoriesHomeSection items={recentStories} />
-      </div>
+      {recentStories && recentStories.length > 0 && (
+        <div className="scroll-reveal">
+          <RecentStoriesHomeSection items={recentStories} />
+        </div>
+      )}
     </>
   );
 }

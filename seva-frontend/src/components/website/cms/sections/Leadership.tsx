@@ -2,33 +2,16 @@ import React from "react";
 import { ICmsSection } from "@/types/cms";
 import { getImageUrl } from "@/lib/image";
 
-const DEFAULT_STEWARDS = [
-  {
-    name: "PRAVESH UNIYAL",
-    role: "FOUNDER & CHAIRMAN",
-    initials: "PU",
-    image: "",
-  },
-  {
-    name: "SWATI",
-    role: "CO-FOUNDER & DIRECTOR",
-    initials: "S",
-    image: "",
-  },
-  {
-    name: "DR. RAJESH KUMAR",
-    role: "MEDICAL ADVISOR",
-    initials: "RK",
-    image: "",
-  },
-];
-
 export default function Leadership({ section }: { section?: ICmsSection }) {
-  const title = section?.title || "STEWARDS OF THE MISSION";
+  if (!section || !section.items || section.items.length === 0) {
+    return null;
+  }
+
+  const title = section.title || "STEWARDS OF THE MISSION";
   const subtitle =
-    section?.subtitle ||
+    section.subtitle ||
     "Our leadership is a blend of seasoned social architects and corporate experts, all united by a singular commitment to ethical service.";
-  const rawItems = section?.items && section.items.length > 0 ? section.items : DEFAULT_STEWARDS;
+  const rawItems = section.items;
 
   const stewards = rawItems.map((item: any) => {
     let initials = item.initials;

@@ -92,6 +92,10 @@ export default function CampaignsSection({
     };
   }, []);
 
+  if (!loading && campaigns.length === 0) {
+    return null;
+  }
+
   return (
     <section className="bg-white py-5">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

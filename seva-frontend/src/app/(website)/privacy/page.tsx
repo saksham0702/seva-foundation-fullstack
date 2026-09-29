@@ -6,6 +6,8 @@ import { constructMetadata, getWebPageSchema } from "@/lib/seo";
 import PrivacySubscribeForm from "@/components/website/privacy/PrivacySubscribeForm";
 import SeoHead from "@/components/common/SeoHead";
 
+export const dynamic = "force-dynamic";
+
 export async function generateMetadata(): Promise<Metadata> {
   const pageData = await getServerCmsPage("privacy");
   const title = pageData?.seo?.metaTitle || pageData?.title || "Privacy & Donor Trust Policy";

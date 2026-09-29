@@ -23,65 +23,6 @@ interface InitiativesHomeSectionProps {
   initiatives?: InitiativeData[];
 }
 
-const DEFAULT_HOME_INITIATIVES: InitiativeData[] = [
-  {
-    key: "vidhya",
-    name: "VIDHYA (EDUCATION)",
-    title: "VIDHYA (EDUCATION)",
-    subtitle: "Bridge schools & scholarships for remote and underprivileged children.",
-    description: "Democratizing access to quality education, empowering over 100,000 children in rural communities.",
-    image: "",
-    extra: {
-      eyebrow: "FOUNDATIONAL LEARNING",
-      alt: "Children in rural bridge school smiling and studying",
-      features: ["RURAL BRIDGE SCHOOLS", "TEACHER TRAINING", "SCHOLARSHIPS"],
-      impactMetrics: [{ value: "100,000+", label: "STUDENTS ENROLLED" }],
-    },
-  },
-  {
-    key: "arogya",
-    name: "AROGYA (HEALTHCARE)",
-    title: "AROGYA (HEALTHCARE)",
-    subtitle: "Mobile medical clinics reaching isolated Himalayan hamlets.",
-    description: "Bringing free primary care, diagnostic testing, and life-saving medicines to the vulnerable.",
-    image: "",
-    extra: {
-      eyebrow: "MOBILE MEDICAL AID",
-      alt: "Compassionate medical caregiver holding hands with patient",
-      features: ["MOBILE CLINIC CAMPS", "FREE MEDICINES & LABS", "MATERNAL CARE"],
-      impactMetrics: [{ value: "50,000+", label: "PATIENTS TREATED" }],
-    },
-  },
-  {
-    key: "annapurna",
-    name: "ANNAPURNA (HUNGER)",
-    title: "ANNAPURNA (HUNGER)",
-    subtitle: "Hygienic daily meals & emergency ration distributions.",
-    description: "Guaranteeing nutrition security for daily-wage workers, homeless elders, and distress zones.",
-    image: "",
-    extra: {
-      eyebrow: "ZERO HUNGER MISSION",
-      alt: "Nutritious warm meals distributed to families",
-      features: ["COMMUNITY KITCHENS", "DAILY HOT MEALS", "DRY RATIONS"],
-      impactMetrics: [{ value: "500,000+", label: "MEALS SERVED" }],
-    },
-    },
-  {
-    key: "sammaan",
-    name: "SAMMAAN (ELDERLY CARE)",
-    title: "SAMMAAN (ELDERLY CARE)",
-    subtitle: "Dignity, nutrition, and healthcare for destitute senior citizens.",
-    description: "Protecting abandoned elders through doorstep medicine, hot meals, and social companionship.",
-    image: "",
-    extra: {
-      eyebrow: "SENIOR CITIZEN DIGNITY",
-      alt: "Elderly individual receiving care and companionship",
-      features: ["GERIATRIC HEALTHCARE", "MONTHLY RATIONS", "COMPANIONSHIP"],
-      impactMetrics: [{ value: "10,000+", label: "ELDERS CARED FOR" }],
-    },
-  },
-];
-
 const INITIATIVE_ICONS: Record<string, any> = {
   vidhya: GraduationCap,
   arogya: HeartPulse,
@@ -133,10 +74,11 @@ const INITIATIVE_ACCENTS: Record<string, { badge: string; text: string; lightBg:
 export default function InitiativesHomeSection({
   initiatives,
 }: InitiativesHomeSectionProps) {
-  const displayItems =
-    initiatives && initiatives.length > 0
-      ? initiatives.slice(0, 4)
-      : DEFAULT_HOME_INITIATIVES;
+  if (!initiatives || initiatives.length === 0) {
+    return null;
+  }
+
+  const displayItems = initiatives.slice(0, 4);
 
   return (
     <section className="bg-[#FAF7F2] py-16 sm:py-24 border-y border-stone-200/60 relative overflow-hidden">

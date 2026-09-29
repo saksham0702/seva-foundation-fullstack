@@ -2,35 +2,16 @@ import React from "react";
 import { Check } from "lucide-react";
 import { ICmsSection } from "@/types/cms";
 
-const DEFAULT_AREAS = [
-  {
-    title: "WOMEN EMPOWERMENT",
-    desc: "We strive to enhance women's status through education, skill development, and economic opportunities, enabling financial independence.",
-  },
-  {
-    title: "SENIOR CITIZEN WELFARE",
-    desc: "Dedicated to improving the quality of life for senior citizens by providing essential support services, healthcare, and social security.",
-  },
-  {
-    title: "YOUTH DEVELOPMENT",
-    desc: "Focusing on holistic development through education, vocational training, and mentorship to empower youth.",
-  },
-  {
-    title: "RURAL DEVELOPMENT",
-    desc: "Comprehensive development of rural areas through infrastructure, healthcare, agriculture, and educational programs.",
-  },
-  {
-    title: "LEPROSY SUPPORT",
-    desc: "Aiding leprosy patients with essential rations, medical support coordination, and challenging societal stigma.",
-  },
-];
-
 export default function AreasOfFocus({ section }: { section?: ICmsSection }) {
-  const title = section?.title || "AREAS OF FOCUS";
+  if (!section || !section.items || section.items.length === 0) {
+    return null;
+  }
+
+  const title = section.title || "AREAS OF FOCUS";
   const subtitle =
-    section?.subtitle ||
+    section.subtitle ||
     "Our organization's efforts are concentrated on these key areas.";
-  const rawItems = section?.items && section.items.length > 0 ? section.items : DEFAULT_AREAS;
+  const rawItems = section.items;
 
   const areas = rawItems.map((item: any) => ({
     title: item.title || item.name || "Focus Area",

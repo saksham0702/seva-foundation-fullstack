@@ -1,19 +1,14 @@
 import React from "react";
 import { ICmsSection } from "@/types/cms";
 
-const DEFAULT_AWARDS = [
-  { category: "OVERALL EXCELLENCE", title: "BEST NGO OF THE YEAR", year: "2026" },
-  { category: "SOCIAL WELFARE", title: "BEST NGO FOR ELDERS", year: "2026" },
-  { category: "HEALTHCARE", title: "BEST NGO FOR LEPROSY CARE", year: "2026" },
-  { category: "MEDICAL OUTREACH", title: "EXCELLENCE IN HEALTHCARE", year: "2026" },
-  { category: "GOVERNANCE", title: "TRANSPARENCY AWARD", year: "2026" },
-  { category: "INNOVATION", title: "SOCIAL IMPACT PIONEER", year: "2026" },
-];
-
 export default function HomeExcellenceSection({ section }: { section?: ICmsSection }) {
-  const title = section?.title || "EXCELLENCE IN HUMAN SERVICE";
-  const subtitle = section?.subtitle || "HONORS & GLOBAL RECOGNITION";
-  const rawItems = section?.items && section.items.length > 0 ? section.items : DEFAULT_AWARDS;
+  if (!section || !section.items || section.items.length === 0) {
+    return null;
+  }
+
+  const title = section.title || "EXCELLENCE IN HUMAN SERVICE";
+  const subtitle = section.subtitle || "HONORS & GLOBAL RECOGNITION";
+  const rawItems = section.items;
   const watermarkText = section?.extra?.watermarkText || "2026";
 
   const words = title.split(" ");
