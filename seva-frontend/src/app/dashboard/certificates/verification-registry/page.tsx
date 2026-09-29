@@ -61,7 +61,7 @@ function CertificateResult({
 
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 text-sm">
         {[
-          { label: "Recipient", value: certificate.recipientName },
+          { label: "Recipient", value: certificate.recipientName.toUpperCase() },
           {
             label: "Certificate Type",
             value: certificate.certificateType.replace(/_/g, " "),

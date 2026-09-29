@@ -4,14 +4,17 @@ import { endpoint } from "./endpoints";
 export const PERMISSION_OPTIONS = [
   { key: "campaigns", label: "Campaigns & Fundraising", description: "Create, edit, and publish campaigns" },
   { key: "donations", label: "Donations & Payments", description: "View transactions, donor receipts, and reports" },
-  { key: "volunteers", label: "Volunteers Management", description: "Manage categories and review applications" },
-  { key: "cms", label: "Content Management (CMS)", description: "Edit static website pages, banners, and layout" },
-  { key: "certificates", label: "80G Certificates & Signatures", description: "Generate, verify, and manage certificates" },
-  { key: "departments", label: "Departments Management", description: "Create departments and configure role permissions" },
-  { key: "users", label: "User & Admin Management", description: "Create staff accounts and assign departments" },
+  { key: "volunteers", label: "Volunteers Overview", description: "Manage volunteer roster and activities" },
+  { key: "volunteer-applications", label: "Volunteer Applications", description: "Review and process incoming volunteer signups" },
+  { key: "volunteer-categories", label: "Volunteer Categories", description: "Manage volunteer roles, badges & skills" },
+  { key: "certificates", label: "Certificates & 80G", description: "Generate, verify, and manage certificates" },
+  { key: "signatures", label: "Digital Signatures", description: "Manage authorized digital signatures and organization seal" },
+  { key: "cms", label: "Content Management (CMS)", description: "Edit dynamic pages, sections, and blogs" },
+  { key: "gallery", label: "Media Gallery", description: "Upload, organize, and toggle gallery images" },
+  { key: "marketing", label: "Marketing & Campaigns", description: "Email & WhatsApp marketing tools and logs" },
   { key: "crm", label: "Donor CRM & Leads", description: "Follow up with unpaid and failed payment leads" },
-  { key: "marketing", label: "Marketing & Media", description: "Blogs, stories, and press releases" },
-  { key: "gallery", label: "Gallery Management", description: "Upload, manage, and toggle gallery images" },
+  { key: "users", label: "User Management", description: "Create staff accounts and assign permissions" },
+  { key: "departments", label: "Departments Management", description: "Create departments and configure role permissions" },
 ] as const;
 
 export interface Department {

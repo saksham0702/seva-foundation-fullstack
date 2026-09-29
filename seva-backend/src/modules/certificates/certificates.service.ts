@@ -171,9 +171,10 @@ const updateCertificate = async (id: string, payload: Partial<ICertificate>): Pr
 
 const revokeCertificate = async (id: string, reason: string, updatedBy?: string): Promise<ICertificate | null> => {
   const updateObj: Record<string, any> = { status: "REVOKED", revokedReason: reason };
-  if (updatedBy) updateObj.updatedBy = updatedBy;
+  if (updatedBy && isValidObjectId(updatedBy)) updateObj.updatedBy = updatedBy;
+  const filter = isValidObjectId(id) ? { _id: id, isDeleted: false } : { certificateNo: id.toUpperCase().trim(), isDeleted: false };
   return CertificateModel.findOneAndUpdate(
-    { _id: id, isDeleted: false },
+    filter,
     { $set: updateObj },
     { new: true }
   );
@@ -181,9 +182,10 @@ const revokeCertificate = async (id: string, reason: string, updatedBy?: string)
 
 const reactivateCertificate = async (id: string, updatedBy?: string): Promise<ICertificate | null> => {
   const updateObj: Record<string, any> = { status: "ACTIVE" };
-  if (updatedBy) updateObj.updatedBy = updatedBy;
+  if (updatedBy && isValidObjectId(updatedBy)) updateObj.updatedBy = updatedBy;
+  const filter = isValidObjectId(id) ? { _id: id, isDeleted: false } : { certificateNo: id.toUpperCase().trim(), isDeleted: false };
   return CertificateModel.findOneAndUpdate(
-    { _id: id, isDeleted: false },
+    filter,
     {
       $set: updateObj,
       $unset: { revokedReason: 1 },
@@ -193,7 +195,8 @@ const reactivateCertificate = async (id: string, updatedBy?: string): Promise<IC
 };
 
 const deleteCertificate = async (id: string): Promise<ICertificate | null> => {
-  return CertificateModel.findByIdAndUpdate(id, { isDeleted: true }, { new: true });
+  const filter = isValidObjectId(id) ? { _id: id } : { certificateNo: id.toUpperCase().trim() };
+  return CertificateModel.findOneAndUpdate(filter, { isDeleted: true }, { new: true });
 };
 
 const generateCertificateForDonor = async (

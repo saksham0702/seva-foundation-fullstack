@@ -13,6 +13,7 @@ import {
   ArrowLeft,
   Share2,
   Loader2,
+  AlertTriangle,
 } from "lucide-react";
 import { Certificate, generatePdf } from "@/app/api/certificate";
 import { getImageUrl } from "@/lib/image";
@@ -45,6 +46,8 @@ export default function CertificateDetailClient({
   const [generatingPdf, setGeneratingPdf] = useState(false);
 
   const pdfDownloadUrl = pdfUrl ? getImageUrl(pdfUrl) : null;
+  const isRevoked = !valid || cert?.status === "REVOKED";
+  const recipientUpper = (cert?.recipientName || "").toUpperCase();
 
   const handleDownloadPdf = async () => {
     if (pdfDownloadUrl) {
@@ -80,21 +83,40 @@ export default function CertificateDetailClient({
           </Link>
 
           {cert && (
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider bg-white shadow-sm border border-gray-200">
-              {valid ? (
+            <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider bg-white shadow-sm border ${
+              !isRevoked ? "border-emerald-200 text-emerald-700" : "border-rose-200 text-rose-700"
+            }`}>
+              {!isRevoked ? (
                 <>
                   <ShieldCheck size={16} className="text-emerald-500" />
-                  <span className="text-emerald-700">Official Authenticated Record</span>
+                  <span>Official Authenticated Record</span>
                 </>
               ) : (
                 <>
                   <ShieldAlert size={16} className="text-rose-500" />
-                  <span className="text-rose-700">Revoked / Invalid Certificate</span>
+                  <span>Revoked Certificate Record</span>
                 </>
               )}
             </div>
           )}
         </div>
+
+        {/* Revoked Notice Banner */}
+        {cert && isRevoked && (
+          <div className="bg-rose-50 border border-rose-200 rounded-2xl p-5 flex items-start gap-4">
+            <AlertTriangle className="text-rose-600 shrink-0 mt-0.5" size={22} />
+            <div>
+              <h4 className="text-sm font-bold text-rose-900 uppercase tracking-wide">
+                This Certificate Has Been Revoked
+              </h4>
+              <p className="text-xs text-rose-700 mt-1 leading-relaxed">
+                {cert.revokedReason
+                  ? `Reason: ${cert.revokedReason}`
+                  : "This certificate is no longer valid and has been revoked by the issuing authority."}
+              </p>
+            </div>
+          </div>
+        )}
 
         {!cert ? (
           <div className="bg-white rounded-3xl p-12 shadow-lg border border-red-100 text-center">
@@ -116,9 +138,14 @@ export default function CertificateDetailClient({
         ) : (
           <>
             {/* Visual Certificate Card */}
-            <div className="relative bg-white rounded-3xl shadow-2xl border-8 border-[#0B2C6B] p-6 sm:p-12 overflow-hidden print:shadow-none">
-              <div className="absolute inset-2 sm:inset-3 border-2 border-[#D4A843] rounded-2xl pointer-events-none opacity-80" />
+            <div className={`relative bg-white rounded-3xl shadow-2xl border-8 ${
+              !isRevoked ? "border-[#0B2C6B]" : "border-rose-800"
+            } p-6 sm:p-12 overflow-hidden print:shadow-none`}>
+              <div className={`absolute inset-2 sm:inset-3 border-2 ${
+                !isRevoked ? "border-[#D4A843]" : "border-rose-400"
+              } rounded-2xl pointer-events-none opacity-80`} />
 
+              {/* Watermark Seal */}
               {cert.signatures?.seal?.imageUrl && (
                 <div className="absolute inset-0 m-auto w-64 h-64 opacity-5 pointer-events-none">
                   <Image
@@ -128,6 +155,15 @@ export default function CertificateDetailClient({
                     sizes="256px"
                     className="object-contain"
                   />
+                </div>
+              )}
+
+              {/* Revoked Watermark Overlay */}
+              {isRevoked && (
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20">
+                  <span className="text-6xl sm:text-8xl font-black text-rose-500/15 uppercase -rotate-12 border-8 border-rose-500/15 px-8 py-2 tracking-widest">
+                    REVOKED
+                  </span>
                 </div>
               )}
 
@@ -150,8 +186,8 @@ export default function CertificateDetailClient({
                 <p className="text-xs sm:text-sm text-gray-500 italic mt-3">
                   This digital certificate is proudly presented to
                 </p>
-                <h1 className="text-2xl sm:text-4xl font-serif font-semibold text-gray-900 mt-2 tracking-tight">
-                  {cert.recipientName}
+                <h1 className="text-2xl sm:text-4xl font-serif font-bold text-gray-900 mt-2 tracking-tight uppercase">
+                  {recipientUpper}
                 </h1>
               </div>
 
@@ -161,9 +197,11 @@ export default function CertificateDetailClient({
                   {cert.body ||
                     `In deep appreciation and grateful recognition of valuable contribution and dedication towards "${cert.programName}". Your support enables our ongoing initiatives to serve vulnerable communities.`}
                 </p>
-                <div className="mt-4 inline-block bg-slate-50 border border-slate-200 rounded-lg px-4 py-1.5 text-xs text-gray-700 font-semibold">
-                  Program: {cert.programName}
-                </div>
+                {cert.programName && (
+                  <div className="mt-4 inline-block bg-slate-50 border border-slate-200 rounded-lg px-4 py-1.5 text-xs text-[#0B2C6B] font-bold">
+                    Program / Cause: &ldquo;{cert.programName}&rdquo;
+                  </div>
+                )}
               </div>
 
               {/* Certificate Details & QR */}
@@ -195,7 +233,9 @@ export default function CertificateDetailClient({
                       className="border border-gray-200 rounded p-0.5"
                     />
                     <div className="text-[10px] text-gray-400 leading-tight">
-                      <span className="font-bold text-emerald-600">✓ Digital Verifiable</span>
+                      <span className={`font-bold ${!isRevoked ? "text-emerald-600" : "text-rose-600"}`}>
+                        {!isRevoked ? "✓ Digital Verifiable" : "⚠ Revoked Record"}
+                      </span>
                       <br />Scan to confirm
                     </div>
                   </div>
@@ -267,8 +307,17 @@ export default function CertificateDetailClient({
             {/* Actions Bar */}
             <div className="flex flex-wrap items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-gray-100 shadow-sm">
               <div className="flex items-center gap-2 text-xs text-gray-600">
-                <CheckCircle2 size={16} className="text-emerald-500" />
-                <span>Certificate verified and secure</span>
+                {!isRevoked ? (
+                  <>
+                    <CheckCircle2 size={16} className="text-emerald-500" />
+                    <span>Certificate verified and active</span>
+                  </>
+                ) : (
+                  <>
+                    <ShieldAlert size={16} className="text-rose-500" />
+                    <span className="text-rose-600 font-semibold">Certificate is revoked</span>
+                  </>
+                )}
               </div>
 
               <div className="flex items-center gap-3">
@@ -299,8 +348,8 @@ export default function CertificateDetailClient({
             <ShareModal
               isOpen={shareOpen}
               onClose={() => setShareOpen(false)}
-              title={`${cert.recipientName} - Certificate of Authenticity`}
-              description={`Official verified Certificate (${cert.certificateNo}) awarded to ${cert.recipientName} for ${cert.programName} by Seva India Foundation.`}
+              title={`${recipientUpper} - Certificate of Authenticity`}
+              description={`Official verified Certificate (${cert.certificateNo}) awarded to ${recipientUpper} for ${cert.programName} by Seva India Foundation.`}
             />
           </>
         )}

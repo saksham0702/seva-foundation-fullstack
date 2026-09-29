@@ -43,9 +43,9 @@ const getProfile = asyncHandler(async (req: AuthRequest, res: Response) => {
 
 // ── Create user ───────────────────────────────────────────────────────────────
 const createUser = asyncHandler(async (req: AuthRequest, res: Response) => {
-  const { name, email, password, role, permissions } = req.body;
+  const { name, email, password, role, permissions, department } = req.body;
   const result = await AuthService.createUser(
-    { name, email, password, role, permissions },
+    { name, email, password, role, permissions, department },
     req.user?.userId
   );
 

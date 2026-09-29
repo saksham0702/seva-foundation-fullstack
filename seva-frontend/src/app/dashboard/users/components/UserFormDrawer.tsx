@@ -173,7 +173,7 @@ function UserFormDrawerContent({
         name: form.name,
         email: form.email,
         role: form.role,
-        department: form.department || undefined,
+        department: form.department ? form.department : null,
         permissions: form.permissions,
         ...(isCreate ? { password: form.password } : {}),
       };

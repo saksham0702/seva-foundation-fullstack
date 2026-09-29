@@ -102,7 +102,9 @@ function CertificateDrawer({
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-5 border-b border-border">
           <div>
-            <p className="font-semibold text-text-primary">{cert.recipientName}</p>
+            <p className="font-semibold text-text-primary uppercase tracking-wide">
+              {cert.recipientName}
+            </p>
             <p className="font-mono text-[11px] text-faint">{cert.certificateNo}</p>
           </div>
           <button
@@ -132,6 +134,7 @@ function CertificateDrawer({
             <p className="label-eyebrow mb-2">Certificate Details</p>
             <div className="bg-bg border border-border rounded-xl divide-y divide-border">
               {[
+                { label: "Recipient Name", value: cert.recipientName.toUpperCase() },
                 { label: "Recipient Type", value: cert.recipientType },
                 { label: "Program", value: cert.programName },
                 { label: "Campaign", value: campaignName || "—" },
@@ -169,7 +172,9 @@ function CertificateDrawer({
           )}
 
           {/* Visual Certificate Preview Card */}
-          <div className="bg-white rounded-xl border-2 border-amber-500/40 p-5 text-gray-900 shadow-lg relative overflow-hidden">
+          <div className={`bg-white rounded-xl border-2 ${
+            cert.status === "REVOKED" ? "border-red-500/60 bg-red-50/20" : "border-amber-500/40"
+          } p-5 text-gray-900 shadow-lg relative overflow-hidden`}>
             {/* Watermark / Seal background */}
             {cert.signatures?.seal?.imageUrl && (
               <img
@@ -177,6 +182,14 @@ function CertificateDrawer({
                 alt="Seal"
                 className="absolute inset-0 m-auto w-32 h-32 object-contain opacity-10 pointer-events-none"
               />
+            )}
+
+            {cert.status === "REVOKED" && (
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
+                <span className="text-3xl font-black text-red-500/25 uppercase -rotate-12 border-4 border-red-500/25 px-4 py-1 tracking-widest">
+                  REVOKED
+                </span>
+              </div>
             )}
 
             <div className="text-center border-b border-gray-200 pb-3 mb-3">
@@ -187,8 +200,8 @@ function CertificateDrawer({
                 {TYPE_LABELS[cert.certificateType] || "Certificate"}
               </h4>
               <p className="text-[10px] text-gray-400 italic">This is proudly presented to</p>
-              <h3 className="text-lg font-black text-gray-900 mt-1 font-serif">
-                {cert.recipientName}
+              <h3 className="text-lg font-black text-gray-900 mt-1 font-serif uppercase">
+                {cert.recipientName.toUpperCase()}
               </h3>
               <p className="text-[11px] text-gray-600 mt-1 line-clamp-2 px-2">
                 {cert.body || `For exemplary participation and dedication to ${cert.programName}.`}
@@ -540,7 +553,7 @@ function CertificatesTable() {
                         {cert.certificateNo}
                       </td>
                       <td className="px-5 py-3.5">
-                        <p className="font-medium text-text-primary">
+                        <p className="font-medium text-text-primary uppercase">
                           {cert.recipientName}
                         </p>
                         {cert.recipientEmail && (
