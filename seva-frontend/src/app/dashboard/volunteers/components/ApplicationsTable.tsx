@@ -109,8 +109,8 @@ export const ApplicationsTable: React.FC<ApplicationsTableProps> = ({
                 ? "Search by company, contact person, email, or industry..."
                 : activeFormType === "career"
                 ? "Search by candidate, position, email, or location..."
-                : activeFormType === "support"
-                ? "Search by donor name, email, support type, or program..."
+                : activeFormType === "individual" || activeFormType === "support"
+                ? "Search by individual name, email, support type, or program..."
                 : "Search by name, email, phone, role, or skills..."
             }
             value={searchQuery}
@@ -149,8 +149,8 @@ export const ApplicationsTable: React.FC<ApplicationsTableProps> = ({
                   ? "All Initiatives"
                   : activeFormType === "career"
                   ? "All Positions"
-                  : activeFormType === "support"
-                  ? "All Giving Programs"
+                  : activeFormType === "individual" || activeFormType === "support"
+                  ? "All Individual Programs"
                   : "All Roles"}
               </option>
               {categories.map((c) => (
@@ -179,7 +179,7 @@ export const ApplicationsTable: React.FC<ApplicationsTableProps> = ({
                 <Building2 size={18} />
               ) : activeFormType === "career" ? (
                 <Briefcase size={18} />
-              ) : activeFormType === "support" ? (
+              ) : activeFormType === "individual" || activeFormType === "support" ? (
                 <Gift size={18} />
               ) : (
                 <Users size={18} />
@@ -214,9 +214,9 @@ export const ApplicationsTable: React.FC<ApplicationsTableProps> = ({
                       <th className="py-3 px-4 sm:px-5">Current Location</th>
                       <th className="py-3 px-4 sm:px-5">Resume</th>
                     </>
-                  ) : activeFormType === "support" ? (
+                  ) : activeFormType === "individual" || activeFormType === "support" ? (
                     <>
-                      <th className="py-3 px-4 sm:px-5">Contributor / Donor</th>
+                      <th className="py-3 px-4 sm:px-5">Individual / Contributor</th>
                       <th className="py-3 px-4 sm:px-5">Support Type</th>
                       <th className="py-3 px-4 sm:px-5">Program</th>
                       <th className="py-3 px-4 sm:px-5">Mailing Address</th>
@@ -335,7 +335,7 @@ export const ApplicationsTable: React.FC<ApplicationsTableProps> = ({
                             )}
                           </td>
                         </>
-                      ) : activeFormType === "support" ? (
+                      ) : activeFormType === "individual" || activeFormType === "support" ? (
                         <>
                           <td className="py-3.5 px-4 sm:px-5">
                             <div>

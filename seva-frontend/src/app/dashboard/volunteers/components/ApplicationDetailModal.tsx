@@ -97,8 +97,8 @@ export const ApplicationDetailModal: React.FC<ApplicationDetailModalProps> = ({
                     ? "Corporate & CSR Partnership"
                     : formType === "career"
                     ? "Career & Job Application"
-                    : formType === "support"
-                    ? "Ways to Give / Support"
+                    : formType === "individual" || formType === "support"
+                    ? "Individual Giving Application"
                     : "Volunteer Application"}
                 </span>
                 <span className="text-[11px] text-slate-400">
@@ -373,8 +373,8 @@ export const ApplicationDetailModal: React.FC<ApplicationDetailModalProps> = ({
               </div>
             )}
 
-            {/* ── 4. SUPPORT / WAYS TO GIVE VIEW ── */}
-            {formType === "support" && (
+            {/* ── 4. INDIVIDUAL / SUPPORT VIEW ── */}
+            {(formType === "individual" || formType === "support") && (
               <div className="space-y-3.5">
                 <div className="grid sm:grid-cols-2 gap-3">
                   {/* Contributor Details */}

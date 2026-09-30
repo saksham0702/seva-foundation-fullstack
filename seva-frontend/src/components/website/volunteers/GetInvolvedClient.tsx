@@ -24,6 +24,8 @@ import {
   FileText,
   Link as LinkIcon,
   HelpCircle,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import {
   createVolunteerApplication,
@@ -78,6 +80,21 @@ const COUNTRY_CODES = [
   { code: "+977", country: "NP", flag: "🇳🇵" },
 ];
 
+const getCategoryIcon = (title: string, formType: FormType) => {
+  const t = (title || "").toLowerCase();
+  if (t.includes("teach") || t.includes("mentor") || t.includes("educat")) return Sparkles;
+  if (t.includes("health") || t.includes("camp") || t.includes("medic")) return Heart;
+  if (t.includes("kitchen") || t.includes("food") || t.includes("meal") || t.includes("hunger")) return Gift;
+  if (t.includes("women") || t.includes("empower") || t.includes("skill")) return Target;
+  if (t.includes("corporate") || t.includes("business") || t.includes("csr")) return Building2;
+  if (t.includes("sponsor") || t.includes("give") || t.includes("donat")) return HandHeart;
+  if (t.includes("job") || t.includes("lead") || t.includes("officer") || t.includes("manager")) return Briefcase;
+  if (formType === "volunteer") return Heart;
+  if (formType === "corporate") return Building2;
+  if (formType === "career") return Briefcase;
+  return HandHeart;
+};
+
 interface GetInvolvedClientProps {
   categories: VolunteerCategory[];
   faqs: { q: string; a: string }[];
@@ -93,34 +110,54 @@ export default function GetInvolvedClient({
   const resolveInitialType = (val: string | null): FormType => {
     if (val === "corporate" || val === "csr") return "corporate";
     if (val === "career" || val === "careers" || val === "jobs") return "career";
-    if (val === "support" || val === "give" || val === "donate") return "support";
+    if (val === "individual" || val === "support" || val === "give" || val === "donate" || val === "ways-to-give") return "individual";
     return "volunteer";
   };
 
   const [activeFormType, setActiveFormType] = useState<FormType>(resolveInitialType(urlType));
   const [openFaq, setOpenFaq] = useState<number | null>(null);
 
-  // Filter categories by formType
-  const filteredCategories = categories.filter(
-    (c) => (c.formType || "volunteer") === activeFormType
-  );
+  // Filter categories by formType (handling individual and legacy support) and deduplicate by title
+  const filteredCategories = categories
+    .filter((c) => {
+      const catType = c.formType || "volunteer";
+      if (activeFormType === "individual" || activeFormType === "support") {
+        return catType === "individual" || catType === "support";
+      }
+      return catType === activeFormType;
+    })
+    .filter(
+      (cat, idx, arr) =>
+        arr.findIndex(
+          (x) =>
+            x._id === cat._id ||
+            x.title.trim().toLowerCase() === cat.title.trim().toLowerCase()
+        ) === idx
+    );
 
-  const defaultCategoryTitle =
-    activeFormType === "corporate"
-      ? "CSR PROJECTS"
-      : activeFormType === "career"
-      ? "PROGRAM MANAGER"
-      : activeFormType === "support"
-      ? "SPONSORSHIP"
-      : "GENERAL SUPPORT";
+  const getCategoryColor = (item: any): string | null => {
+    if (item?.color && typeof item.color === "string" && item.color.trim() !== "") {
+      return item.color.trim();
+    }
+    return null;
+  };
 
-  const initialCat = filteredCategories[0];
+  const displayCategories = filteredCategories;
+
+  const initialCat = displayCategories[0];
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>(
     initialCat?._id || ""
   );
   const [selectedRole, setSelectedRole] = useState<string>(
-    initialCat?.title || defaultCategoryTitle
+    initialCat?.title || ""
   );
+
+  const currentCategory =
+    displayCategories.find(
+      (c) =>
+        (selectedCategoryId && c._id === selectedCategoryId) ||
+        (c.title && selectedRole && c.title.toUpperCase() === selectedRole.toUpperCase())
+    ) || displayCategories[0] || null;
 
   const [countryCode, setCountryCode] = useState("+91");
   const [phoneNumber, setPhoneNumber] = useState("");
@@ -144,7 +181,7 @@ export default function GetInvolvedClient({
     partnershipGoals: "",
 
     // Volunteer specific
-    availability: "Flexible" as Availability | "Flexible",
+    availability: "flexible" as Availability,
     skills: "",
     previousExperience: "",
     reason: "",
@@ -155,7 +192,7 @@ export default function GetInvolvedClient({
     resumeUrl: "",
     coverLetter: "",
 
-    // Support specific
+    // Support / Individual specific
     supportType: "One-time Donation",
     address: "",
   });
@@ -163,31 +200,39 @@ export default function GetInvolvedClient({
   const formRef = useRef<HTMLDivElement | null>(null);
 
   const handleTabChange = (type: FormType) => {
-    setActiveFormType(type);
+    const targetType = type === ("support" as any) ? "individual" : type;
+    setActiveFormType(targetType);
     setSubmitted(false);
     setErrorMessage(null);
 
-    const newFiltered = categories.filter((c) => (c.formType || "volunteer") === type);
+    const newFiltered = categories.filter((c) => {
+      const catType = c.formType || "volunteer";
+      if (targetType === "individual") {
+        return catType === "individual" || catType === "support";
+      }
+      return catType === targetType;
+    });
+
     const firstNew = newFiltered[0];
     if (firstNew) {
       setSelectedCategoryId(firstNew._id);
       setSelectedRole(firstNew.title);
-      if (type === "career") {
+      if (targetType === "career") {
         setFormData((prev) => ({ ...prev, positionAppliedFor: firstNew.title }));
+      } else if (targetType === "individual") {
+        setFormData((prev) => ({ ...prev, supportType: firstNew.title }));
+      } else if (targetType === "corporate") {
+        setFormData((prev) => ({ ...prev, csrFocusAreas: firstNew.title }));
       }
     } else {
       setSelectedCategoryId("");
-      const fallback =
-        type === "corporate"
-          ? "CSR PROJECTS"
-          : type === "career"
-          ? "PROGRAM MANAGER"
-          : type === "support"
-          ? "SPONSORSHIP"
-          : "GENERAL SUPPORT";
-      setSelectedRole(fallback);
-      if (type === "career") {
-        setFormData((prev) => ({ ...prev, positionAppliedFor: fallback }));
+      setSelectedRole("");
+      if (targetType === "career") {
+        setFormData((prev) => ({ ...prev, positionAppliedFor: "" }));
+      } else if (targetType === "individual") {
+        setFormData((prev) => ({ ...prev, supportType: "" }));
+      } else if (targetType === "corporate") {
+        setFormData((prev) => ({ ...prev, csrFocusAreas: "" }));
       }
     }
   };
@@ -218,6 +263,10 @@ export default function GetInvolvedClient({
     if (categoryId) setSelectedCategoryId(categoryId);
     if (activeFormType === "career") {
       setFormData((prev) => ({ ...prev, positionAppliedFor: title }));
+    } else if (activeFormType === "individual" || activeFormType === "support") {
+      setFormData((prev) => ({ ...prev, supportType: title }));
+    } else if (activeFormType === "corporate") {
+      setFormData((prev) => ({ ...prev, csrFocusAreas: title }));
     }
     formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
@@ -265,21 +314,30 @@ export default function GetInvolvedClient({
         payload.contactPerson = formData.contactPerson;
         payload.industry = formData.industry;
         payload.partnershipType = formData.partnershipType;
-        payload.csrFocusAreas = formData.csrFocusAreas;
-        payload.partnershipGoals = formData.partnershipGoals;
+        payload.csrFocusAreas = formData.csrFocusAreas || selectedRole;
+        payload.partnershipGoals = formData.partnershipGoals || formData.message;
       } else if (activeFormType === "volunteer") {
-        payload.availability = (formData.availability.toLowerCase() as Availability) || "flexible";
+        const availRaw = String(formData.availability).toLowerCase().trim();
+        let availClean: Availability = "flexible";
+        if (availRaw.includes("weekend")) availClean = "weekends";
+        else if (availRaw.includes("weekday")) availClean = "weekdays";
+        else if (availRaw.includes("both")) availClean = "both";
+        else if (availRaw.includes("full")) availClean = "fulltime";
+        else if (availRaw.includes("part")) availClean = "parttime";
+        payload.availability = availClean;
         payload.skills = formData.skills;
         payload.previousExperience = formData.previousExperience;
-        payload.reason = formData.reason;
+        payload.reason = formData.reason || formData.message;
       } else if (activeFormType === "career") {
         payload.positionAppliedFor = formData.positionAppliedFor || selectedRole;
         payload.currentLocation = formData.currentLocation;
         payload.resumeUrl = formData.resumeUrl;
-        payload.coverLetter = formData.coverLetter;
-      } else if (activeFormType === "support") {
-        payload.supportType = formData.supportType;
+        payload.coverLetter = formData.coverLetter || formData.message;
+      } else if (activeFormType === "individual" || activeFormType === "support") {
+        payload.formType = "individual";
+        payload.supportType = formData.supportType || selectedRole;
         payload.address = formData.address;
+        payload.message = formData.message;
       }
 
       await createVolunteerApplication(payload);
@@ -301,366 +359,455 @@ export default function GetInvolvedClient({
       {/* ── Selection Part & Interactive Forms ── */}
       <section id="select-and-apply" className="py-16 sm:py-24 bg-white scroll-mt-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid lg:grid-cols-12 gap-10 lg:gap-14 items-start">
-            
-            {/* ======================================================== */}
-            {/* LEFT 6 COLUMNS: DYNAMIC BENEFIT / CATEGORY CARDS         */}
-            {/* ======================================================== */}
-            <div className="lg:col-span-6 space-y-8">
-              
-              {/* TAB 1: CORPORATE */}
-              {activeFormType === "corporate" && (
-                <>
-                  <div>
-                    <h2 className="font-serif text-3xl sm:text-4xl font-bold text-[#0f2347] tracking-tight uppercase">
-                      PARTNER FOR <span className="text-[#4169E1]">IMPACT</span>
-                    </h2>
-                    <p className="text-slate-600 text-sm sm:text-base leading-relaxed mt-3 max-w-lg">
-                      We offer strategic, long-term partnership opportunities that align with your CSR goals and provide measurable social impact.
-                    </p>
+          
+          {/* ── 4 Major Engagement Navigation Tabs ── */}
+          <div className="mb-12">
+            <div className="text-center max-w-2xl mx-auto mb-6">
+              <span className="inline-block text-xs font-bold tracking-widest uppercase text-[#4169E1] mb-2 bg-blue-50 px-3.5 py-1 rounded-full border border-blue-100">
+                Choose Your Engagement Path
+              </span>
+              <h2 className="font-serif text-3xl sm:text-4xl font-bold text-[#0f2347] tracking-tight">
+                WAYS TO GET <span className="text-[#F5A623]">INVOLVED</span>
+              </h2>
+            </div>
+
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-3.5 max-w-4xl mx-auto p-2 bg-slate-100/90 backdrop-blur rounded-2xl border border-slate-200 shadow-xs">
+              {[
+                { id: "volunteer" as FormType, label: "Volunteer", sub: "Grassroots Action", icon: Heart },
+                { id: "individual" as FormType, label: "Individual", sub: "Support & Giving", icon: HandHeart },
+                { id: "corporate" as FormType, label: "Corporate", sub: "CSR & Partnerships", icon: Building2 },
+                { id: "career" as FormType, label: "Careers & Jobs", sub: "Join Our Team", icon: Briefcase },
+              ].map((tab) => {
+                const isActive =
+                  activeFormType === tab.id ||
+                  (tab.id === "individual" && activeFormType === "support");
+                const Icon = tab.icon;
+                return (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    onClick={() => handleTabChange(tab.id)}
+                    className={`flex items-center gap-3 p-3.5 sm:p-4 rounded-xl text-left transition-all duration-200 cursor-pointer ${
+                      isActive
+                        ? "bg-[#0f2347] text-white shadow-md scale-[1.02] ring-2 ring-[#0f2347]/20"
+                        : "bg-white text-slate-700 hover:text-[#0f2347] hover:bg-slate-50 border border-slate-200/60 shadow-xs"
+                    }`}
+                  >
+                    <div
+                      className={`w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center shrink-0 ${
+                        isActive
+                          ? "bg-white/10 text-[#F5A623]"
+                          : "bg-slate-100 text-slate-500"
+                      }`}
+                    >
+                      <Icon size={18} />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="text-xs sm:text-sm font-bold uppercase tracking-wider leading-tight truncate">
+                        {tab.label}
+                      </div>
+                      <div
+                        className={`text-[10px] sm:text-[11px] truncate mt-0.5 ${
+                          isActive ? "text-slate-300" : "text-slate-500"
+                        }`}
+                      >
+                        {tab.sub}
+                      </div>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* ── Category Selection Grid (Multi-row Lines) ── */}
+          {displayCategories.length > 0 && (
+            <div className="mb-10 bg-slate-50/80 rounded-3xl p-5 sm:p-6 border border-slate-200/80 shadow-xs">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 rounded-full bg-[#0f2347] animate-pulse" />
+                    <span className="text-xs font-bold uppercase tracking-widest text-[#0f2347]">
+                      {activeFormType === "volunteer"
+                        ? "Select Volunteer Program"
+                        : activeFormType === "corporate"
+                        ? "Select CSR Focus Area"
+                        : activeFormType === "career"
+                        ? "Select Job Opening"
+                        : "Select Giving & Support Track"}
+                    </span>
                   </div>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    Click any program below to view details and update your application details
+                  </p>
+                </div>
 
-                  {/* 4 Feature Cards */}
-                  <div className="grid sm:grid-cols-2 gap-4">
-                    {[
-                      {
-                        title: "CSR PROJECTS",
-                        desc: "Direct implementation of high-impact social projects.",
-                        icon: Target,
-                        id: "csr-projects",
-                      },
-                      {
-                        title: "EMPLOYEE ENGAGEMENT",
-                        desc: "Volunteer programs for your workforce.",
-                        icon: HandHeart,
-                        id: "employee-engagement",
-                      },
-                      {
-                        title: "IMPACT REPORTING",
-                        desc: "Detailed data-driven reports for your CSR compliance.",
-                        icon: BarChart3,
-                        id: "impact-reporting",
-                      },
-                      {
-                        title: "GLOBAL STANDARDS",
-                        desc: "Projects aligned with UN Sustainable Development Goals.",
-                        icon: Globe,
-                        id: "global-standards",
-                      },
-                    ].map((item) => {
-                      const matchedCat = filteredCategories.find(
-                        (c) => c.title.toUpperCase() === item.title
-                      );
-                      const isSelected = selectedRole.toUpperCase() === item.title;
-                      const IconComponent = item.icon;
+                <span className="text-xs font-bold uppercase tracking-wider text-slate-500 bg-white px-3 py-1 rounded-full border border-slate-200 shadow-xs self-start sm:self-auto">
+                  {displayCategories.length} {displayCategories.length === 1 ? "Program" : "Programs"}
+                </span>
+              </div>
 
-                      return (
-                        <div
-                          key={item.title}
-                          onClick={() => handleCategoryClick(item.title, matchedCat?._id)}
-                          className={`p-6 rounded-3xl border transition-all duration-300 cursor-pointer relative flex flex-col justify-between ${
-                            isSelected
-                              ? "bg-blue-50/50 border-[#4169E1] ring-2 ring-[#4169E1]/20 shadow-md scale-[1.02]"
-                              : "bg-slate-50/60 border-slate-100 hover:border-slate-200 hover:bg-white"
-                          }`}
-                        >
-                          <div>
-                            <div className="w-12 h-12 rounded-2xl bg-white shadow-xs border border-slate-100 flex items-center justify-center text-[#4169E1] mb-4">
-                              <IconComponent size={24} />
-                            </div>
-                            <h3 className="font-serif font-bold text-sm text-[#0f2347] tracking-wider uppercase mb-1.5">
-                              {item.title}
-                            </h3>
-                            <p className="text-xs text-slate-500 leading-relaxed">
-                              {matchedCat?.description || item.desc}
-                            </p>
+              {/* Responsive Multi-line Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
+                {displayCategories.map((item) => {
+                  const isSelected =
+                    (selectedCategoryId && item._id === selectedCategoryId) ||
+                    (item.title && selectedRole && item.title.toUpperCase() === selectedRole.toUpperCase());
+                  const IconComponent = getCategoryIcon(item.title, activeFormType);
+                  const catColor = getCategoryColor(item);
+
+                  return (
+                    <button
+                      key={item._id || item.title}
+                      type="button"
+                      onClick={() => handleCategoryClick(item.title, item._id)}
+                      style={{
+                        borderColor: isSelected && catColor ? catColor : undefined,
+                        boxShadow: isSelected && catColor ? `0 8px 24px -4px ${catColor}35` : undefined,
+                      }}
+                      className={`p-4 rounded-2xl border text-left transition-all duration-200 cursor-pointer flex flex-col justify-between relative group ${
+                        isSelected
+                          ? "bg-[#0f2347] text-white ring-2 ring-[#0f2347]/20 scale-[1.01]"
+                          : "bg-white text-slate-700 border-slate-200 hover:border-slate-300 hover:bg-slate-50/70 shadow-xs"
+                      }`}
+                    >
+                      <div>
+                        <div className="flex items-center justify-between mb-2.5">
+                          <div
+                            className={`w-9 h-9 rounded-xl flex items-center justify-center transition-transform group-hover:scale-105 ${
+                              !catColor
+                                ? isSelected
+                                  ? "bg-white/10 text-white"
+                                  : "bg-slate-100 text-[#0f2347] group-hover:text-[#4169E1]"
+                                : ""
+                            }`}
+                            style={
+                              catColor
+                                ? {
+                                    backgroundColor: isSelected ? `${catColor}30` : `${catColor}15`,
+                                    color: isSelected ? "#ffffff" : catColor,
+                                    border: `1px solid ${catColor}30`,
+                                  }
+                                : undefined
+                            }
+                          >
+                            <IconComponent size={18} />
                           </div>
-                          {isSelected && (
-                            <span className="inline-flex items-center gap-1 text-[10px] font-bold text-[#4169E1] uppercase tracking-wider mt-3">
-                              <CheckCircle2 size={12} /> Selected for Inquiry
+                          {item.badge && (
+                            <span
+                              className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${
+                                !catColor
+                                  ? isSelected
+                                    ? "bg-white/15 text-slate-200"
+                                    : "bg-slate-100 text-slate-600"
+                                  : ""
+                              }`}
+                              style={
+                                catColor
+                                  ? {
+                                      backgroundColor: isSelected ? `${catColor}30` : `${catColor}15`,
+                                      color: isSelected ? "#ffffff" : catColor,
+                                      border: `1px solid ${catColor}30`,
+                                    }
+                                  : undefined
+                              }
+                            >
+                              {item.badge}
                             </span>
                           )}
                         </div>
-                      );
-                    })}
+
+                        <h4
+                          className={`font-serif font-bold text-xs uppercase tracking-wide line-clamp-1 ${
+                            isSelected ? "text-white" : "text-[#0f2347]"
+                          }`}
+                        >
+                          {item.title}
+                        </h4>
+                        {item.description && (
+                          <p
+                            className={`text-[11px] line-clamp-2 mt-1 leading-relaxed ${
+                              isSelected ? "text-slate-300" : "text-slate-500"
+                            }`}
+                          >
+                            {item.description}
+                          </p>
+                        )}
+                      </div>
+
+                      <div
+                        className="mt-3 pt-2.5 border-t flex items-center justify-between"
+                        style={{
+                          borderColor: isSelected
+                            ? "rgba(255,255,255,0.15)"
+                            : "rgba(226,232,240,0.8)",
+                        }}
+                      >
+                        {isSelected ? (
+                          <span
+                            className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider"
+                            style={{ color: catColor || "#F5A623" }}
+                          >
+                            <CheckCircle2 size={12} /> Selected
+                          </span>
+                        ) : (
+                          <span className="text-[10px] font-semibold text-slate-400 group-hover:text-slate-600 uppercase tracking-wider">
+                            Click to select
+                          </span>
+                        )}
+                        {catColor && (
+                          <span
+                            className="w-2.5 h-2.5 rounded-full"
+                            style={{ backgroundColor: catColor }}
+                            title="Category color"
+                          />
+                        )}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          <div className="grid lg:grid-cols-12 gap-10 lg:gap-14 items-start">
+            
+            {/* ======================================================== */}
+            {/* LEFT 6 COLUMNS: SELECTED SPOTLIGHT & IMPACT BANNER       */}
+            {/* ======================================================== */}
+            <div className="lg:col-span-6 space-y-6">
+              
+              {/* Active Selection Spotlight Card */}
+              {currentCategory && (
+                <div
+                  className="bg-white rounded-3xl p-6 sm:p-8 border shadow-sm relative overflow-hidden"
+                  style={
+                    getCategoryColor(currentCategory)
+                      ? {
+                          borderColor: `${getCategoryColor(currentCategory)}40`,
+                          boxShadow: `0 8px 24px -4px ${getCategoryColor(currentCategory)}20`,
+                        }
+                      : {
+                          borderColor: "#e2e8f0",
+                        }
+                  }
+                >
+                  {getCategoryColor(currentCategory) && (
+                    <div
+                      className="absolute top-0 right-0 w-64 h-64 rounded-full blur-3xl opacity-15 pointer-events-none"
+                      style={{ backgroundColor: getCategoryColor(currentCategory)! }}
+                    />
+                  )}
+                  <div className="relative z-10">
+                    <div className="flex items-center justify-between gap-3 mb-4">
+                      <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-50 border border-slate-200 shadow-xs">
+                        <span
+                          className="w-2 h-2 rounded-full animate-pulse"
+                          style={{
+                            backgroundColor: getCategoryColor(currentCategory) || "#10B981",
+                          }}
+                        />
+                        <span className="text-[11px] font-bold tracking-wider uppercase text-[#0f2347]">
+                          Selected Program Spotlight
+                        </span>
+                      </div>
+                      {currentCategory.badge && (
+                        <span
+                          className={`text-xs font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full ${
+                            !getCategoryColor(currentCategory)
+                              ? "bg-slate-100 text-slate-700 border border-slate-200"
+                              : ""
+                          }`}
+                          style={
+                            getCategoryColor(currentCategory)
+                              ? {
+                                  backgroundColor: `${getCategoryColor(currentCategory)}15`,
+                                  color: getCategoryColor(currentCategory)!,
+                                  border: `1px solid ${getCategoryColor(currentCategory)}30`,
+                                }
+                              : undefined
+                          }
+                        >
+                          {currentCategory.badge}
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="flex items-start gap-4 mb-4">
+                      <div
+                        className={`w-14 h-14 rounded-2xl shadow-xs border flex items-center justify-center shrink-0 ${
+                          !getCategoryColor(currentCategory)
+                            ? "bg-slate-100 text-[#0f2347] border-slate-200"
+                            : ""
+                        }`}
+                        style={
+                          getCategoryColor(currentCategory)
+                            ? {
+                                backgroundColor: `${getCategoryColor(currentCategory)}15`,
+                                color: getCategoryColor(currentCategory)!,
+                                borderColor: `${getCategoryColor(currentCategory)}30`,
+                              }
+                            : undefined
+                        }
+                      >
+                        {(() => {
+                          const IconComp = getCategoryIcon(currentCategory.title || "", activeFormType);
+                          return <IconComp size={28} />;
+                        })()}
+                      </div>
+                      <div>
+                        <h3 className="font-serif text-2xl font-bold text-[#0f2347] tracking-tight uppercase">
+                          {currentCategory.title}
+                        </h3>
+                        <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mt-0.5">
+                          {activeFormType === "volunteer"
+                            ? "Grassroots Community Initiative"
+                            : activeFormType === "corporate"
+                            ? "Strategic CSR Partnership Track"
+                            : activeFormType === "career"
+                            ? "Open Position • Seva Foundation"
+                            : "Direct Philanthropic Initiative"}
+                        </p>
+                      </div>
+                    </div>
+
+                    {currentCategory.description && (
+                      <p className="text-slate-600 text-sm leading-relaxed mb-6">
+                        {currentCategory.description}
+                      </p>
+                    )}
+
+                    <div className="grid grid-cols-2 gap-3 pt-4 border-t border-slate-100">
+                      <div className="bg-slate-50 rounded-xl p-3 border border-slate-100 shadow-xs">
+                        <div className="flex items-center gap-2 text-slate-400 text-xs mb-1">
+                          <Clock size={13} />
+                          <span className="font-semibold uppercase text-[10px]">Commitment</span>
+                        </div>
+                        <p className="text-xs font-bold text-[#0f2347]">
+                          {activeFormType === "career" ? "Full-Time" : "Flexible / Weekly"}
+                        </p>
+                      </div>
+
+                      <div className="bg-slate-50 rounded-xl p-3 border border-slate-100 shadow-xs">
+                        <div className="flex items-center gap-2 text-slate-400 text-xs mb-1">
+                          <MapPin size={13} />
+                          <span className="font-semibold uppercase text-[10px]">Location</span>
+                        </div>
+                        <p className="text-xs font-bold text-[#0f2347]">
+                          {activeFormType === "career" ? "Delhi / Hybrid" : "Uttarakhand & North India"}
+                        </p>
+                      </div>
+                    </div>
                   </div>
-                </>
+                </div>
               )}
 
-              {/* TAB 2: VOLUNTEER */}
+              {/* TAB 1: CORPORATE BENEFIT BANNER */}
+              {activeFormType === "corporate" && (
+                <div className="bg-[#0f2347] rounded-3xl p-7 text-white relative overflow-hidden shadow-xl">
+                  <Building2 size={120} className="absolute -right-6 -bottom-6 text-white/5" />
+                  <h4 className="font-serif font-bold text-base tracking-wider uppercase text-white mb-4">
+                    PARTNER FOR IMPACT WITH SEVA
+                  </h4>
+                  <div className="space-y-3">
+                    {[
+                      "ALIGN WITH UN SUSTAINABLE DEVELOPMENT GOALS (SDGS)",
+                      "AUDIT-READY QUARTERLY CSR IMPACT & FINANCIAL REPORTS",
+                      "EMPLOYEE VOLUNTEERING DRIVES & ENGAGEMENT WORKSHOPS",
+                      "ELIGIBLE FOR 80G & CSR TAX DEDUCTIONS UNDER INDIAN LAW",
+                    ].map((item) => (
+                      <div key={item} className="flex items-center gap-2.5">
+                        <div className="w-5 h-5 rounded-full bg-[#E8542A]/20 border border-[#E8542A]/40 flex items-center justify-center shrink-0">
+                          <CheckCircle2 size={13} className="text-[#E8542A]" />
+                        </div>
+                        <span className="text-xs font-semibold uppercase tracking-wider text-slate-200">
+                          {item}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* TAB 2: VOLUNTEER BENEFIT BANNER */}
               {activeFormType === "volunteer" && (
-                <>
-                  <div>
-                    <h2 className="font-serif text-3xl sm:text-4xl font-bold text-[#0f2347] tracking-tight uppercase">
-                      VOLUNTEER WITH <span className="text-[#E8542A]">SEVA</span>
-                    </h2>
-                    <p className="text-slate-600 text-sm sm:text-base leading-relaxed mt-3 max-w-lg">
-                      Volunteering with Seva India Foundation is a rewarding experience that allows you to contribute directly to social change while building new skills.
-                    </p>
-                  </div>
-
-                  {/* 4 Cards */}
-                  <div className="grid sm:grid-cols-2 gap-4">
+                <div className="bg-[#0f2347] rounded-3xl p-7 text-white relative overflow-hidden shadow-xl">
+                  <Heart size={120} className="absolute -right-6 -bottom-6 text-white/5" fill="currentColor" />
+                  <h4 className="font-serif font-bold text-base tracking-wider uppercase text-white mb-4">
+                    VOLUNTEER BENEFITS
+                  </h4>
+                  <div className="space-y-3">
                     {[
-                      {
-                        title: "DIRECT IMPACT",
-                        desc: "Work directly with communities on the ground.",
-                        icon: Heart,
-                      },
-                      {
-                        title: "SKILL SHARING",
-                        desc: "Use your professional skills for social good.",
-                        icon: Target,
-                      },
-                      {
-                        title: "COMMUNITY",
-                        desc: "Join a network of like-minded change-makers.",
-                        icon: Users,
-                      },
-                      {
-                        title: "FLEXIBLE",
-                        desc: "Choose opportunities that fit your schedule.",
-                        icon: Clock,
-                      },
-                    ].map((item) => {
-                      const isSelected = selectedRole.toUpperCase() === item.title;
-                      const IconComponent = item.icon;
-                      const matchedCat = filteredCategories.find(
-                        (c) => c.title.toUpperCase() === item.title
-                      );
-
-                      return (
-                        <div
-                          key={item.title}
-                          onClick={() => handleCategoryClick(item.title, matchedCat?._id)}
-                          className={`p-6 rounded-3xl border transition-all duration-300 cursor-pointer ${
-                            isSelected
-                              ? "bg-orange-50/50 border-[#E8542A] ring-2 ring-[#E8542A]/20 shadow-md scale-[1.02]"
-                              : "bg-slate-50/60 border-slate-100 hover:border-slate-200 hover:bg-white"
-                          }`}
-                        >
-                          <div className="w-12 h-12 rounded-2xl bg-white shadow-xs border border-slate-100 flex items-center justify-center text-[#E8542A] mb-4">
-                            <IconComponent size={24} />
-                          </div>
-                          <h3 className="font-serif font-bold text-sm text-[#0f2347] tracking-wider uppercase mb-1.5">
-                            {item.title}
-                          </h3>
-                          <p className="text-xs text-slate-500 leading-relaxed">
-                            {item.desc}
-                          </p>
+                      "OFFICIAL CERTIFICATE OF SOCIAL WORK APPRECIATION",
+                      "HANDS-ON GROUND EXPERIENCE IN GRASSROOTS SOCIAL WORK",
+                      "NETWORKING WITH PASSIONATE CHANGEMAKERS & PROFESSIONALS",
+                      "MENTORSHIP & LEADERSHIP SKILL ACCELERATION OPPORTUNITY",
+                    ].map((benefit) => (
+                      <div key={benefit} className="flex items-center gap-2.5">
+                        <div className="w-5 h-5 rounded-full bg-[#E8542A]/20 border border-[#E8542A]/40 flex items-center justify-center shrink-0">
+                          <CheckCircle2 size={13} className="text-[#E8542A]" />
                         </div>
-                      );
-                    })}
+                        <span className="text-xs font-semibold uppercase tracking-wider text-slate-200">
+                          {benefit}
+                        </span>
+                      </div>
+                    ))}
                   </div>
-
-                  {/* Volunteer Benefits Banner */}
-                  <div className="bg-[#0f2347] rounded-3xl p-7 text-white relative overflow-hidden shadow-xl">
-                    <Heart size={120} className="absolute -right-6 -bottom-6 text-white/5" fill="currentColor" />
-                    <h4 className="font-serif font-bold text-base tracking-wider uppercase text-white mb-4">
-                      VOLUNTEER BENEFITS
-                    </h4>
-                    <div className="space-y-3">
-                      {[
-                        "CERTIFICATE OF APPRECIATION",
-                        "HANDS-ON EXPERIENCE IN SOCIAL WORK",
-                        "NETWORKING WITH INDUSTRY PROFESSIONALS",
-                      ].map((benefit) => (
-                        <div key={benefit} className="flex items-center gap-2.5">
-                          <div className="w-5 h-5 rounded-full bg-[#E8542A]/20 border border-[#E8542A]/40 flex items-center justify-center shrink-0">
-                            <CheckCircle2 size={13} className="text-[#E8542A]" />
-                          </div>
-                          <span className="text-xs font-semibold uppercase tracking-wider text-slate-200">
-                            {benefit}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </>
+                </div>
               )}
 
-              {/* TAB 3: CAREERS */}
+              {/* TAB 3: CAREER BENEFIT BANNER */}
               {activeFormType === "career" && (
-                <>
-                  <div>
-                    <h2 className="font-serif text-3xl sm:text-4xl font-bold text-[#0f2347] tracking-tight uppercase">
-                      JOIN OUR <span className="text-[#4169E1]">TEAM</span>
-                    </h2>
-                    <p className="text-slate-600 text-sm sm:text-base leading-relaxed mt-3 max-w-lg">
-                      We are looking for passionate, driven, and skilled professionals who want to use their talents to solve some of India&apos;s most pressing social challenges.
-                    </p>
-                  </div>
-
-                  {/* Job List Cards */}
-                  <div className="space-y-3.5">
-                    {(filteredCategories.length > 0
-                      ? filteredCategories
-                      : [
-                          {
-                            _id: "1",
-                            title: "PROGRAM MANAGER",
-                            badge: "MULTIPLE LOCATIONS • FULL-TIME",
-                            description: "Lead grassroots community programs and manage team operations.",
-                          },
-                          {
-                            _id: "2",
-                            title: "FUNDRAISING LEAD",
-                            badge: "DELHI / REMOTE • FULL-TIME",
-                            description: "Drive corporate partnerships and donor relations.",
-                          },
-                          {
-                            _id: "3",
-                            title: "COMMUNICATIONS OFFICER",
-                            badge: "DELHI / NCR • FULL-TIME",
-                            description: "Manage storytelling, press relations, and digital campaigns.",
-                          },
-                        ]
-                    ).map((job) => {
-                      const isSelected = selectedRole.toUpperCase() === job.title.toUpperCase();
-
-                      return (
-                        <div
-                          key={job._id || job.title}
-                          onClick={() => handleCategoryClick(job.title, job._id)}
-                          className={`p-5 sm:p-6 rounded-3xl border transition-all duration-300 cursor-pointer flex items-center justify-between ${
-                            isSelected
-                              ? "bg-amber-50/50 border-[#F5A623] ring-2 ring-[#F5A623]/20 shadow-md scale-[1.01]"
-                              : "bg-slate-50/60 border-slate-100 hover:border-slate-200 hover:bg-white"
-                          }`}
-                        >
-                          <div>
-                            <h3 className="font-serif font-bold text-sm sm:text-base text-[#0f2347] tracking-wider uppercase mb-1">
-                              {job.title}
-                            </h3>
-                            <div className="flex items-center gap-1.5 text-xs text-slate-500 font-medium">
-                              <MapPin size={13} className="text-[#4169E1]" />
-                              <span>{job.badge || "DELHI / HYBRID • FULL-TIME"}</span>
-                            </div>
-                          </div>
-                          <div className="w-10 h-10 rounded-2xl bg-amber-100/60 flex items-center justify-center text-[#F5A623] shrink-0">
-                            <Briefcase size={20} />
-                          </div>
+                <div className="bg-[#0f2347] rounded-3xl p-7 text-white relative overflow-hidden shadow-xl">
+                  <Sparkles size={120} className="absolute -right-6 -bottom-6 text-white/5" />
+                  <h4 className="font-serif font-bold text-base tracking-wider uppercase text-white mb-4">
+                    WHY WORK WITH SEVA INDIA?
+                  </h4>
+                  <div className="space-y-3">
+                    {[
+                      "PURPOSE-DRIVEN CAREER DRIVING REAL SOCIAL TRANSFORMATION",
+                      "COLLABORATIVE, TRANSPARENT, AND HIGHLY INCLUSIVE CULTURE",
+                      "PROFESSIONAL GROWTH, REGIONAL LEADERSHIP, & TRAININGS",
+                      "COMPETITIVE SALARIES & FIELDWORK REIMBURSEMENTS",
+                    ].map((item) => (
+                      <div key={item} className="flex items-center gap-2.5">
+                        <div className="w-5 h-5 rounded-full bg-[#E8542A]/20 border border-[#E8542A]/40 flex items-center justify-center shrink-0">
+                          <CheckCircle2 size={13} className="text-[#E8542A]" />
                         </div>
-                      );
-                    })}
+                        <span className="text-xs font-semibold uppercase tracking-wider text-slate-200">
+                          {item}
+                        </span>
+                      </div>
+                    ))}
                   </div>
-
-                  {/* Why Seva India Banner */}
-                  <div className="bg-[#0f2347] rounded-3xl p-7 text-white relative overflow-hidden shadow-xl">
-                    <Sparkles size={120} className="absolute -right-6 -bottom-6 text-white/5" />
-                    <h4 className="font-serif font-bold text-base tracking-wider uppercase text-white mb-4">
-                      WHY SEVA INDIA?
-                    </h4>
-                    <div className="space-y-3">
-                      {[
-                        "MEANINGFUL AND IMPACTFUL WORK",
-                        "COLLABORATIVE AND INCLUSIVE CULTURE",
-                        "PROFESSIONAL GROWTH AND LEARNING",
-                      ].map((item) => (
-                        <div key={item} className="flex items-center gap-2.5">
-                          <div className="w-5 h-5 rounded-full bg-[#E8542A]/20 border border-[#E8542A]/40 flex items-center justify-center shrink-0">
-                            <CheckCircle2 size={13} className="text-[#E8542A]" />
-                          </div>
-                          <span className="text-xs font-semibold uppercase tracking-wider text-slate-200">
-                            {item}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </>
+                </div>
               )}
 
-              {/* TAB 4: WAYS TO GIVE / SUPPORT */}
-              {activeFormType === "support" && (
-                <>
-                  <div>
-                    <h2 className="font-serif text-3xl sm:text-4xl font-bold text-[#0f2347] tracking-tight uppercase">
-                      WAYS TO <span className="text-[#4169E1]">GIVE</span>
-                    </h2>
-                    <p className="text-slate-600 text-sm sm:text-base leading-relaxed mt-3 max-w-lg">
-                      Every contribution, no matter the size, helps us reach one more person in need. Choose the way that suits you best.
-                    </p>
-                  </div>
-
-                  {/* 4 Cards */}
-                  <div className="grid sm:grid-cols-2 gap-4">
+              {/* TAB 4: INDIVIDUAL BENEFIT BANNER */}
+              {(activeFormType === "individual" || activeFormType === "support") && (
+                <div className="bg-[#0f2347] rounded-3xl p-7 text-white relative overflow-hidden shadow-xl">
+                  <Gift size={120} className="absolute -right-6 -bottom-6 text-white/5" />
+                  <h4 className="font-serif font-bold text-base tracking-wider uppercase text-white mb-4">
+                    WHY SUPPORT AS AN INDIVIDUAL?
+                  </h4>
+                  <div className="space-y-3">
                     {[
-                      {
-                        title: "SPONSORSHIP",
-                        desc: "Support a child's education or an elder's care.",
-                        icon: Star,
-                      },
-                      {
-                        title: "MONTHLY GIVING",
-                        desc: "Provide consistent support for our long-term projects.",
-                        icon: Calendar,
-                      },
-                      {
-                        title: "ONE-TIME GIFT",
-                        desc: "Make an immediate impact where it's needed most.",
-                        icon: Gift,
-                      },
-                      {
-                        title: "LEGACY GIVING",
-                        desc: "Create a lasting impact for future generations.",
-                        icon: Heart,
-                      },
-                    ].map((item) => {
-                      const isSelected = selectedRole.toUpperCase() === item.title;
-                      const IconComponent = item.icon;
-                      const matchedCat = filteredCategories.find(
-                        (c) => c.title.toUpperCase() === item.title
-                      );
-
-                      return (
-                        <div
-                          key={item.title}
-                          onClick={() => handleCategoryClick(item.title, matchedCat?._id)}
-                          className={`p-6 rounded-3xl border transition-all duration-300 cursor-pointer ${
-                            isSelected
-                              ? "bg-orange-50/50 border-[#F5A623] ring-2 ring-[#F5A623]/20 shadow-md scale-[1.02]"
-                              : "bg-slate-50/60 border-slate-100 hover:border-slate-200 hover:bg-white"
-                          }`}
-                        >
-                          <div className="w-12 h-12 rounded-2xl bg-white shadow-xs border border-slate-100 flex items-center justify-center text-[#4169E1] mb-4">
-                            <IconComponent size={24} />
-                          </div>
-                          <h3 className="font-serif font-bold text-sm text-[#0f2347] tracking-wider uppercase mb-1.5">
-                            {item.title}
-                          </h3>
-                          <p className="text-xs text-slate-500 leading-relaxed">
-                            {item.desc}
-                          </p>
+                      "100% FINANCIAL TRANSPARENCY & AUDITED ANNUAL REPORTS",
+                      "80G & 12A TAX EXEMPTION CERTIFICATES DELIVERED VIA EMAIL",
+                      "DIRECT BENEFICIARY OUTREACH WITH MONTHLY PROGRESS UPDATES",
+                      "COMMUNITY SUPPORT NETWORK WITH REGULAR ON-GROUND VISITS",
+                    ].map((item) => (
+                      <div key={item} className="flex items-center gap-2.5">
+                        <div className="w-5 h-5 rounded-full bg-[#E8542A]/20 border border-[#E8542A]/40 flex items-center justify-center shrink-0">
+                          <CheckCircle2 size={13} className="text-[#E8542A]" />
                         </div>
-                      );
-                    })}
+                        <span className="text-xs font-semibold uppercase tracking-wider text-slate-200">
+                          {item}
+                        </span>
+                      </div>
+                    ))}
                   </div>
-
-                  {/* Why Support Us Banner */}
-                  <div className="bg-[#0f2347] rounded-3xl p-7 text-white relative overflow-hidden shadow-xl">
-                    <Gift size={120} className="absolute -right-6 -bottom-6 text-white/5" />
-                    <h4 className="font-serif font-bold text-base tracking-wider uppercase text-white mb-4">
-                      WHY SUPPORT US?
-                    </h4>
-                    <div className="space-y-3">
-                      {[
-                        "100% TRANSPARENCY & AUDITED ANNUAL REPORTS",
-                        "80G & 12A TAX EXEMPTION CERTIFICATES AVAILABLE",
-                        "DIRECT GRASSROOTS SOCIAL & HEALTH TRANSFORMATION",
-                      ].map((item) => (
-                        <div key={item} className="flex items-center gap-2.5">
-                          <div className="w-5 h-5 rounded-full bg-[#E8542A]/20 border border-[#E8542A]/40 flex items-center justify-center shrink-0">
-                            <CheckCircle2 size={13} className="text-[#E8542A]" />
-                          </div>
-                          <span className="text-xs font-semibold uppercase tracking-wider text-slate-200">
-                            {item}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </>
+                </div>
               )}
             </div>
 
@@ -695,7 +842,7 @@ export default function GetInvolvedClient({
                           partnershipType: "Financial Support",
                           csrFocusAreas: "",
                           partnershipGoals: "",
-                          availability: "Flexible",
+                          availability: "flexible" as Availability,
                           skills: "",
                           previousExperience: "",
                           reason: "",
@@ -716,17 +863,17 @@ export default function GetInvolvedClient({
                 ) : (
                   <form onSubmit={handleSubmit} className="space-y-5">
                     
-                    {/* Header Title Matching Screenshots */}
+                    {/* Header Title */}
                     <div className="mb-6">
-                      <h3 className="font-serif text-2xl sm:text-3xl font-bold tracking-tight uppercase">
+                      <h3 className="font-serif text-2xl sm:text-3xl font-bold tracking-tight uppercase text-[#0f2347]">
                         {activeFormType === "corporate" ? (
-                          <>PARTNERSHIP <span className="text-[#F5A623]">INQUIRY</span></>
+                          <>PARTNERSHIP <span className="text-[#E8542A]">INQUIRY</span></>
                         ) : activeFormType === "volunteer" ? (
-                          <>VOLUNTEER <span className="text-[#F5A623]">APPLICATION</span></>
+                          <>VOLUNTEER <span className="text-[#E8542A]">APPLICATION</span></>
                         ) : activeFormType === "career" ? (
-                          <>APPLY <span className="text-[#F5A623]">NOW</span></>
+                          <>CAREER <span className="text-[#E8542A]">APPLICATION</span></>
                         ) : (
-                          <>SUPPORT <span className="text-[#F5A623]">FORM</span></>
+                          <>INDIVIDUAL <span className="text-[#E8542A]">CONTRIBUTION</span></>
                         )}
                       </h3>
                     </div>
@@ -752,7 +899,7 @@ export default function GetInvolvedClient({
                               required
                               value={formData.companyName}
                               onChange={(e) => setFormData({ ...formData, companyName: e.target.value })}
-                              placeholder="Acme Corp"
+                              placeholder="e.g. Tata Trust, Reliance Foundation"
                               className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#4169E1]/20 focus:border-[#4169E1] transition-all"
                             />
                           </div>
@@ -766,7 +913,7 @@ export default function GetInvolvedClient({
                               required
                               value={formData.contactPerson}
                               onChange={(e) => setFormData({ ...formData, contactPerson: e.target.value })}
-                              placeholder="Jane Smith"
+                              placeholder="e.g. Priya Sharma"
                               className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#4169E1]/20 focus:border-[#4169E1] transition-all"
                             />
                           </div>
@@ -782,7 +929,7 @@ export default function GetInvolvedClient({
                               required
                               value={formData.email}
                               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                              placeholder="jane@acme.com"
+                              placeholder="priya.sharma@company.com"
                               className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#4169E1]/20 focus:border-[#4169E1] transition-all"
                             />
                           </div>
@@ -838,18 +985,6 @@ export default function GetInvolvedClient({
 
                           <div>
                             <label className="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1.5">
-                              SELECTED PROJECT
-                            </label>
-                            <div className="px-4 py-3 bg-blue-50/80 border border-blue-200 rounded-xl text-xs sm:text-sm font-bold text-[#0f2347] uppercase truncate flex items-center justify-between">
-                              <span className="truncate">{selectedRole || "GENERAL SUPPORT"}</span>
-                              <span className="text-[10px] text-[#4169E1] font-bold shrink-0 ml-1">✓ ACTIVE</span>
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="grid sm:grid-cols-2 gap-4">
-                          <div>
-                            <label className="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1.5">
                               PARTNERSHIP TYPE
                             </label>
                             <select
@@ -865,19 +1000,40 @@ export default function GetInvolvedClient({
                               <option value="Infrastructure Development">Infrastructure Development</option>
                             </select>
                           </div>
+                        </div>
 
-                          <div>
-                            <label className="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1.5">
-                              CSR FOCUS AREAS
-                            </label>
-                            <input
-                              type="text"
-                              value={formData.csrFocusAreas}
-                              onChange={(e) => setFormData({ ...formData, csrFocusAreas: e.target.value })}
-                              placeholder="e.g. Education, Healthcare, Nutrition"
-                              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#4169E1]/20 focus:border-[#4169E1] transition-all"
-                            />
-                          </div>
+                        <div>
+                          <label className="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1.5">
+                            CSR INITIATIVE / FOCUS
+                          </label>
+                          <select
+                            value={selectedCategoryId || selectedRole}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              const cat = filteredCategories.find(
+                                (c) => c._id === val || c.title === val
+                              );
+                              if (cat) {
+                                setSelectedCategoryId(cat._id);
+                                setSelectedRole(cat.title);
+                                setFormData((prev) => ({ ...prev, csrFocusAreas: cat.title }));
+                              } else {
+                                setSelectedRole(val);
+                                setFormData((prev) => ({ ...prev, csrFocusAreas: val }));
+                              }
+                            }}
+                            className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#4169E1]/20 focus:border-[#4169E1] transition-all"
+                          >
+                            {filteredCategories.length > 0 ? (
+                              filteredCategories.map((c) => (
+                                <option key={c._id} value={c._id}>
+                                  {c.title}
+                                </option>
+                              ))
+                            ) : (
+                              <option value="">General Corporate Inquiry</option>
+                            )}
+                          </select>
                         </div>
 
                         <div>
@@ -911,7 +1067,7 @@ export default function GetInvolvedClient({
                               required
                               value={formData.name}
                               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                              placeholder="John Doe"
+                              placeholder="e.g. Rahul Verma"
                               className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#E8542A]/20 focus:border-[#E8542A] transition-all"
                             />
                           </div>
@@ -925,7 +1081,7 @@ export default function GetInvolvedClient({
                               required
                               value={formData.email}
                               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                              placeholder="john@example.com"
+                              placeholder="rahul.verma@gmail.com"
                               className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#E8542A]/20 focus:border-[#E8542A] transition-all"
                             />
                           </div>
@@ -968,12 +1124,34 @@ export default function GetInvolvedClient({
 
                           <div>
                             <label className="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1.5">
-                              SELECTED AREA
+                              VOLUNTEER ROLE / AREA
                             </label>
-                            <div className="px-4 py-3 bg-blue-50/80 border border-blue-200 rounded-xl text-xs sm:text-sm font-bold text-[#0f2347] uppercase truncate flex items-center justify-between">
-                              <span className="truncate">{selectedRole || "GENERAL SUPPORT"}</span>
-                              <span className="text-[10px] text-[#E8542A] font-bold shrink-0 ml-1">✓ ACTIVE</span>
-                            </div>
+                            <select
+                              value={selectedCategoryId || selectedRole}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                const cat = filteredCategories.find(
+                                  (c) => c._id === val || c.title === val
+                                );
+                                if (cat) {
+                                  setSelectedCategoryId(cat._id);
+                                  setSelectedRole(cat.title);
+                                } else {
+                                  setSelectedRole(val);
+                                }
+                              }}
+                              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#E8542A]/20 focus:border-[#E8542A] transition-all"
+                            >
+                              {filteredCategories.length > 0 ? (
+                                filteredCategories.map((c) => (
+                                  <option key={c._id} value={c._id}>
+                                    {c.title}
+                                  </option>
+                                ))
+                              ) : (
+                                <option value="">General Volunteer Application</option>
+                              )}
+                            </select>
                           </div>
                         </div>
 
@@ -987,11 +1165,12 @@ export default function GetInvolvedClient({
                               onChange={(e) => setFormData({ ...formData, availability: e.target.value as any })}
                               className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#E8542A]/20 focus:border-[#E8542A] transition-all"
                             >
-                              <option value="Flexible">Flexible</option>
-                              <option value="Weekends">Weekends Only</option>
-                              <option value="Weekdays">Weekdays</option>
-                              <option value="Full-time">Full-time</option>
-                              <option value="Part-time">Part-time (2-4 hrs/wk)</option>
+                              <option value="flexible">Flexible</option>
+                              <option value="weekends">Weekends Only</option>
+                              <option value="weekdays">Weekdays</option>
+                              <option value="both">Both Weekdays & Weekends</option>
+                              <option value="fulltime">Full-time</option>
+                              <option value="parttime">Part-time (2-4 hrs/wk)</option>
                             </select>
                           </div>
 
@@ -1060,7 +1239,7 @@ export default function GetInvolvedClient({
                               required
                               value={formData.name}
                               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                              placeholder="John Doe"
+                              placeholder="e.g. Amit Patel"
                               className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#F5A623]/20 focus:border-[#F5A623] transition-all"
                             />
                           </div>
@@ -1074,7 +1253,7 @@ export default function GetInvolvedClient({
                               required
                               value={formData.email}
                               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                              placeholder="john@example.com"
+                              placeholder="amit.patel@gmail.com"
                               className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#F5A623]/20 focus:border-[#F5A623] transition-all"
                             />
                           </div>
@@ -1117,12 +1296,36 @@ export default function GetInvolvedClient({
 
                           <div>
                             <label className="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1.5">
-                              SELECTED PROGRAM
+                              POSITION / ROLE
                             </label>
-                            <div className="px-4 py-3 bg-blue-50/80 border border-blue-200 rounded-xl text-xs sm:text-sm font-bold text-[#0f2347] uppercase truncate flex items-center justify-between">
-                              <span className="truncate">{selectedRole || "GENERAL OPERATIONS"}</span>
-                              <span className="text-[10px] text-[#F5A623] font-bold shrink-0 ml-1">✓ ACTIVE</span>
-                            </div>
+                            <select
+                              value={selectedCategoryId || selectedRole}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                const cat = filteredCategories.find(
+                                  (c) => c._id === val || c.title === val
+                                );
+                                if (cat) {
+                                  setSelectedCategoryId(cat._id);
+                                  setSelectedRole(cat.title);
+                                  setFormData((prev) => ({ ...prev, positionAppliedFor: cat.title }));
+                                } else {
+                                  setSelectedRole(val);
+                                  setFormData((prev) => ({ ...prev, positionAppliedFor: val }));
+                                }
+                              }}
+                              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#F5A623]/20 focus:border-[#F5A623] transition-all"
+                            >
+                              {filteredCategories.length > 0 ? (
+                                filteredCategories.map((c) => (
+                                  <option key={c._id} value={c._id}>
+                                    {c.title}
+                                  </option>
+                                ))
+                              ) : (
+                                <option value="">General Application</option>
+                              )}
+                            </select>
                           </div>
                         </div>
 
@@ -1150,7 +1353,7 @@ export default function GetInvolvedClient({
                               required
                               value={formData.currentLocation}
                               onChange={(e) => setFormData({ ...formData, currentLocation: e.target.value })}
-                              placeholder="City, State"
+                              placeholder="e.g. Dehradun, Uttarakhand"
                               className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#F5A623]/20 focus:border-[#F5A623] transition-all"
                             />
                           </div>
@@ -1190,9 +1393,9 @@ export default function GetInvolvedClient({
                     )}
 
                     {/* ──────────────────────────────────────────────────────── */}
-                    {/* FORM 4: WAYS TO GIVE / SUPPORT FORM                      */}
+                    {/* FORM 4: INDIVIDUAL CONTRIBUTION FORM                     */}
                     {/* ──────────────────────────────────────────────────────── */}
-                    {activeFormType === "support" && (
+                    {(activeFormType === "individual" || activeFormType === "support") && (
                       <>
                         <div className="grid sm:grid-cols-2 gap-4">
                           <div>
@@ -1204,7 +1407,7 @@ export default function GetInvolvedClient({
                               required
                               value={formData.name}
                               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                              placeholder="John Doe"
+                              placeholder="e.g. Ananya Mishra"
                               className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#F5A623]/20 focus:border-[#F5A623] transition-all"
                             />
                           </div>
@@ -1218,7 +1421,7 @@ export default function GetInvolvedClient({
                               required
                               value={formData.email}
                               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                              placeholder="john@example.com"
+                              placeholder="ananya.mishra@gmail.com"
                               className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#F5A623]/20 focus:border-[#F5A623] transition-all"
                             />
                           </div>
@@ -1261,12 +1464,36 @@ export default function GetInvolvedClient({
 
                           <div>
                             <label className="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1.5">
-                              SELECTED PROGRAM
+                              INDIVIDUAL GIVING PROGRAM
                             </label>
-                            <div className="px-4 py-3 bg-blue-50/80 border border-blue-200 rounded-xl text-xs sm:text-sm font-bold text-[#0f2347] uppercase truncate flex items-center justify-between">
-                              <span className="truncate">{selectedRole || "GENERAL SUPPORT"}</span>
-                              <span className="text-[10px] text-[#F5A623] font-bold shrink-0 ml-1">✓ ACTIVE</span>
-                            </div>
+                            <select
+                              value={selectedCategoryId || selectedRole}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                const cat = filteredCategories.find(
+                                  (c) => c._id === val || c.title === val
+                                );
+                                if (cat) {
+                                  setSelectedCategoryId(cat._id);
+                                  setSelectedRole(cat.title);
+                                  setFormData((prev) => ({ ...prev, supportType: cat.title }));
+                                } else {
+                                  setSelectedRole(val);
+                                  setFormData((prev) => ({ ...prev, supportType: val }));
+                                }
+                              }}
+                              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#F5A623]/20 focus:border-[#F5A623] transition-all"
+                            >
+                              {filteredCategories.length > 0 ? (
+                                filteredCategories.map((c) => (
+                                  <option key={c._id} value={c._id}>
+                                    {c.title}
+                                  </option>
+                                ))
+                              ) : (
+                                <option value="">General Support & Giving</option>
+                              )}
+                            </select>
                           </div>
                         </div>
 
@@ -1322,7 +1549,7 @@ export default function GetInvolvedClient({
                       <button
                         type="submit"
                         disabled={isSubmitting}
-                        className="w-full py-4 bg-[#F5A623] hover:bg-[#d48b17] text-white font-bold rounded-2xl transition-all shadow-lg shadow-amber-500/20 flex items-center justify-center gap-2 text-sm uppercase tracking-wider active:scale-[0.99] disabled:opacity-60"
+                        className="w-full py-4 bg-[#F5A623] hover:bg-[#d48b17] text-white font-bold rounded-2xl transition-all shadow-lg shadow-amber-500/20 flex items-center justify-center gap-2 text-sm uppercase tracking-wider active:scale-[0.99] disabled:opacity-60 cursor-pointer"
                       >
                         {isSubmitting ? (
                           <>
@@ -1338,7 +1565,7 @@ export default function GetInvolvedClient({
                                 ? "Submit Volunteer Application"
                                 : activeFormType === "career"
                                 ? "Submit Career Application"
-                                : "Submit Inquiry"}
+                                : "Submit Individual Contribution"}
                             </span>
                             <Send size={16} />
                           </>

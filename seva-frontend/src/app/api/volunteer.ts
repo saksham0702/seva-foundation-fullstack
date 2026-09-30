@@ -1,7 +1,7 @@
 import axiosInstance from "./index";
 import { endpoint } from "./endpoints";
 
-export type FormType = "volunteer" | "corporate" | "career" | "support";
+export type FormType = "volunteer" | "individual" | "corporate" | "career" | "support";
 
 export type Availability =
   | "weekends"
@@ -9,7 +9,9 @@ export type Availability =
   | "both"
   | "flexible"
   | "fulltime"
-  | "parttime";
+  | "parttime"
+  | "full-time"
+  | "part-time";
 
 export type ApplicationStatus =
   | "pending"

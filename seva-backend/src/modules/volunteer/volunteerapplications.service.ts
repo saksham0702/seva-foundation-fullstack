@@ -11,6 +11,20 @@ import { MailerService } from "../mail/mailer.service";
 const createVolunteerApplication = async (
   payload: Partial<IVolunteerApplication>
 ): Promise<IVolunteerApplication> => {
+  if (payload.availability) {
+    const lower = String(payload.availability).toLowerCase().trim();
+    if (lower.includes("weekend")) payload.availability = "weekends";
+    else if (lower.includes("weekday")) payload.availability = "weekdays";
+    else if (lower.includes("both")) payload.availability = "both";
+    else if (lower.includes("full")) payload.availability = "fulltime";
+    else if (lower.includes("part")) payload.availability = "parttime";
+    else payload.availability = "flexible";
+  }
+
+  if (payload.formType === ("support" as any)) {
+    payload.formType = "individual";
+  }
+
   const result = await VolunteerApplicationModel.create(payload);
 
   // Fire-and-forget confirmation email
@@ -41,7 +55,13 @@ const getAllVolunteerApplications = async (filters: {
   const query: Record<string, unknown> = { isDeleted: false };
   if (filters.status) query.status = filters.status;
   if (filters.category) query.category = filters.category;
-  if (filters.formType) query.formType = filters.formType;
+  if (filters.formType) {
+    if (filters.formType === "individual" || filters.formType === "support") {
+      query.formType = { $in: ["individual", "support"] };
+    } else {
+      query.formType = filters.formType;
+    }
+  }
 
   const result = await VolunteerApplicationModel.find(query)
     .populate("category", "title color icon slug formType badge")

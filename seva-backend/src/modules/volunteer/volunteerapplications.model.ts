@@ -1,6 +1,6 @@
 import { Document, Types, Schema, model } from "mongoose";
 
-export type FormType = "volunteer" | "corporate" | "career" | "support";
+export type FormType = "volunteer" | "individual" | "corporate" | "career" | "support";
 
 export type Availability =
   | "weekends"
@@ -8,7 +8,9 @@ export type Availability =
   | "both"
   | "flexible"
   | "fulltime"
-  | "parttime";
+  | "parttime"
+  | "full-time"
+  | "part-time";
 
 export type ApplicationStatus =
   | "pending"
@@ -45,7 +47,7 @@ export interface IVolunteerApplication extends Document {
   resumeUrl?: string;
   coverLetter?: string;
 
-  // Support specific
+  // Individual / Support specific
   supportType?: string;
   address?: string;
 
@@ -61,7 +63,7 @@ const VolunteerApplicationSchema = new Schema<IVolunteerApplication>(
   {
     formType: {
       type: String,
-      enum: ["volunteer", "corporate", "career", "support"],
+      enum: ["volunteer", "individual", "corporate", "career", "support"],
       default: "volunteer",
       required: true,
       index: true,
@@ -100,7 +102,17 @@ const VolunteerApplicationSchema = new Schema<IVolunteerApplication>(
     // Volunteer specific
     availability: {
       type: String,
-      enum: ["weekends", "weekdays", "both", "flexible", "fulltime", "parttime"],
+      enum: [
+        "weekends",
+        "weekdays",
+        "both",
+        "flexible",
+        "fulltime",
+        "parttime",
+        "full-time",
+        "part-time",
+      ],
+      default: "flexible",
     },
     skills: {
       type: String,

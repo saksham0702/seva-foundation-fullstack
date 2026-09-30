@@ -14,7 +14,13 @@ const getAllVolunteerCategories = async (
   formType?: string
 ): Promise<IVolunteerCategory[]> => {
   const filter: Record<string, any> = { isDeleted: false };
-  if (formType) filter.formType = formType;
+  if (formType) {
+    if (formType === "individual" || formType === "support") {
+      filter.formType = { $in: ["individual", "support"] };
+    } else {
+      filter.formType = formType;
+    }
+  }
   const result = await VolunteerCategoryModel.find(filter).sort({
     createdAt: -1,
   });
@@ -23,7 +29,7 @@ const getAllVolunteerCategories = async (
 
 /**
  * Public listing — only active, non-deleted categories.
- * Filterable by formType (volunteer | corporate | career).
+ * Filterable by formType (volunteer | individual | corporate | career).
  */
 const getPublicVolunteerCategories = async (
   formType?: string
@@ -32,7 +38,13 @@ const getPublicVolunteerCategories = async (
     isDeleted: false,
     isActive: true,
   };
-  if (formType) filter.formType = formType;
+  if (formType) {
+    if (formType === "individual" || formType === "support") {
+      filter.formType = { $in: ["individual", "support"] };
+    } else {
+      filter.formType = formType;
+    }
+  }
   const result = await VolunteerCategoryModel.find(filter).sort({ createdAt: 1 });
   return result;
 };

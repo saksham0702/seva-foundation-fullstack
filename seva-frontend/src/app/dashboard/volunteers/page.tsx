@@ -30,9 +30,9 @@ import { DeleteConfirmModal } from "./components/DeleteConfirmModal";
 
 const FORM_TYPES: { id: FormType; label: string }[] = [
   { id: "volunteer", label: "Volunteers" },
+  { id: "individual", label: "Individual" },
   { id: "corporate", label: "Corporate & CSR" },
   { id: "career", label: "Careers & Jobs" },
-  { id: "support", label: "Ways to Give / Support" },
 ];
 
 export default function VolunteersDashboardPage() {

@@ -121,11 +121,15 @@ export const CategoryFormModal: React.FC<CategoryFormModalProps> = ({
       ? activeType === "corporate"
         ? "Edit Corporate Category"
         : "Edit Career Department"
+      : activeType === "individual" || activeType === "support"
+      ? "Edit Individual Giving Program"
       : "Edit Role Category"
     : isSimpleCategory
     ? activeType === "corporate"
       ? "New Corporate Category"
       : "New Career Department"
+    : activeType === "individual" || activeType === "support"
+    ? "New Individual Giving Program"
     : "Create Role Category";
 
   return (
