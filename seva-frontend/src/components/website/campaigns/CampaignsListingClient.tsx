@@ -1,9 +1,12 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import { Search, ChevronLeft, ChevronRight, Inbox, Sparkles } from "lucide-react";
 import { CampaignCard } from "@/components/shared/CampaignCard";
+import { CampaignGridSkeleton } from "@/components/website/skeletons/WebsiteSkeletons";
 import { toCampaignCardData } from "@/lib/campaign-stats";
+import { getCampaigns } from "@/app/api/campaign";
+import { getCategories } from "@/app/api/category";
 
 interface CampaignsListingClientProps {
   initialCampaigns: any[];
@@ -13,21 +16,48 @@ interface CampaignsListingClientProps {
 const ITEMS_PER_PAGE = 6;
 
 export function CampaignsListingClient({
-  initialCampaigns,
+  initialCampaigns = [],
   initialCategories = [],
 }: CampaignsListingClientProps) {
+  const [campaignsList, setCampaignsList] = useState<any[]>(initialCampaigns);
+  const [categoriesList, setCategoriesList] = useState(initialCategories);
+  const [loading, setLoading] = useState(initialCampaigns.length === 0);
   const [search, setSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [showAllCategories, setShowAllCategories] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
 
+  useEffect(() => {
+    setCampaignsList(initialCampaigns);
+    setCategoriesList(initialCategories);
+
+    (async () => {
+      try {
+        const [campsRes, catsRes] = await Promise.allSettled([
+          getCampaigns(),
+          getCategories(),
+        ]);
+        if (campsRes.status === "fulfilled" && Array.isArray(campsRes.value)) {
+          setCampaignsList(campsRes.value);
+        }
+        if (catsRes.status === "fulfilled" && Array.isArray(catsRes.value)) {
+          setCategoriesList(catsRes.value);
+        }
+      } catch (e) {
+        console.error("Error fetching campaigns:", e);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [initialCampaigns, initialCategories]);
+
   // Extract all categories dynamically from admin-created categories & campaigns
   const categories = useMemo(() => {
     const set = new Set<string>();
-    initialCategories.forEach((cat) => {
+    categoriesList.forEach((cat) => {
       if (cat.name) set.add(cat.name);
     });
-    initialCampaigns.forEach((camp) => {
+    campaignsList.forEach((camp) => {
       const catName =
         typeof camp.category === "object" && camp.category?.name
           ? camp.category.name
@@ -37,11 +67,11 @@ export function CampaignsListingClient({
       if (catName) set.add(catName);
     });
     return ["all", ...Array.from(set)];
-  }, [initialCampaigns, initialCategories]);
+  }, [campaignsList, categoriesList]);
 
   // Filter campaigns by search & category
   const filteredCampaigns = useMemo(() => {
-    return initialCampaigns.filter((camp) => {
+    return campaignsList.filter((camp) => {
       const title = (camp.title || camp.name || "").toLowerCase();
       const desc = (camp.description || camp.story || "").toLowerCase();
       const q = search.toLowerCase().trim();
@@ -61,7 +91,7 @@ export function CampaignsListingClient({
 
       return matchesSearch && matchesCategory;
     });
-  }, [initialCampaigns, search, selectedCategory]);
+  }, [campaignsList, search, selectedCategory]);
 
   // Pagination calculation
   const totalPages = Math.ceil(filteredCampaigns.length / ITEMS_PER_PAGE) || 1;
@@ -81,7 +111,7 @@ export function CampaignsListingClient({
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 min-h-[60vh]">
       {/* ── Search and Category Filter Bar ── */}
       <div className="bg-gray-50/80 border border-gray-100 rounded-2xl p-4 sm:p-5 shadow-xs space-y-4">
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
@@ -100,7 +130,7 @@ export function CampaignsListingClient({
           </div>
 
           <p className="text-xs text-gray-500 self-start sm:self-center">
-            Showing <strong className="text-[#0f2347]">{filteredCampaigns.length}</strong> active causes
+            Showing <strong className="text-[#0f2347]">{loading && campaignsList.length === 0 ? "..." : filteredCampaigns.length}</strong> active causes
           </p>
         </div>
 
@@ -155,7 +185,9 @@ export function CampaignsListingClient({
       </div>
 
       {/* ── Campaigns Grid ── */}
-      {paginatedCampaigns.length === 0 ? (
+      {loading && campaignsList.length === 0 ? (
+        <CampaignGridSkeleton count={6} />
+      ) : paginatedCampaigns.length === 0 ? (
         <div className="min-h-[35vh] flex flex-col items-center justify-center gap-3 text-center bg-gray-50/50 rounded-3xl border border-gray-100 p-8">
           <Inbox className="text-gray-300" size={36} />
           <p className="text-gray-500 text-sm font-medium">

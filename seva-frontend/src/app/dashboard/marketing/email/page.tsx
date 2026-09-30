@@ -151,39 +151,9 @@ export default function EmailMarketingConsole() {
     fromName: "Seva Foundation",
     fromEmail: "info@sevafoundation.org",
     replyTo: "support@sevafoundation.org",
-    logoUrl: "/assets/seva-logo.png",
     isActive: true,
   });
   const [savingConfig, setSavingConfig] = useState(false);
-  const [uploadingLogo, setUploadingLogo] = useState(false);
-
-  const handleUploadLogoFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    if (!file.type.startsWith("image/")) {
-      toast.error("Please upload an image file (PNG, JPG, SVG, WEBP)");
-      return;
-    }
-
-    try {
-      setUploadingLogo(true);
-      const formData = new FormData();
-      formData.append("image", file);
-      const res = await axiosInstance.post(endpoint.upload.mailLogo, formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
-      const uploadedUrl = res.data?.data?.url || res.data?.url;
-      if (uploadedUrl) {
-        setConfigForm((prev) => ({ ...prev, logoUrl: uploadedUrl }));
-        toast.success("Email header logo uploaded successfully!");
-      }
-    } catch (err: any) {
-      toast.error(err?.response?.data?.message || "Failed to upload logo image");
-    } finally {
-      setUploadingLogo(false);
-    }
-  };
 
   // ── 3. Logs & Templates State ─────────────────────────────────────────────
   const [logs, setLogs] = useState<MailLog[]>([]);
@@ -302,58 +272,6 @@ export default function EmailMarketingConsole() {
       await loadAll();
     } catch (err: any) {
       toast.error(err?.response?.data?.message || "Failed to set active config");
-    }
-  };
-
-  const handleQuickUploadGlobalLogo = async (file: File) => {
-    if (!file) return;
-    if (!file.type.startsWith("image/")) {
-      toast.error("Please select a valid image file (PNG, JPG, SVG, WEBP)");
-      return;
-    }
-
-    const activeConf = configs.find((c) => c.isActive) || configs[0];
-    if (!activeConf) {
-      toast.error("Please configure and activate an outgoing mail server first.");
-      return;
-    }
-
-    try {
-      setUploadingLogo(true);
-      const formData = new FormData();
-      formData.append("image", file);
-      const res = await axiosInstance.post(endpoint.upload.mailLogo, formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
-      const uploadedUrl = res.data?.data?.url || res.data?.url;
-      if (uploadedUrl) {
-        await axiosInstance.patch(endpoint.mail.updateConfig(activeConf._id), {
-          logoUrl: uploadedUrl,
-        });
-        toast.success("Global email header logo updated and saved!");
-        await loadAll();
-      }
-    } catch (err: any) {
-      toast.error(err?.response?.data?.message || "Failed to upload logo image");
-    } finally {
-      setUploadingLogo(false);
-    }
-  };
-
-  const handleResetGlobalLogo = async () => {
-    const activeConf = configs.find((c) => c.isActive) || configs[0];
-    if (!activeConf) return;
-    try {
-      setUploadingLogo(true);
-      await axiosInstance.patch(endpoint.mail.updateConfig(activeConf._id), {
-        logoUrl: "/assets/seva-logo.png",
-      });
-      toast.success("Reset to default organization logo");
-      await loadAll();
-    } catch (err: any) {
-      toast.error("Failed to reset logo");
-    } finally {
-      setUploadingLogo(false);
     }
   };
 
@@ -1019,93 +937,31 @@ export default function EmailMarketingConsole() {
         {/* ── TAB 2: ZOHO & MAIL SERVER CONFIGURATIONS ───────────────────────── */}
         {activeTab === "servers" && (
           <div className="space-y-6">
-            {/* ── GLOBAL EMAIL HEADER BRANDING & LOGO UPLOADER CARD ── */}
-            <div className="bg-white rounded-3xl p-6 sm:p-7 border border-slate-200 shadow-sm space-y-5">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-2xl bg-[#0f2347] text-white flex items-center justify-center shrink-0 shadow-md shadow-[#0f2347]/20">
-                    <ImageIcon size={20} />
-                  </div>
-                  <div>
-                    <h3 className="text-base font-bold text-slate-900">
-                      Global Email Header Logo & Branding Hub
-                    </h3>
-                    <p className="text-xs text-slate-500 mt-0.5">
-                      Uploaded logo is embedded permanently in the top header of all static triggers and dynamic broadcast campaigns.
-                    </p>
-                  </div>
+            {/* ── PERMANENT EMAIL HEADER BRANDING BANNER ── */}
+            <div className="bg-[#0A1A2F] rounded-3xl p-6 sm:p-7 shadow-lg relative overflow-hidden border border-slate-800 text-white flex flex-col md:flex-row md:items-center justify-between gap-6">
+              <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-[#F5A623] to-[#E8542A]" />
+              <div className="flex items-center gap-4">
+                <div className="bg-[#0f2347] p-3.5 rounded-2xl border border-white/10 flex items-center justify-center shrink-0">
+                  <img
+                    src="/assets/seva-logo-white.png"
+                    alt="Seva Foundation Logo"
+                    className="max-h-12 max-w-[180px] object-contain"
+                  />
                 </div>
-
-                {activeMailConfig?.logoUrl && (
-                  <button
-                    type="button"
-                    onClick={handleResetGlobalLogo}
-                    disabled={uploadingLogo}
-                    className="text-xs font-bold text-slate-500 hover:text-red-600 transition-colors self-start sm:self-auto flex items-center gap-1.5"
-                  >
-                    <RotateCcw size={13} />
-                    Reset to Default Logo
-                  </button>
-                )}
-              </div>
-
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center bg-slate-50/70 p-5 rounded-2xl border border-slate-200">
-                {/* Visual Header Live Email Rendering Frame */}
-                <div className="lg:col-span-5 bg-[#0A1A2F] rounded-2xl p-6 text-center shadow-lg relative overflow-hidden border border-slate-800">
-                  <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-[#F5A623] to-[#E8542A]" />
-                  <div className="flex justify-center mb-4">
-                    <div className="bg-white px-6 py-3 rounded-2xl shadow-md border border-white/95 inline-flex items-center justify-center">
-                      <img
-                        src={activeMailConfig?.logoUrl || "/assets/seva-logo.png"}
-                        alt="Active Logo"
-                        className="max-h-20 h-16 w-auto max-w-[260px] object-contain"
-                      />
-                    </div>
-                  </div>
-                  <h4 className="text-white text-base font-bold tracking-wide">
-                    SEVA INDIA FOUNDATION
-                  </h4>
-                  <p className="text-[#F5A623] text-[10px] font-bold uppercase tracking-wider mt-1">
-                    Serving Humanity • Empowering Lives
+                <div>
+                  <h3 className="text-base font-bold text-white tracking-wide">
+                    Official Seva Foundation Email Header Branding
+                  </h3>
+                  <p className="text-xs text-slate-300 mt-0.5">
+                    This official transparent white logo is permanently integrated and automatically embedded at the top of all outgoing emails and templates.
                   </p>
-                  <span className="inline-block mt-3 px-3 py-1 rounded-full bg-white/10 text-white/90 text-[10px] font-semibold">
-                    ✓ Top Header Banner on All Outgoing Emails
-                  </span>
                 </div>
-
-                {/* Uploader Dropzone */}
-                <div className="lg:col-span-7 space-y-3">
-                  <label className="relative flex flex-col items-center justify-center p-6 border-2 border-dashed border-slate-300 hover:border-[#0f2347] rounded-2xl cursor-pointer bg-white transition-all text-center group">
-                    <input
-                      type="file"
-                      accept="image/png, image/jpeg, image/webp, image/svg+xml"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (file) handleQuickUploadGlobalLogo(file);
-                      }}
-                      disabled={uploadingLogo}
-                      className="sr-only"
-                    />
-                    {uploadingLogo ? (
-                      <div className="flex flex-col items-center gap-2 text-xs font-bold text-[#0f2347]">
-                        <Loader2 size={24} className="animate-spin" />
-                        <span>Uploading & Applying Logo to All Emails...</span>
-                      </div>
-                    ) : (
-                      <div className="space-y-1.5">
-                        <div className="w-10 h-10 rounded-full bg-blue-50 text-[#0f2347] flex items-center justify-center mx-auto group-hover:scale-110 transition-transform">
-                          <Upload size={18} />
-                        </div>
-                        <p className="text-xs font-bold text-slate-800">
-                          Click to browse or drag & drop new organization logo
-                        </p>
-                        <p className="text-[10px] text-slate-400">
-                          Supports PNG, JPG, SVG, WEBP • Saves immediately to active mail server
-                        </p>
-                      </div>
-                    )}
-                  </label>
-                </div>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-xs font-semibold">
+                  <CheckCircle2 size={14} />
+                  Auto-Embedded in All Emails
+                </span>
               </div>
             </div>
 
@@ -1132,7 +988,6 @@ export default function EmailMarketingConsole() {
                     fromName: "Seva Foundation",
                     fromEmail: "info@sevafoundation.org",
                     replyTo: "support@sevafoundation.org",
-                    logoUrl: "/assets/seva-logo.png",
                     isActive: configs.length === 0,
                   });
                   setShowConfigModal(true);
@@ -1267,7 +1122,6 @@ export default function EmailMarketingConsole() {
                               fromName: conf.fromName,
                               fromEmail: conf.fromEmail,
                               replyTo: conf.replyTo || "",
-                              logoUrl: conf.logoUrl || "/assets/seva-logo.png",
                               isActive: conf.isActive,
                             });
                             setShowConfigModal(true);
@@ -1721,15 +1575,13 @@ export default function EmailMarketingConsole() {
                     }`}
                   >
                     {/* Email Header banner with Organization Logo */}
-                    <div className="bg-[#0A1A2F] p-8 text-center relative">
-                      <div className="flex justify-center mb-4">
-                        <div className="bg-white px-7 py-3.5 rounded-2xl shadow-lg border border-white/95 inline-flex items-center justify-center">
-                          <img
-                            src={activeMailConfig?.logoUrl || "/assets/seva-logo.png"}
-                            alt="Seva Foundation Logo"
-                            className="max-h-20 h-16 sm:h-20 w-auto max-w-[280px] object-contain"
-                          />
-                        </div>
+                    <div className="bg-[#0A1A2F] p-7 text-center relative">
+                      <div className="flex justify-center mb-3">
+                        <img
+                          src="/assets/seva-logo-white.png"
+                          alt="Seva Foundation Logo"
+                          className="max-h-16 h-14 sm:h-16 w-auto max-w-[260px] object-contain"
+                        />
                       </div>
                       <h1 className="text-white text-xl font-bold tracking-wider">
                         SEVA INDIA FOUNDATION
@@ -1944,93 +1796,6 @@ export default function EmailMarketingConsole() {
                         }
                         className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs text-slate-900 focus:outline-none focus:border-[#0f2347]"
                       />
-                    </div>
-                  </div>
-
-                  {/* Email Header Brand Logo Uploader */}
-                  <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <label className="block text-xs font-bold text-slate-900">
-                          Email Header Brand Logo Uploader
-                        </label>
-                        <p className="text-[11px] text-slate-500 mt-0.5">
-                          Upload PNG, JPG, SVG, or WEBP logo to embed in headers of all emails
-                        </p>
-                      </div>
-                      {configForm.logoUrl && (
-                        <button
-                          type="button"
-                          onClick={() => setConfigForm((prev) => ({ ...prev, logoUrl: "" }))}
-                          className="text-[11px] font-bold text-red-600 hover:underline flex items-center gap-1"
-                        >
-                          <Trash2 size={12} />
-                          Remove
-                        </button>
-                      )}
-                    </div>
-
-                    <div className="flex flex-col sm:flex-row items-center gap-4">
-                      {/* Logo Preview in Dark Navy Header Frame with White Capsule */}
-                      <div className="w-full sm:w-56 h-32 rounded-xl bg-[#0A1A2F] border border-slate-700 p-3 flex flex-col items-center justify-center shrink-0 shadow-inner relative group">
-                        {configForm.logoUrl ? (
-                          <div className="bg-white px-4 py-2 rounded-xl shadow-sm border border-white/95 inline-flex items-center justify-center max-w-[95%]">
-                            <img
-                              src={configForm.logoUrl}
-                              alt="Brand Logo"
-                              className="max-h-16 h-14 w-auto object-contain"
-                            />
-                          </div>
-                        ) : (
-                          <div className="text-center text-slate-400">
-                            <ImageIcon size={22} className="mx-auto mb-1 opacity-50 text-slate-300" />
-                            <span className="text-[10px] font-bold">No Logo Set</span>
-                          </div>
-                        )}
-                        <span className="absolute bottom-1.5 text-[8px] font-bold uppercase tracking-wider text-[#F5A623]">
-                          Header Preview
-                        </span>
-                      </div>
-
-                      {/* Dropzone & Upload Button */}
-                      <div className="flex-1 w-full space-y-2">
-                        <label className="relative flex flex-col items-center justify-center p-3.5 border-2 border-dashed border-slate-300 hover:border-[#0f2347] rounded-xl cursor-pointer bg-white transition-all text-center">
-                          <input
-                            type="file"
-                            accept="image/png, image/jpeg, image/webp, image/svg+xml"
-                            onChange={handleUploadLogoFile}
-                            disabled={uploadingLogo}
-                            className="sr-only"
-                          />
-                          {uploadingLogo ? (
-                            <div className="flex items-center gap-2 text-xs font-bold text-[#0f2347]">
-                              <Loader2 size={16} className="animate-spin" />
-                              <span>Uploading Logo File...</span>
-                            </div>
-                          ) : (
-                            <div className="flex items-center gap-2 text-xs font-bold text-slate-700">
-                              <Upload size={16} className="text-[#0f2347]" />
-                              <span>Click to browse & upload logo file</span>
-                            </div>
-                          )}
-                          <span className="text-[10px] text-slate-400 mt-0.5">
-                            Recommended: High-resolution PNG or SVG with transparent background
-                          </span>
-                        </label>
-
-                        <div className="flex items-center gap-2">
-                          <span className="text-[10px] text-slate-400 font-bold uppercase">Or URL:</span>
-                          <input
-                            type="text"
-                            placeholder="https://yourdomain.com/logo.png"
-                            value={configForm.logoUrl || ""}
-                            onChange={(e) =>
-                              setConfigForm({ ...configForm, logoUrl: e.target.value })
-                            }
-                            className="flex-1 bg-white border border-slate-200 rounded-lg px-2.5 py-1 text-xs text-slate-800 focus:outline-none focus:border-[#0f2347]"
-                          />
-                        </div>
-                      </div>
                     </div>
                   </div>
 

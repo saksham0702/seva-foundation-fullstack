@@ -80,7 +80,7 @@ const MOCK_VARIABLES: Record<string, string> = {
   loginUrl: "http://localhost:3000/login",
   verifyUrl: "http://localhost:3000/verify/SIF-2026-CERT-0192",
   siteUrl: "http://localhost:3000",
-  logoUrl: "/assets/seva-logo.png",
+  logoUrl: "/assets/seva-logo-white.png",
   currentYear: "2026",
 };
 
@@ -92,6 +92,10 @@ function renderPreviewHtml(html: string): string {
     rendered = rendered.replace(reg, val);
   }
   rendered = rendered.replace(/\{\{\s*([\w.]+)\s*\}\}/g, "[$1]");
+  const logoTag = `<div style="text-align: center; margin-bottom: 18px; line-height: 1;"><img src="/assets/seva-logo-white.png" alt="Seva Foundation" style="max-height: 55px; max-width: 220px; height: auto; width: auto; display: inline-block; border: 0; outline: none; vertical-align: middle;" /></div>`;
+  if (rendered.includes("<!-- SEVA_LOGO_PLACEHOLDER -->")) {
+    rendered = rendered.replace("<!-- SEVA_LOGO_PLACEHOLDER -->", logoTag);
+  }
   return rendered;
 }
 
@@ -1029,45 +1033,60 @@ function TemplatesContent() {
 
                 <div className="flex-1 overflow-y-auto p-6 bg-slate-100 flex justify-center">
                   {previewTemplate.type === "email" ? (
-                    <div
-                      className={`bg-white rounded-2xl shadow-md border border-slate-200 overflow-hidden transition-all duration-300 ${previewDevice === "mobile" ? "max-w-sm w-full" : "max-w-2xl w-full"
-                        }`}
-                    >
-                      {/* Email Header banner with Logo */}
-                      <div className="bg-[#0f2347] p-6 text-center">
-                        <div className="flex justify-center mb-3">
-                          <img
-                            src="/assets/seva-logo.png"
-                            alt="Seva Foundation Logo"
-                            className="max-h-12 max-w-[180px] object-contain"
-                          />
-                        </div>
-                        <h1 className="text-white text-lg font-bold tracking-wide">
-                          SEVA INDIA FOUNDATION
-                        </h1>
-                        <p className="text-[#c99e32] text-[10px] font-bold uppercase tracking-wider mt-0.5">
-                          Humanitarian & Development Outreach
-                        </p>
-                      </div>
-
-                      {/* Email Message Content */}
+                    previewTemplate.body.includes("<!DOCTYPE") || previewTemplate.body.includes("<html") ? (
                       <div
-                        className="p-6 text-slate-800 text-sm leading-relaxed prose prose-slate max-w-none"
-                        dangerouslySetInnerHTML={{
-                          __html: renderPreviewHtml(previewTemplate.body),
-                        }}
-                      />
-
-                      {/* Email Footer */}
-                      <div className="bg-slate-50 p-4 border-t border-slate-200 text-center text-xs text-slate-500 space-y-1">
-                        <p className="font-semibold text-slate-700">
-                          Seva India Foundation • Registered Section 8 NGO
-                        </p>
-                        <p className="text-[10px]">
-                          80G Tax Exemption Available on all contributions.
-                        </p>
+                        className={`bg-white rounded-2xl shadow-md border border-slate-200 overflow-hidden transition-all duration-300 ${
+                          previewDevice === "mobile" ? "max-w-sm w-full" : "max-w-2xl w-full"
+                        }`}
+                      >
+                        <iframe
+                          srcDoc={renderPreviewHtml(previewTemplate.body)}
+                          title="Email Preview"
+                          className="w-full border-0 min-h-[600px] h-[70vh] bg-slate-100"
+                        />
                       </div>
-                    </div>
+                    ) : (
+                      <div
+                        className={`bg-white rounded-2xl shadow-md border border-slate-200 overflow-hidden transition-all duration-300 ${
+                          previewDevice === "mobile" ? "max-w-sm w-full" : "max-w-2xl w-full"
+                        }`}
+                      >
+                        {/* Email Header banner with Logo */}
+                        <div className="bg-[#0A1A2F] p-7 text-center">
+                          <div className="flex justify-center mb-3">
+                            <img
+                              src="/assets/seva-logo-white.png"
+                              alt="Seva Foundation Logo"
+                              className="max-h-14 max-w-[220px] object-contain"
+                            />
+                          </div>
+                          <h1 className="text-white text-lg font-bold tracking-wide">
+                            SEVA INDIA FOUNDATION
+                          </h1>
+                          <p className="text-[#F5A623] text-[10px] font-bold uppercase tracking-wider mt-0.5">
+                            Humanitarian & Development Outreach
+                          </p>
+                        </div>
+
+                        {/* Email Message Content */}
+                        <div
+                          className="p-6 text-slate-800 text-sm leading-relaxed prose prose-slate max-w-none"
+                          dangerouslySetInnerHTML={{
+                            __html: renderPreviewHtml(previewTemplate.body),
+                          }}
+                        />
+
+                        {/* Email Footer */}
+                        <div className="bg-slate-50 p-4 border-t border-slate-200 text-center text-xs text-slate-500 space-y-1">
+                          <p className="font-semibold text-slate-700">
+                            Seva India Foundation • Registered Section 8 NGO
+                          </p>
+                          <p className="text-[10px]">
+                            80G Tax Exemption Available on all contributions.
+                          </p>
+                        </div>
+                      </div>
+                    )
                   ) : (
                     <div className="max-w-md w-full bg-[#E5DDD5] p-5 rounded-2xl shadow-md space-y-3">
                       <div className="bg-white rounded-2xl rounded-tl-sm p-4 shadow-sm text-xs text-slate-900 whitespace-pre-wrap leading-relaxed">

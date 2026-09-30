@@ -1,3 +1,5 @@
+import fs from "fs";
+import path from "path";
 import { Transporter } from "nodemailer";
 import { MailConfigService } from "./mailconfig.service";
 import { MailTemplateService } from "./mailtemplates.service";
@@ -93,6 +95,16 @@ const sendTemplatedMail = async (
   try {
     const { transporter, fromName, fromEmail, replyTo } = await getTransporter();
 
+    const logoPath = path.join(process.cwd(), "assets", "seva-logo.png");
+    const finalAttachments: any[] = [...(input.attachments || [])];
+    if (fs.existsSync(logoPath) && !finalAttachments.some((a: any) => a.cid === "seva-logo")) {
+      finalAttachments.push({
+        filename: "seva-logo.png",
+        path: logoPath,
+        cid: "seva-logo",
+      });
+    }
+
     const info = await transporter.sendMail({
       from: `"${fromName}" <${fromEmail}>`,
       to: input.to,
@@ -100,7 +112,7 @@ const sendTemplatedMail = async (
       replyTo,
       subject,
       html,
-      attachments: input.attachments,
+      attachments: finalAttachments,
     });
 
     log.status = "SENT";

@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowRight, Loader2 } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { CampaignCard } from "@/components/shared/CampaignCard";
+import { CampaignGridSkeleton } from "@/components/website/skeletons/WebsiteSkeletons";
 import { getCampaigns, type Campaign } from "@/app/api/campaign";
 import { getDonations, type Donation } from "@/app/api/donation";
 import { toCampaignCardData } from "@/lib/campaign-stats";
@@ -126,12 +127,7 @@ export default function CampaignsSection({
           </Link>
         </div>
 
-        {loading && (
-          <div className="min-h-[30vh] flex flex-col items-center justify-center gap-3 text-gray-400">
-            <Loader2 className="animate-spin" size={24} />
-            <p className="text-sm">Loading campaigns…</p>
-          </div>
-        )}
+        {loading && <CampaignGridSkeleton count={3} />}
 
         {!loading && error && (
           <p className="text-sm text-center text-[#E8542A] font-medium py-10">

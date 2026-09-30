@@ -45,6 +45,10 @@ app.use(
   "/uploads",
   express.static(path.join(process.cwd(), "uploads"))
 );
+app.use(
+  "/assets",
+  express.static(path.join(process.cwd(), "assets"))
+);
 
 // ── Health check ──────────────────────────────────────────────────────────────
 app.get("/api", (_req: Request, res: Response) => {

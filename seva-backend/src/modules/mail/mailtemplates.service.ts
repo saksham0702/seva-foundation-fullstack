@@ -97,9 +97,9 @@ const renderTemplate = (
     process.env.BACKEND_PUBLIC_URL ||
     process.env.API_URL ||
     "http://187.126.112.144:5000";
-  const defaultLogo = `${siteUrl}/assets/seva-logo.png`;
+  const defaultLogo = `${backendUrl}/assets/seva-logo.png`;
 
-  // Resolve relative logoUrl to an absolute URL so email clients can fetch it
+  // Resolve relative logoUrl to an absolute URL so email clients and previews can fetch it
   let logoUrl = String(variables.logoUrl || "");
   if (!logoUrl) {
     logoUrl = defaultLogo;
@@ -120,10 +120,8 @@ const renderTemplate = (
 
   // Inject logo banner if the template hasn't already included one
   if (logoUrl) {
-    const logoImgTag = `<div style="text-align: center; margin-bottom: 22px;">
-      <div style="display: inline-block; background-color: #ffffff; padding: 12px 28px; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.22); border: 1px solid rgba(255,255,255,0.95);">
-        <img src="${logoUrl}" alt="Seva Foundation" style="max-height: 120px; max-width: 280px; height: auto; width: auto; display: block; margin: 0 auto; object-fit: contain; border: 0; outline: none;" />
-      </div>
+    const logoImgTag = `<div style="text-align: center; margin-bottom: 18px; line-height: 1;">
+      <img src="${logoUrl}" alt="Seva Foundation" style="max-height: 60px; max-width: 240px; height: auto; width: auto; display: inline-block; border: 0; outline: none; vertical-align: middle;" />
     </div>`;
 
     if (html.includes("<!-- SEVA_LOGO_PLACEHOLDER -->")) {

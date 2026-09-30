@@ -226,12 +226,6 @@ export const ApplicationDetailModal: React.FC<ApplicationDetailModalProps> = ({
                         {application.phone}
                       </a>
                     </div>
-                    {application.city && (
-                      <div className="flex items-center justify-between text-xs">
-                        <span className="text-slate-500">Location:</span>
-                        <span className="font-bold text-slate-800">{application.city}</span>
-                      </div>
-                    )}
                   </div>
 
                   {/* Role & Availability */}

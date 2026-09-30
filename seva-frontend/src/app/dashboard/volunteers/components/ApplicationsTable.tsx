@@ -111,7 +111,7 @@ export const ApplicationsTable: React.FC<ApplicationsTableProps> = ({
                 ? "Search by candidate, position, email, or location..."
                 : activeFormType === "support"
                 ? "Search by donor name, email, support type, or program..."
-                : "Search by name, email, phone, city or role..."
+                : "Search by name, email, phone, role, or skills..."
             }
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
@@ -199,7 +199,7 @@ export const ApplicationsTable: React.FC<ApplicationsTableProps> = ({
             <table className="w-full text-left text-xs sm:text-sm">
               <thead>
                 <tr className="bg-slate-50/80 border-b border-slate-200 text-[10.5px] font-bold text-slate-500 uppercase tracking-wider">
-                  {/* DYNAMIC TABLE HEADERS */}
+                  {/* DYNAMIC TABLE HEADERS (Strictly matching form fields) */}
                   {activeFormType === "corporate" ? (
                     <>
                       <th className="py-3 px-4 sm:px-5">Company &amp; Contact</th>
@@ -211,7 +211,7 @@ export const ApplicationsTable: React.FC<ApplicationsTableProps> = ({
                     <>
                       <th className="py-3 px-4 sm:px-5">Candidate</th>
                       <th className="py-3 px-4 sm:px-5">Position Applied</th>
-                      <th className="py-3 px-4 sm:px-5">Location</th>
+                      <th className="py-3 px-4 sm:px-5">Current Location</th>
                       <th className="py-3 px-4 sm:px-5">Resume</th>
                     </>
                   ) : activeFormType === "support" ? (
@@ -219,14 +219,14 @@ export const ApplicationsTable: React.FC<ApplicationsTableProps> = ({
                       <th className="py-3 px-4 sm:px-5">Contributor / Donor</th>
                       <th className="py-3 px-4 sm:px-5">Support Type</th>
                       <th className="py-3 px-4 sm:px-5">Program</th>
-                      <th className="py-3 px-4 sm:px-5">Address</th>
+                      <th className="py-3 px-4 sm:px-5">Mailing Address</th>
                     </>
                   ) : (
                     <>
                       <th className="py-3 px-4 sm:px-5">Volunteer</th>
-                      <th className="py-3 px-4 sm:px-5">Role Applied</th>
-                      <th className="py-3 px-4 sm:px-5">Location</th>
+                      <th className="py-3 px-4 sm:px-5">Selected Area</th>
                       <th className="py-3 px-4 sm:px-5">Availability</th>
+                      <th className="py-3 px-4 sm:px-5">Skills &amp; Expertise</th>
                     </>
                   )}
                   <th className="py-3 px-4 sm:px-5">Date</th>
@@ -397,15 +397,12 @@ export const ApplicationsTable: React.FC<ApplicationsTableProps> = ({
                             </span>
                           </td>
                           <td className="py-3.5 px-4 sm:px-5 text-xs text-slate-600 font-medium">
-                            <span className="flex items-center gap-1">
-                              <MapPin size={12} className="text-slate-400" />
-                              {app.city || "—"}
-                            </span>
-                          </td>
-                          <td className="py-3.5 px-4 sm:px-5 text-xs text-slate-600 font-medium">
-                            <span className="capitalize px-2 py-0.5 bg-slate-100 rounded-md text-[11px] font-semibold text-slate-700">
+                            <span className="capitalize px-2.5 py-0.5 bg-blue-50 text-blue-700 border border-blue-200/80 rounded-full text-[11px] font-bold">
                               {app.availability || "Flexible"}
                             </span>
+                          </td>
+                          <td className="py-3.5 px-4 sm:px-5 text-xs text-slate-600 font-medium max-w-xs truncate" title={app.skills || ""}>
+                            {app.skills || "—"}
                           </td>
                         </>
                       )}

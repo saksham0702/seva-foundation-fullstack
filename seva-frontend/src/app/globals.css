@@ -40,6 +40,7 @@
   body {
     @apply bg-navy text-white font-sans antialiased;
     background-color: #0B0F1F;
+    overflow-x: hidden;
   }
 
   ::-webkit-scrollbar {

@@ -22,6 +22,8 @@ export const metadata: Metadata = constructMetadata({
 
 export const dynamic = "force-dynamic";
 
+import { DonationsPageSkeleton } from "@/components/website/skeletons/WebsiteSkeletons";
+
 interface DonationsPageProps {
   searchParams?: Promise<{
     campaign?: string;
@@ -59,14 +61,7 @@ export default async function DonationsPage({ searchParams }: DonationsPageProps
         canonicalPath="/donations"
         jsonLd={donateSchema}
       />
-      <Suspense
-        fallback={
-          <div className="min-h-[60vh] flex flex-col items-center justify-center gap-3 text-gray-400">
-            <Loader2 className="animate-spin" size={28} />
-            <p className="text-sm font-medium">Preparing donation portal…</p>
-          </div>
-        }
-      >
+      <Suspense fallback={<DonationsPageSkeleton />}>
         <div className="scroll-reveal">
           <DonateFlowClient
             initialCampaigns={campaigns}

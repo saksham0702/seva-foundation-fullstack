@@ -1,6 +1,6 @@
 import Image from "next/image";
 
-export default function WebsiteLoading() {
+export default function RootLoading() {
   return (
     <div className="fixed inset-0 top-0 left-0 w-screen h-screen z-[99999999] flex flex-col items-center justify-center bg-white">
       {/* Thin progress bar at top */}

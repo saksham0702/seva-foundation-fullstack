@@ -23,6 +23,11 @@ import { getImageUrl } from "@/lib/image";
 import { EventRegisterModal } from "@/components/website/events/EventRegisterModal";
 import { getCategories } from "@/app/api/category";
 import { cmsAPI } from "@/app/api/cms";
+import {
+  BlogGridSkeleton,
+  EventGridSkeleton,
+  NewsGridSkeleton,
+} from "@/components/website/skeletons/WebsiteSkeletons";
 
 /* ------------------------------------------------------------------ */
 /*  CARD COMPONENTS (DISTINCT DESIGNS FOR BLOG, EVENT, NEWS)          */
@@ -300,6 +305,7 @@ export default function MediaHubListingClient({
   const [eventsList, setEventsList] = useState<CmsItem[]>(events);
   const [newsList, setNewsList] = useState<CmsItem[]>(news);
   const [categoriesList, setCategoriesList] = useState(categories);
+  const [loading, setLoading] = useState(blogs.length === 0 && events.length === 0 && news.length === 0);
 
   // Client-side hydration to ensure data is always fresh and loaded
   useEffect(() => {
@@ -331,6 +337,8 @@ export default function MediaHubListingClient({
         }
       } catch (err) {
         console.error("Client fetch error in MediaHubListingClient:", err);
+      } finally {
+        setLoading(false);
       }
     })();
   }, [blogs, events, news, categories]);
@@ -553,7 +561,13 @@ export default function MediaHubListingClient({
           {/* ALL CONTENT TAB */}
           {activeTab === "all" && (
             <div className="space-y-16">
-              {totalAll === 0 ? (
+              {loading && totalAll === 0 ? (
+                <div className="space-y-12">
+                  <BlogGridSkeleton count={3} />
+                  <EventGridSkeleton count={3} />
+                  <NewsGridSkeleton count={3} />
+                </div>
+              ) : totalAll === 0 ? (
                 <div className="text-center py-20 bg-gray-50 rounded-3xl border border-dashed border-gray-200">
                   <Inbox className="mx-auto text-gray-300 mb-3" size={48} />
                   <h3 className="text-lg font-bold text-gray-700">No content found</h3>
@@ -641,7 +655,9 @@ export default function MediaHubListingClient({
           {/* BLOGS TAB */}
           {activeTab === "blogs" && (
             <div>
-              {totalBlogs > 0 ? (
+              {loading && totalBlogs === 0 ? (
+                <BlogGridSkeleton count={6} />
+              ) : totalBlogs > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                   {filteredBlogs.map((post) => (
                     <BlogCard key={post._id} post={post} />
@@ -696,7 +712,9 @@ export default function MediaHubListingClient({
           {/* EVENTS TAB */}
           {activeTab === "events" && (
             <div>
-              {totalEvents > 0 ? (
+              {loading && totalEvents === 0 ? (
+                <EventGridSkeleton count={6} />
+              ) : totalEvents > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                   {filteredEvents.map((event) => (
                     <EventCard
@@ -751,7 +769,9 @@ export default function MediaHubListingClient({
           {/* NEWS TAB */}
           {activeTab === "news" && (
             <div>
-              {totalNews > 0 ? (
+              {loading && totalNews === 0 ? (
+                <NewsGridSkeleton count={6} />
+              ) : totalNews > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                   {filteredNews.map((item) => (
                     <NewsCard key={item._id} item={item} />

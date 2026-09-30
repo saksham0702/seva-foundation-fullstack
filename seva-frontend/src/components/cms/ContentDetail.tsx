@@ -89,12 +89,23 @@ export function ContentDetail({
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-white flex flex-col items-center justify-center py-24 gap-4">
-        <Loader2 size={36} className="animate-spin" style={{ color: accentColor }} />
-        <p className="text-sm font-semibold" style={{ color: headingColor }}>
-          {loadingLabel}
-        </p>
-      </div>
+      <article className="min-h-screen bg-white py-12 animate-pulse" style={cssVars}>
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+          <div className="h-6 w-32 bg-slate-200 rounded-full" />
+          <div className="h-10 w-4/5 bg-slate-200 rounded-2xl" />
+          <div className="flex items-center gap-4">
+            <div className="h-4 w-28 bg-slate-100 rounded" />
+            <div className="h-4 w-32 bg-slate-100 rounded" />
+          </div>
+          <div className="h-96 w-full bg-slate-200 rounded-3xl" />
+          <div className="space-y-3 pt-6">
+            <div className="h-4 w-full bg-slate-100 rounded" />
+            <div className="h-4 w-full bg-slate-100 rounded" />
+            <div className="h-4 w-5/6 bg-slate-100 rounded" />
+            <div className="h-4 w-3/4 bg-slate-100 rounded" />
+          </div>
+        </div>
+      </article>
     );
   }
 
