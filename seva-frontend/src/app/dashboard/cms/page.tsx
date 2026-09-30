@@ -4804,11 +4804,11 @@ export default function CmsDashboardPage() {
                                     items: [
                                       ...curr,
                                       {
-                                        name: "Aarav Sharma",
-                                        role: "Education Volunteer",
-                                        since: "2023",
-                                        hours: "250+",
-                                        quote: "Being part of Seva Foundation gives me purpose. Seeing young children learn to read is priceless.",
+                                        name: "",
+                                        role: "",
+                                        since: "",
+                                        hours: "",
+                                        quote: "",
                                         avatar: "",
                                       },
                                     ],
@@ -4822,40 +4822,17 @@ export default function CmsDashboardPage() {
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                               {(() => {
-                                const testimonialsList = getSection("testimonials")?.items || [
-                                  {
-                                    name: "Ananya Mishra",
-                                    role: "Education Coordinator",
-                                    since: "2018",
-                                    hours: "2,400+",
-                                    quote: "I started as a weekend tutor. Six years later, I design the curriculum for 8 centres. Seva India grows you as you grow it.",
-                                    avatar: "",
-                                  },
-                                  {
-                                    name: "Vikram Singh Rawat",
-                                    role: "Field Operations",
-                                    since: "2019",
-                                    hours: "3,100+",
-                                    quote: "I know every village road in Tehri district. The best part? The chai and stories at every home we visit.",
-                                    avatar: "",
-                                  },
-                                  {
-                                    name: "Amit Khanna",
-                                    role: "Community Kitchen",
-                                    since: "2019",
-                                    hours: "1,800+",
-                                    quote: "Every Sunday at 6 AM, I am at the kitchen. It is the most honest work I do all week. No meetings. Just meals.",
-                                    avatar: "",
-                                  },
-                                  {
-                                    name: "Priya Nair",
-                                    role: "Health Camp Nurse",
-                                    since: "2021",
-                                    hours: "950+",
-                                    quote: "I am a full-time nurse at Doon Hospital. Weekends, I am in villages with Seva India. Both jobs save lives.",
-                                    avatar: "",
-                                  },
-                                ];
+                                const testimonialsList = getSection("testimonials")?.items || [];
+
+                                if (testimonialsList.length === 0) {
+                                  return (
+                                    <div className="col-span-full py-8 text-center bg-white dark:bg-panel rounded-xl border border-dashed border-gray-200 dark:border-border">
+                                      <p className="text-xs text-gray-500 font-medium">
+                                        No testimonials added yet. Click &quot;Add Testimonial Story&quot; above to create one.
+                                      </p>
+                                    </div>
+                                  );
+                                }
 
                                 return testimonialsList.map((item: any, idx: number) => (
                                   <div

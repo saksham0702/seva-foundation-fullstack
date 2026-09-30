@@ -148,7 +148,7 @@ export default async function GetInvolvedPage() {
                 href="#volunteer-form"
                 className="inline-flex items-center gap-2 px-7 py-3.5 bg-[#E8542A] hover:bg-[#c9431d] text-white font-bold rounded-xl transition-colors shadow-xl shadow-orange-900/30"
               >
-                Join as Volunteer
+                Join Us
                 <ArrowRight size={18} />
               </a>
             </div>

@@ -35,41 +35,6 @@ import {
 } from "@/app/api/volunteer";
 import { getImageUrl } from "@/lib/image";
 
-const ACTIVE_VOLUNTEERS = [
-  {
-    name: "Ananya Mishra",
-    role: "Education Coordinator",
-    since: "2018",
-    hours: "2,400+",
-    quote:
-      "I started as a weekend tutor. Six years later, I design the curriculum for 8 centres. Seva India grows you as you grow it.",
-  },
-  {
-    name: "Vikram Singh Rawat",
-    role: "Field Operations",
-    since: "2019",
-    hours: "3,100+",
-    quote:
-      "I know every village road in Tehri district. The best part? The chai and stories at every home we visit.",
-  },
-  {
-    name: "Amit Khanna",
-    role: "Community Kitchen",
-    since: "2019",
-    hours: "1,800+",
-    quote:
-      "Every Sunday at 6 AM, I am at the kitchen. It is the most honest work I do all week. No meetings. Just meals.",
-  },
-  {
-    name: "Priya Nair",
-    role: "Health Camp Nurse",
-    since: "2021",
-    hours: "950+",
-    quote:
-      "I am a full-time nurse at Doon Hospital. Weekends, I am in villages with Seva India. Both jobs save lives.",
-  },
-];
-
 const COUNTRY_CODES = [
   { code: "+91", country: "IN", flag: "🇮🇳" },
   { code: "+1", country: "US/CA", flag: "🇺🇸" },
@@ -212,9 +177,9 @@ export default function GetInvolvedClient({
         typeof window !== "undefined" &&
         (window.location.hash === "#volunteer-form" ||
           window.location.hash === "#apply-volunteer" ||
-          window.location.hash === "#form")
+          window.location.hash === "#form" ||
+          window.location.hash === "#join-form")
       ) {
-        setActiveFormType("volunteer");
         setTimeout(() => {
           formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
         }, 120);
@@ -1611,9 +1576,9 @@ export default function GetInvolvedClient({
       {/* ── Testimonials & Impact ── */}
       {(() => {
         const volunteersList =
-          testimonials && testimonials.length > 0
+          testimonials && Array.isArray(testimonials) && testimonials.length > 0
             ? testimonials
-            : ACTIVE_VOLUNTEERS;
+            : [];
 
         if (!volunteersList || volunteersList.length === 0) return null;
 
