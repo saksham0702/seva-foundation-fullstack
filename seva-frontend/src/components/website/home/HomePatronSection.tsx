@@ -28,7 +28,7 @@ export default function HomePatronSection({ section }: { section?: ICmsSection }
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-center">
           {/* Left Column */}
-          <div className="lg:col-span-7 space-y-6">
+          <div className="lg:col-span-7 space-y-6 reveal-left">
             {/* Pill Badge */}
             <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-[#f5a623] text-xs font-bold uppercase tracking-wider">
               <ShieldCheck size={14} className="text-[#f5a623]" />
@@ -61,7 +61,7 @@ export default function HomePatronSection({ section }: { section?: ICmsSection }
           </div>
 
           {/* Right Column: Dark Patron Card */}
-          <div className="lg:col-span-5">
+          <div className="lg:col-span-5 reveal-right delay-100">
             <div className="bg-[#0B1120] text-white rounded-[2.8rem] p-8 sm:p-10 md:p-12 relative overflow-hidden shadow-2xl border border-white/5 hover:-translate-y-1.5 transition-all duration-300 group">
               {/* Background watermark icon */}
               <Heart

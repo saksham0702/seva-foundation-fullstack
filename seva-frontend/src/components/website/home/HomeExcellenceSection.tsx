@@ -24,7 +24,7 @@ export default function HomeExcellenceSection({ section }: { section?: ICmsSecti
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         {/* Header */}
-        <div className="text-center max-w-3xl mx-auto mb-16 space-y-4">
+        <div className="text-center max-w-3xl mx-auto mb-16 space-y-4 reveal-up">
           <div className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full border border-amber-500/30 bg-amber-500/10 text-[#f5a623] text-xs font-bold uppercase tracking-wider">
             {subtitle}
           </div>
@@ -40,7 +40,9 @@ export default function HomeExcellenceSection({ section }: { section?: ICmsSecti
           {rawItems.map((item: any, idx: number) => (
             <div
               key={idx}
-              className="bg-[#111C30]/75 backdrop-blur-md border border-white/5 rounded-[2rem] p-7 sm:p-8 flex flex-col justify-between min-h-[175px] hover:-translate-y-1.5 hover:border-amber-500/30 transition-all duration-300 shadow-xl group"
+              className={`bg-[#111C30]/75 backdrop-blur-md border border-white/5 rounded-[2rem] p-7 sm:p-8 flex flex-col justify-between min-h-[175px] hover:-translate-y-1.5 hover:border-amber-500/30 transition-all duration-300 shadow-xl group ${
+                idx % 2 === 0 ? "reveal-left" : "reveal-right"
+              } delay-${Math.min((idx % 3) * 100, 300)}`}
             >
               <div>
                 <span className="text-[10px] font-bold text-amber-400 uppercase tracking-widest block mb-3">

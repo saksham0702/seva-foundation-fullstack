@@ -28,7 +28,7 @@ export default function Transparency({ section }: { section?: ICmsSection }) {
         <div className="bg-[#0B1120] rounded-[2.5rem] p-8 md:p-12 lg:p-16 shadow-2xl">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             {/* LEFT */}
-            <div>
+            <div className="reveal-left">
               {/* Badge */}
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 mb-6">
                 <Shield className="w-4 h-4 text-[#f5a623]" />
@@ -50,7 +50,7 @@ export default function Transparency({ section }: { section?: ICmsSection }) {
             </div>
 
             {/* RIGHT: 2x2 Info grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 reveal-right delay-100">
               <div className="bg-white/5 border border-white/10 rounded-2xl p-5 min-w-0 overflow-hidden hover:bg-white/[0.08] transition-colors">
                 <div className="text-[#f5a623] text-[10px] font-bold uppercase tracking-wider mb-1.5">
                   NGO Darpan ID

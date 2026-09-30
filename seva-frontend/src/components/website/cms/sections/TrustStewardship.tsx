@@ -35,22 +35,22 @@ export default function TrustStewardship({ section }: { section?: ICmsSection })
 
           <div className="relative z-10 max-w-3xl mx-auto text-center">
             {/* Title */}
-            <h2 className="text-2xl sm:text-3xl md:text-4xl font-serif font-extrabold tracking-wider text-[#0B1120] uppercase">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-serif font-extrabold tracking-wider text-[#0B1120] uppercase reveal-up">
               {title}
             </h2>
 
             {/* Accent divider */}
-            <div className="w-20 h-1 bg-[#f5a623] rounded-full mx-auto my-4" />
+            <div className="w-20 h-1 bg-[#f5a623] rounded-full mx-auto my-4 reveal-up" />
 
             {/* Description */}
-            <p className="text-[#4f46e5] text-sm md:text-base leading-relaxed mb-12 max-w-2xl mx-auto font-medium">
+            <p className="text-[#4f46e5] text-sm md:text-base leading-relaxed mb-12 max-w-2xl mx-auto font-medium reveal-up">
               {description}
             </p>
 
             {/* Two Allocation Breakdown Cards */}
             <div className="grid sm:grid-cols-2 gap-6 lg:gap-8 items-stretch">
               {/* Left: Program Support (Dark) */}
-              <div className="bg-[#0B1120] text-white rounded-3xl p-8 lg:p-10 text-center shadow-xl hover:-translate-y-1.5 transition-all duration-300 flex flex-col justify-center border border-white/5">
+              <div className="bg-[#0B1120] text-white rounded-3xl p-8 lg:p-10 text-center shadow-xl hover:-translate-y-1.5 transition-all duration-300 flex flex-col justify-center border border-white/5 reveal-left">
                 <div className="text-5xl md:text-6xl font-serif font-black text-[#f5a623] mb-3 tracking-tight">
                   {programPercent}
                 </div>
@@ -63,7 +63,7 @@ export default function TrustStewardship({ section }: { section?: ICmsSection })
               </div>
 
               {/* Right: Admin & Fundraising (Light) */}
-              <div className="bg-white border-2 border-blue-100/90 rounded-3xl p-8 lg:p-10 text-center shadow-sm hover:shadow-lg hover:-translate-y-1.5 transition-all duration-300 flex flex-col justify-center">
+              <div className="bg-white border-2 border-blue-100/90 rounded-3xl p-8 lg:p-10 text-center shadow-sm hover:shadow-lg hover:-translate-y-1.5 transition-all duration-300 flex flex-col justify-center reveal-right delay-100">
                 <div className="text-5xl md:text-6xl font-serif font-black text-[#0B1120] mb-3 tracking-tight">
                   {adminPercent}
                 </div>

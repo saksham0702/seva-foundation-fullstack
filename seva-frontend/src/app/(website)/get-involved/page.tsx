@@ -116,7 +116,7 @@ export default async function GetInvolvedPage() {
         </div>
 
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 w-full">
-          <div className="max-w-2xl">
+          <div className="max-w-2xl reveal-left">
             <div className="inline-flex items-center gap-2 px-4 py-2 bg-[#E8542A]/20 backdrop-blur-sm rounded-full text-[#E8542A] text-xs font-bold uppercase tracking-wider mb-6">
               <Heart size={14} fill="currentColor" />
               Join 200+ Volunteers Across India
@@ -149,11 +149,14 @@ export default async function GetInvolvedPage() {
 
       {/* ── Impact Numbers ── */}
       {impactNumbers.length > 0 && (
-        <section className="bg-[#0f2347] py-14 -mt-1 scroll-reveal">
+        <section className="bg-[#0f2347] py-14 -mt-1">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12">
               {impactNumbers.map((stat, i) => (
-                <div key={i} className="text-center">
+                <div
+                  key={i}
+                  className={`text-center ${i % 2 === 0 ? "reveal-left" : "reveal-right"} delay-${Math.min((i % 4) * 100, 300)}`}
+                >
                   <div className="text-3xl sm:text-4xl font-bold text-white mb-1">
                     {stat.number}
                   </div>
@@ -169,11 +172,9 @@ export default async function GetInvolvedPage() {
       )}
 
       {/* ── Interactive Selection Grid & Form ── */}
-      <div className="scroll-reveal">
-        <Suspense fallback={<div className="py-20 text-center text-gray-400">Loading volunteer categories...</div>}>
-          <GetInvolvedClient categories={categories} faqs={faqs} />
-        </Suspense>
-      </div>
+      <Suspense fallback={<div className="py-20 text-center text-gray-400">Loading volunteer categories...</div>}>
+        <GetInvolvedClient categories={categories} faqs={faqs} />
+      </Suspense>
     </div>
   );
 }

@@ -18,7 +18,7 @@ export default function AwardsRecognition({ section }: { section?: ICmsSection }
     <section className="py-20 lg:py-24 bg-white relative overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Title */}
-        <div className="text-center max-w-3xl mx-auto mb-14">
+        <div className="text-center max-w-3xl mx-auto mb-14 reveal-up">
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-serif font-extrabold tracking-wide text-[#0B1120]">
             {title}
           </h2>
@@ -34,7 +34,9 @@ export default function AwardsRecognition({ section }: { section?: ICmsSection }
           {awards.map((award, idx) => (
             <div
               key={idx}
-              className="bg-white rounded-[2.2rem] border border-blue-100/90 p-8 text-center flex flex-col items-center justify-center min-h-[190px] shadow-[0_4px_20px_rgba(0,0,0,0.03)] hover:shadow-[0_14px_35px_rgba(245,166,35,0.12)] hover:-translate-y-1.5 transition-all duration-300 group"
+              className={`bg-white rounded-[2.2rem] border border-blue-100/90 p-8 text-center flex flex-col items-center justify-center min-h-[190px] shadow-[0_4px_20px_rgba(0,0,0,0.03)] hover:shadow-[0_14px_35px_rgba(245,166,35,0.12)] hover:-translate-y-1.5 transition-all duration-300 group ${
+                idx % 2 === 0 ? "reveal-left" : "reveal-right"
+              } delay-${Math.min((idx % 4) * 100, 300)}`}
             >
               <div className="w-14 h-14 rounded-2xl bg-amber-50/70 border border-amber-100 flex items-center justify-center mb-5 group-hover:scale-110 group-hover:bg-[#f5a623] transition-all duration-300">
                 <Award

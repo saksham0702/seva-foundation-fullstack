@@ -28,11 +28,13 @@ import { cmsAPI } from "@/app/api/cms";
 /*  CARD COMPONENTS (DISTINCT DESIGNS FOR BLOG, EVENT, NEWS)          */
 /* ------------------------------------------------------------------ */
 
-export function BlogCard({ post }: { post: CmsItem }) {
+export function BlogCard({ post, index = 0 }: { post: CmsItem; index?: number }) {
+  const dirClass = index % 2 === 0 ? "reveal-left" : "reveal-right";
+  const delayClass = `delay-${Math.min((index % 3) * 100, 300)}`;
   return (
     <Link
       href={`/blogs/${post.slug}`}
-      className="group bg-white rounded-3xl overflow-hidden border border-gray-100 hover:border-[#E8542A]/30 hover:shadow-2xl transition-all duration-300 flex flex-col justify-between"
+      className={`group bg-white rounded-3xl overflow-hidden border border-gray-100 hover:border-[#E8542A]/30 hover:shadow-2xl transition-all duration-300 flex flex-col justify-between ${dirClass} ${delayClass}`}
     >
       <div>
         <div className="relative h-52 overflow-hidden bg-slate-100">
@@ -98,18 +100,22 @@ export function BlogCard({ post }: { post: CmsItem }) {
 export function EventCard({
   event,
   onRegister,
+  index = 0,
 }: {
   event: CmsItem;
   onRegister: (e: CmsItem) => void;
+  index?: number;
 }) {
   const isUpcoming = event.eventDate
     ? new Date(event.eventDate).getTime() >= Date.now() - 86400000
     : true;
 
   const eventDateObj = event.eventDate ? new Date(event.eventDate) : null;
+  const dirClass = index % 2 === 0 ? "reveal-left" : "reveal-right";
+  const delayClass = `delay-${Math.min((index % 3) * 100, 300)}`;
 
   return (
-    <div className="group bg-white rounded-3xl overflow-hidden border border-gray-100 hover:border-cyan-500/40 hover:shadow-2xl transition-all duration-300 flex flex-col justify-between">
+    <div className={`group bg-white rounded-3xl overflow-hidden border border-gray-100 hover:border-cyan-500/40 hover:shadow-2xl transition-all duration-300 flex flex-col justify-between ${dirClass} ${delayClass}`}>
       <div>
         <div className="relative h-56 overflow-hidden bg-slate-100">
           <Image
@@ -205,11 +211,13 @@ export function EventCard({
   );
 }
 
-export function NewsCard({ item }: { item: CmsItem }) {
+export function NewsCard({ item, index = 0 }: { item: CmsItem; index?: number }) {
+  const dirClass = index % 2 === 0 ? "reveal-left" : "reveal-right";
+  const delayClass = `delay-${Math.min((index % 3) * 100, 300)}`;
   return (
     <Link
       href={`/news/${item.slug}`}
-      className="group bg-white rounded-3xl overflow-hidden border border-gray-100 hover:border-[#F5A623]/40 hover:shadow-2xl transition-all duration-300 flex flex-col justify-between"
+      className={`group bg-white rounded-3xl overflow-hidden border border-gray-100 hover:border-[#F5A623]/40 hover:shadow-2xl transition-all duration-300 flex flex-col justify-between ${dirClass} ${delayClass}`}
     >
       <div>
         <div className="relative h-52 overflow-hidden bg-slate-100">
@@ -576,8 +584,8 @@ export default function MediaHubListingClient({
                         </button>
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                        {filteredBlogs.map((post) => (
-                          <BlogCard key={post._id} post={post} />
+                        {filteredBlogs.map((post, idx) => (
+                          <BlogCard key={post._id} post={post} index={idx} />
                         ))}
                       </div>
                     </div>
@@ -598,10 +606,11 @@ export default function MediaHubListingClient({
                         </button>
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                        {filteredEvents.map((event) => (
+                        {filteredEvents.map((event, idx) => (
                           <EventCard
                             key={event._id}
                             event={event}
+                            index={idx}
                             onRegister={(e) => setRegisteringEvent(e)}
                           />
                         ))}
@@ -624,8 +633,8 @@ export default function MediaHubListingClient({
                         </button>
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                        {filteredNews.map((item) => (
-                          <NewsCard key={item._id} item={item} />
+                        {filteredNews.map((item, idx) => (
+                          <NewsCard key={item._id} item={item} index={idx} />
                         ))}
                       </div>
                     </div>
@@ -712,8 +721,8 @@ export default function MediaHubListingClient({
                         Related Stories in &ldquo;{selectedCategory}&rdquo;
                       </h3>
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                        {filteredBlogs.map((post) => (
-                          <BlogCard key={post._id} post={post} />
+                        {filteredBlogs.map((post, idx) => (
+                          <BlogCard key={post._id} post={post} index={idx} />
                         ))}
                       </div>
                     </div>
@@ -763,8 +772,8 @@ export default function MediaHubListingClient({
                         Related Stories in &ldquo;{selectedCategory}&rdquo;
                       </h3>
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                        {filteredBlogs.map((post) => (
-                          <BlogCard key={post._id} post={post} />
+                        {filteredBlogs.map((post, idx) => (
+                          <BlogCard key={post._id} post={post} index={idx} />
                         ))}
                       </div>
                     </div>

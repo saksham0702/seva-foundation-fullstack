@@ -269,7 +269,7 @@
 @keyframes subtleFadeUp {
   0% {
     opacity: 0;
-    transform: translateY(6px);
+    transform: translateY(8px);
   }
   100% {
     opacity: 1;
@@ -280,68 +280,146 @@
 .website-page-transition {
   animation: subtleFadeUp 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
   will-change: opacity, transform;
+  overflow-x: clip;
 }
 
-/* ── High-Performance Subtle Scroll Reveal Animations ── */
-.scroll-reveal {
-  opacity: 0;
-  transform: translateY(22px);
-  transition: opacity 0.65s cubic-bezier(0.16, 1, 0.3, 1), transform 0.65s cubic-bezier(0.16, 1, 0.3, 1);
+/* ── High-Performance Subtle Scroll Reveal Animations (Left, Right, Up, Card) ── */
+/* Base reveal transitions using hardware accelerated translate3d */
+.scroll-reveal,
+.reveal-up {
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
+  transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1), transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
   will-change: opacity, transform;
 }
 
-.scroll-reveal.is-revealed {
-  opacity: 1 !important;
-  transform: translateY(0) !important;
+.scroll-reveal-left,
+.reveal-left {
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
+  transition: opacity 0.75s cubic-bezier(0.16, 1, 0.3, 1), transform 0.75s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: opacity, transform;
 }
 
-.scroll-reveal-fade {
-  opacity: 0;
+.scroll-reveal-right,
+.reveal-right {
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
+  transition: opacity 0.75s cubic-bezier(0.16, 1, 0.3, 1), transform 0.75s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: opacity, transform;
+}
+
+.scroll-reveal-fade,
+.reveal-fade {
+  opacity: 1;
   transition: opacity 0.65s cubic-bezier(0.16, 1, 0.3, 1);
   will-change: opacity;
 }
 
-.scroll-reveal-fade.is-revealed {
-  opacity: 1 !important;
-}
-
-.scroll-reveal-left {
-  opacity: 0;
-  transform: translateX(-24px);
-  transition: opacity 0.65s cubic-bezier(0.16, 1, 0.3, 1), transform 0.65s cubic-bezier(0.16, 1, 0.3, 1);
+.scroll-reveal-scale,
+.reveal-card,
+.reveal-scale {
+  opacity: 1;
+  transform: translate3d(0, 0, 0) scale(1);
+  transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1), transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
   will-change: opacity, transform;
 }
 
-.scroll-reveal-left.is-revealed {
-  opacity: 1 !important;
-  transform: translateX(0) !important;
-}
-
-.scroll-reveal-right {
+/* When client animation observer is initialized, unrevealed items start with subtle offset */
+.js-anim .reveal-up:not(.is-revealed),
+.js-anim .scroll-reveal:not(.is-revealed) {
   opacity: 0;
-  transform: translateX(24px);
-  transition: opacity 0.65s cubic-bezier(0.16, 1, 0.3, 1), transform 0.65s cubic-bezier(0.16, 1, 0.3, 1);
-  will-change: opacity, transform;
+  transform: translate3d(0, 24px, 0);
 }
 
-.scroll-reveal-right.is-revealed {
-  opacity: 1 !important;
-  transform: translateX(0) !important;
-}
-
-.scroll-reveal-scale {
+.js-anim .reveal-left:not(.is-revealed),
+.js-anim .scroll-reveal-left:not(.is-revealed) {
   opacity: 0;
-  transform: scale(0.96) translateY(12px);
-  transition: opacity 0.65s cubic-bezier(0.16, 1, 0.3, 1), transform 0.65s cubic-bezier(0.16, 1, 0.3, 1);
-  will-change: opacity, transform;
+  transform: translate3d(-32px, 0, 0);
 }
 
-.scroll-reveal-scale.is-revealed {
+.js-anim .reveal-right:not(.is-revealed),
+.js-anim .scroll-reveal-right:not(.is-revealed) {
+  opacity: 0;
+  transform: translate3d(32px, 0, 0);
+}
+
+.js-anim .reveal-fade:not(.is-revealed),
+.js-anim .scroll-reveal-fade:not(.is-revealed) {
+  opacity: 0;
+}
+
+.js-anim .reveal-card:not(.is-revealed),
+.js-anim .reveal-scale:not(.is-revealed),
+.js-anim .scroll-reveal-scale:not(.is-revealed) {
+  opacity: 0;
+  transform: translate3d(0, 16px, 0) scale(0.97);
+}
+
+/* ── Above-the-fold Pure CSS Entrance Animations (Hydration Safe) ── */
+@keyframes heroSlideLeft {
+  from {
+    opacity: 0;
+    transform: translate3d(-24px, 0, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes heroSlideRight {
+  from {
+    opacity: 0;
+    transform: translate3d(24px, 0, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes heroSlideUp {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 20px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+.animate-hero-left {
+  animation: heroSlideLeft 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-hero-right {
+  animation: heroSlideRight 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-hero-up {
+  animation: heroSlideUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Revealed active states */
+.scroll-reveal.is-revealed,
+.scroll-reveal-left.is-revealed,
+.scroll-reveal-right.is-revealed,
+.scroll-reveal-fade.is-revealed,
+.scroll-reveal-scale.is-revealed,
+.reveal-up.is-revealed,
+.reveal-left.is-revealed,
+.reveal-right.is-revealed,
+.reveal-fade.is-revealed,
+.reveal-card.is-revealed,
+.reveal-scale.is-revealed {
   opacity: 1 !important;
-  transform: scale(1) translateY(0) !important;
+  transform: translate3d(0, 0, 0) scale(1) !important;
 }
 
 /* Stagger delay utility classes */
+.delay-50  { transition-delay: 50ms !important; }
 .delay-75  { transition-delay: 75ms !important; }
 .delay-100 { transition-delay: 100ms !important; }
 .delay-150 { transition-delay: 150ms !important; }
@@ -350,6 +428,18 @@
 .delay-300 { transition-delay: 300ms !important; }
 .delay-400 { transition-delay: 400ms !important; }
 .delay-500 { transition-delay: 500ms !important; }
+.delay-600 { transition-delay: 600ms !important; }
+
+@media (max-width: 640px) {
+  .scroll-reveal-left,
+  .reveal-left {
+    transform: translate3d(-18px, 0, 0);
+  }
+  .scroll-reveal-right,
+  .reveal-right {
+    transform: translate3d(18px, 0, 0);
+  }
+}
 
 @media (prefers-reduced-motion: reduce) {
   .website-page-transition,
@@ -357,7 +447,13 @@
   .scroll-reveal-fade,
   .scroll-reveal-left,
   .scroll-reveal-right,
-  .scroll-reveal-scale {
+  .scroll-reveal-scale,
+  .reveal-up,
+  .reveal-left,
+  .reveal-right,
+  .reveal-fade,
+  .reveal-card,
+  .reveal-scale {
     animation: none !important;
     opacity: 1 !important;
     transform: none !important;

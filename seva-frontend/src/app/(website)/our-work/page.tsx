@@ -138,13 +138,11 @@ export default async function OurWorkPage() {
       </section>
 
       {/* ── Interactive Category Filtering & List ── */}
-      <div className="scroll-reveal">
-        <OurWorkClient initiatives={initiatives} />
-      </div>
+      <OurWorkClient initiatives={initiatives} />
 
       {/* ── Bottom Call to Action ── */}
-      <section className="bg-[#0A1A2F] text-white py-16 sm:py-20 mt-12 border-t border-white/10 scroll-reveal">
-        <div className="max-w-4xl mx-auto px-4 text-center space-y-6">
+      <section className="bg-[#0A1A2F] text-white py-16 sm:py-20 mt-12 border-t border-white/10">
+        <div className="max-w-4xl mx-auto px-4 text-center space-y-6 reveal-up">
           <span className="text-xs font-semibold uppercase tracking-[0.2em] text-[#F5A623]">
             Be A Changemaker
           </span>

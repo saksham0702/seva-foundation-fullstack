@@ -60,58 +60,42 @@ export default async function LandingPage() {
 
       {/* 1. Featured In Marquee */}
       {featuredInSection && featuredInSection.items && featuredInSection.items.length > 0 && (
-        <div className="scroll-reveal">
-          <FeaturedInMarquee section={featuredInSection} />
-        </div>
+        <FeaturedInMarquee section={featuredInSection} />
       )}
 
       {/* 2. Urgent Campaigns */}
       {campaigns && campaigns.length > 0 && (
-        <div className="scroll-reveal">
-          <CampaignsSection initialCampaigns={campaigns} />
-        </div>
+        <CampaignsSection initialCampaigns={campaigns} />
       )}
 
       {/* 3. Core Initiatives */}
       {initiatives && initiatives.length > 0 && (
-        <div className="scroll-reveal">
-          <InitiativesHomeSection initiatives={initiatives} />
-        </div>
+        <InitiativesHomeSection initiatives={initiatives} />
       )}
 
       {/* 4. Principal Patron (Dev Bhoomi Samiti) & About Tease */}
       {patronSection && (patronSection.title || patronSection.subtitle) && (
-        <div className="scroll-reveal">
-          <HomePatronSection section={patronSection} />
-        </div>
+        <HomePatronSection section={patronSection} />
       )}
 
       {/* 5. Honors & Global Recognition (Excellence in Human Service) */}
       {excellenceSection && excellenceSection.items && excellenceSection.items.length > 0 && (
-        <div className="scroll-reveal">
-          <HomeExcellenceSection section={excellenceSection} />
-        </div>
+        <HomeExcellenceSection section={excellenceSection} />
       )}
 
       {/* 6. Integrity & Compliance (90% Program Support, CIN, Office) */}
       {integritySection && (
-        <div className="scroll-reveal">
-          <HomeIntegritySection section={integritySection} />
-        </div>
+        <HomeIntegritySection section={integritySection} />
       )}
 
       {/* 7. Impact Gallery */}
       {galleryImages && galleryImages.length > 0 && (
-        <div className="scroll-reveal">
-          <GalleryHomeSection images={galleryImages} />
-        </div>
+        <GalleryHomeSection images={galleryImages} />
       )}
 
       {/* 8. Recent Stories & Field Dispatches */}
       {recentStories && recentStories.length > 0 && (
-        <div className="scroll-reveal">
-          <RecentStoriesHomeSection items={recentStories} />
-        </div>
+        <RecentStoriesHomeSection items={recentStories} />
       )}
     </>
   );

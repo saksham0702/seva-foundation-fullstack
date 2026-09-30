@@ -24,13 +24,13 @@ export default function SacredPromise({ section }: { section?: ICmsSection }) {
   return (
     <section className="py-20 lg:py-28 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <h2 className="text-3xl md:text-4xl lg:text-5xl font-semibold text-[#0B1120] mb-12">
+        <h2 className="text-3xl md:text-4xl lg:text-5xl font-semibold text-[#0B1120] mb-12 reveal-up">
           {section.title || "The Sacred Promise"}
         </h2>
 
         <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-start">
           {/* LEFT: Story */}
-          <div className="space-y-6">
+          <div className="space-y-6 reveal-left">
             {customStory && (
               <div className="bg-gray-50 border-l-4 border-slate-300 rounded-r-xl p-6 md:p-8">
                 <p className="text-[#0B1120] italic leading-relaxed text-base md:text-lg whitespace-pre-wrap">
@@ -48,7 +48,7 @@ export default function SacredPromise({ section }: { section?: ICmsSection }) {
           </div>
 
           {/* RIGHT: Image card with year badge */}
-          <div className="relative mt-6 lg:mt-0">
+          <div className="relative mt-6 lg:mt-0 reveal-right delay-100">
             <div className="relative rounded-3xl overflow-hidden shadow-xl min-h-[380px] lg:h-[520px] bg-gradient-to-br from-[#0B1120] via-[#1a3a6b] to-[#0B1120] flex items-center justify-center p-8 border border-white/10">
               {sectionImage ? (
                 <Image

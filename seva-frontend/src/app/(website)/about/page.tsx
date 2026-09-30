@@ -61,14 +61,10 @@ export default async function AboutPage() {
       />
       <HeroSection data={cmsData} />
       {cmsData?.sections && cmsData.sections.length > 0 && (
-        <div className="scroll-reveal">
-          <SectionRenderer sections={cmsData.sections} />
-        </div>
+        <SectionRenderer sections={cmsData.sections} />
       )}
       {galleryImages && galleryImages.length > 0 && (
-        <div className="scroll-reveal">
-          <GalleryHomeSection images={galleryImages} />
-        </div>
+        <GalleryHomeSection images={galleryImages} />
       )}
     </main>
   );

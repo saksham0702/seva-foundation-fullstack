@@ -195,7 +195,7 @@ export default function HeroSection({ section, initialCampaigns }: HeroSectionPr
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-8">
         <div className="grid lg:grid-cols-12 gap-8 lg:gap-12 items-center min-h-[85vh]">
           {/* ── LEFT: Content ── */}
-          <div className="lg:col-span-5 space-y-8">
+          <div className="lg:col-span-5 space-y-8 animate-hero-left">
             {/* Trust badge */}
             <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/5 backdrop-blur-sm border border-white/10 rounded-full">
               <Sparkles size={14} className="text-[#E8542A]" />
@@ -301,7 +301,7 @@ export default function HeroSection({ section, initialCampaigns }: HeroSectionPr
           </div>
 
           {/* ── RIGHT: Featured Campaign Card or Mission Card ── */}
-          <div className="lg:col-span-7 relative">
+          <div className="lg:col-span-7 relative animate-hero-right">
             {!campaign ? (
               <div className="relative bg-white/5 border border-white/10 rounded-3xl p-8 sm:p-12 text-center space-y-6 backdrop-blur-md shadow-2xl">
                 <div className="w-16 h-16 rounded-2xl bg-[#E8542A]/20 border border-[#E8542A]/40 flex items-center justify-center mx-auto text-[#E8542A]">

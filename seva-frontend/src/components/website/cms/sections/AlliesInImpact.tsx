@@ -35,7 +35,7 @@ export default function AlliesInImpact({ section }: { section?: ICmsSection }) {
     <section className="py-20 lg:py-28 bg-[#fafbff] relative overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="text-center max-w-3xl mx-auto mb-14">
+        <div className="text-center max-w-3xl mx-auto mb-14 reveal-up">
           <h2 className="text-3xl md:text-5xl font-serif font-extrabold tracking-wide text-[#0B1120] mb-4">
             {firstWords && <span>{firstWords} </span>}
             <span className="text-[#f5a623]">{lastWord || title}</span>
@@ -48,7 +48,7 @@ export default function AlliesInImpact({ section }: { section?: ICmsSection }) {
         {/* 2 Cards Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-stretch max-w-6xl mx-auto">
           {/* Left Card: DEV BHOOMI SAMITI (Dark) */}
-          <div className="bg-[#0B1120] text-white rounded-[2.8rem] p-8 sm:p-12 lg:p-14 flex flex-col justify-between shadow-2xl relative overflow-hidden border border-white/5 hover:-translate-y-1.5 transition-all duration-300 group">
+          <div className="bg-[#0B1120] text-white rounded-[2.8rem] p-8 sm:p-12 lg:p-14 flex flex-col justify-between shadow-2xl relative overflow-hidden border border-white/5 hover:-translate-y-1.5 transition-all duration-300 group reveal-left">
             <div>
               {/* Icon badge */}
               <div className="w-16 h-16 rounded-2xl bg-[#f5a623] flex items-center justify-center mb-8 shadow-md group-hover:scale-105 transition-transform duration-300">
@@ -81,7 +81,7 @@ export default function AlliesInImpact({ section }: { section?: ICmsSection }) {
           </div>
 
           {/* Right Card: Foundation's Core Strength (Light) */}
-          <div className="bg-[#f8fafc] border border-blue-100 rounded-[2.8rem] p-8 sm:p-12 lg:p-14 flex flex-col justify-between shadow-sm hover:shadow-md hover:-translate-y-1.5 transition-all duration-300">
+          <div className="bg-[#f8fafc] border border-blue-100 rounded-[2.8rem] p-8 sm:p-12 lg:p-14 flex flex-col justify-between shadow-sm hover:shadow-md hover:-translate-y-1.5 transition-all duration-300 reveal-right delay-100">
             <div>
               <h3 className="text-lg sm:text-xl font-serif font-extrabold uppercase tracking-wider text-[#0B1120] mb-5">
                 {coreStrengthTitle}

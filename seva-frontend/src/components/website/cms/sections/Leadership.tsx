@@ -40,7 +40,7 @@ export default function Leadership({ section }: { section?: ICmsSection }) {
     <section className="py-20 lg:py-28 bg-white relative overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="text-center max-w-3xl mx-auto mb-16">
+        <div className="text-center max-w-3xl mx-auto mb-16 reveal-up">
           <h2 className="text-3xl md:text-5xl font-serif font-extrabold tracking-wide text-[#0B1120] mb-4">
             {firstWords && <span>{firstWords} </span>}
             <span className="text-[#f5a623]">{lastWord || title}</span>
@@ -55,7 +55,9 @@ export default function Leadership({ section }: { section?: ICmsSection }) {
           {stewards.map((steward, idx) => (
             <div
               key={idx}
-              className="bg-white rounded-[2.5rem] border border-slate-100 shadow-[0_6px_28px_rgba(0,0,0,0.04)] hover:shadow-[0_16px_40px_rgba(15,23,42,0.09)] p-8 md:p-10 text-center flex flex-col items-center hover:-translate-y-2 transition-all duration-300 group"
+              className={`bg-white rounded-[2.5rem] border border-slate-100 shadow-[0_6px_28px_rgba(0,0,0,0.04)] hover:shadow-[0_16px_40px_rgba(15,23,42,0.09)] p-8 md:p-10 text-center flex flex-col items-center hover:-translate-y-2 transition-all duration-300 group ${
+                idx % 2 === 0 ? "reveal-left" : "reveal-right"
+              } delay-${Math.min((idx % 3) * 100, 300)}`}
             >
               {/* Circular Avatar / Initials */}
               <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-slate-50 shadow-md mb-6 flex items-center justify-center bg-[#0B1120] text-[#f5a623] relative group-hover:scale-105 transition-transform duration-300">

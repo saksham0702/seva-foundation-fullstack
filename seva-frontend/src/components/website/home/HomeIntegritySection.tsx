@@ -43,7 +43,7 @@ export default function HomeIntegritySection({ section }: { section?: ICmsSectio
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-start">
           {/* Left Column: Heading, Description, Bars, Compliance Identifiers */}
-          <div className="lg:col-span-7 space-y-8">
+          <div className="lg:col-span-7 space-y-8 reveal-left">
             <div className="space-y-4">
               <h2 className="text-3xl md:text-5xl font-serif font-extrabold tracking-wide uppercase text-white">
                 {title}
@@ -134,7 +134,7 @@ export default function HomeIntegritySection({ section }: { section?: ICmsSectio
           </div>
 
           {/* Right Column: Registered Office Card */}
-          <div className="lg:col-span-5">
+          <div className="lg:col-span-5 reveal-right delay-100">
             <div className="bg-[#111C30]/70 backdrop-blur-md border border-white/10 rounded-[2.5rem] p-8 md:p-10 shadow-2xl relative overflow-hidden space-y-8 hover:border-white/20 transition-colors">
               <h3 className="font-serif font-extrabold text-base md:text-lg tracking-wider text-white uppercase">
                 {officeTitle}

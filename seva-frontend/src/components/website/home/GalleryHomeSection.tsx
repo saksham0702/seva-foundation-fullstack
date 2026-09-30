@@ -59,7 +59,7 @@ export default function GalleryHomeSection({
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         {/* Section Header */}
         <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-12">
-          <div className="max-w-2xl">
+          <div className="max-w-2xl reveal-left">
             <span className="inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.2em] text-[#E8542A] mb-3">
               <Camera size={13} className="text-[#E8542A]" />
               Moments of Impact · Field Photobank
@@ -73,7 +73,7 @@ export default function GalleryHomeSection({
             </p>
           </div>
 
-          <div className="flex-shrink-0">
+          <div className="flex-shrink-0 reveal-right delay-100">
             <Link
               href="/gallery"
               className="inline-flex items-center gap-2 text-sm font-bold text-[#0A1A2F] hover:text-[#E8542A] bg-white border border-slate-300 hover:border-[#E8542A] px-5 py-3 rounded-xl transition-all shadow-sm group"
@@ -98,7 +98,9 @@ export default function GalleryHomeSection({
               <div
                 key={img._id || idx}
                 onClick={() => setActiveModalIndex(idx)}
-                className="group relative aspect-[4/3] rounded-2xl overflow-hidden bg-slate-200 border border-slate-200/80 shadow-sm hover:shadow-xl transition-all duration-300 cursor-pointer"
+                className={`group relative aspect-[4/3] rounded-2xl overflow-hidden bg-slate-200 border border-slate-200/80 shadow-sm hover:shadow-xl transition-all duration-300 cursor-pointer ${
+                  idx % 2 === 0 ? "reveal-left" : "reveal-right"
+                } delay-${Math.min((idx % 3) * 100, 300)}`}
               >
                 {/* Image */}
                 <Image

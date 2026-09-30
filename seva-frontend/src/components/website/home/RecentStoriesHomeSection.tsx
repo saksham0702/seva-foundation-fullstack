@@ -58,7 +58,7 @@ export default function RecentStoriesHomeSection({
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
         <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-12">
-          <div className="max-w-2xl">
+          <div className="max-w-2xl reveal-left">
             <span className="inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.2em] text-[#E8542A] mb-3">
               <span className="w-5 h-px bg-[#E8542A]" />
               Field Insights &amp; Stories
@@ -72,7 +72,7 @@ export default function RecentStoriesHomeSection({
             </p>
           </div>
 
-          <div className="flex-shrink-0 flex items-center gap-3">
+          <div className="flex-shrink-0 flex items-center gap-3 reveal-right delay-100">
             <Link
               href="/blogs"
               className="inline-flex items-center gap-2 text-sm font-bold text-[#0A1A2F] hover:text-[#E8542A] bg-slate-50 border border-slate-200 hover:border-[#E8542A] px-5 py-3 rounded-xl transition-all shadow-sm group"
@@ -85,7 +85,7 @@ export default function RecentStoriesHomeSection({
 
         {/* 3 Articles Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {displayItems.map((item) => {
+          {displayItems.map((item, idx) => {
             const config = TYPE_CONFIG[item.type] || TYPE_CONFIG.blog;
             const TypeIcon = config.icon;
             const linkHref = `${config.linkPrefix}/${item.slug || item.id || item._id}`;
@@ -98,7 +98,9 @@ export default function RecentStoriesHomeSection({
             return (
               <article
                 key={item.id || item._id || item.slug}
-                className="bg-white rounded-2xl border border-slate-200/80 shadow-sm hover:shadow-lg transition-all duration-300 flex flex-col justify-between overflow-hidden group"
+                className={`bg-white rounded-2xl border border-slate-200/80 shadow-sm hover:shadow-lg transition-all duration-300 flex flex-col justify-between overflow-hidden group ${
+                  idx % 2 === 0 ? "reveal-left" : "reveal-right"
+                } delay-${Math.min((idx % 3) * 100, 300)}`}
               >
                 <div>
                   {/* Image Container */}

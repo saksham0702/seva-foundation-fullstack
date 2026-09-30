@@ -39,7 +39,7 @@ export default async function CampaignsPage() {
         jsonLd={collectionSchema}
       />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4 scroll-reveal">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4 reveal-left">
           <div>
             <h1 className="text-3xl sm:text-4xl font-bold text-[#0f2347] mb-2 font-display">
               Active Campaigns
@@ -50,9 +50,7 @@ export default async function CampaignsPage() {
           </div>
         </div>
 
-        <div className="scroll-reveal delay-100">
-          <CampaignsListingClient initialCampaigns={campaigns} initialCategories={categories} />
-        </div>
+        <CampaignsListingClient initialCampaigns={campaigns} initialCategories={categories} />
       </div>
     </section>
   );

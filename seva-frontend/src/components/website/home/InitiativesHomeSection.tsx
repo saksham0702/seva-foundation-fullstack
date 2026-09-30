@@ -89,7 +89,7 @@ export default function InitiativesHomeSection({
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         {/* Section Header */}
         <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-12">
-          <div className="max-w-2xl">
+          <div className="max-w-2xl reveal-left">
             <span className="inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.2em] text-[#E8542A] mb-3">
               <span className="w-5 h-px bg-[#E8542A]" />
               Dedicated Grassroots Initiatives
@@ -103,7 +103,7 @@ export default function InitiativesHomeSection({
             </p>
           </div>
 
-          <div className="flex-shrink-0">
+          <div className="flex-shrink-0 reveal-right delay-100">
             <Link
               href="/our-work"
               className="inline-flex items-center gap-2 text-sm font-bold text-[#0A1A2F] hover:text-[#E8542A] bg-white border border-slate-300 hover:border-[#E8542A] px-5 py-3 rounded-xl transition-all shadow-sm group"
@@ -116,7 +116,7 @@ export default function InitiativesHomeSection({
 
         {/* 4 Cards Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {displayItems.map((init) => {
+          {displayItems.map((init, idx) => {
             const key = init.key.toLowerCase();
             const Icon = INITIATIVE_ICONS[key] || Sparkles;
             const accent = INITIATIVE_ACCENTS[key] || {
@@ -134,7 +134,9 @@ export default function InitiativesHomeSection({
             return (
               <div
                 key={init.key}
-                className="bg-white rounded-2xl border border-slate-200/80 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col justify-between overflow-hidden group"
+                className={`bg-white rounded-2xl border border-slate-200/80 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col justify-between overflow-hidden group ${
+                  idx % 2 === 0 ? "reveal-left" : "reveal-right"
+                } delay-${Math.min((idx % 4) * 100, 300)}`}
               >
                 <div>
                   {/* Image or Icon Hero */}

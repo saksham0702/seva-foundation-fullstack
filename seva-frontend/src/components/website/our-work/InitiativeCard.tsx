@@ -87,7 +87,7 @@ export default function InitiativeCard({
         {/* ── Top Row: Text Header & Visual Image ── */}
         <div className="grid lg:grid-cols-12 gap-8 lg:gap-12 items-start">
           {/* Left Info Column */}
-          <div className={`${hasImage ? "lg:col-span-7" : "lg:col-span-12"} space-y-6`}>
+          <div className={`${hasImage ? "lg:col-span-7" : "lg:col-span-12"} space-y-6 reveal-left`}>
             <div className="flex items-start justify-between gap-4">
               <div>
                 <span className="text-[12px] font-semibold uppercase tracking-[0.2em] text-[#4C6FFF] block mb-2">
@@ -125,7 +125,7 @@ export default function InitiativeCard({
 
           {/* Right Visual / Image Column */}
           {hasImage && (
-            <div className="lg:col-span-5">
+            <div className="lg:col-span-5 reveal-right delay-100">
               <div className="bg-[#F8EFE0] p-3 sm:p-4 rounded-[32px] sm:rounded-[40px] shadow-sm">
                 <div className="relative w-full aspect-[4/3] rounded-[24px] sm:rounded-[32px] overflow-hidden bg-slate-100">
                   <Image
@@ -145,7 +145,7 @@ export default function InitiativeCard({
         {/* ── Bottom Row: Questions & Actions + Impact Metrics ── */}
         <div className="mt-10 pt-8 border-t border-gray-100 grid lg:grid-cols-12 gap-8 lg:gap-12 items-start">
           {/* Left Column: FAQs, Feature Pills, and CTA Buttons */}
-          <div className={`${hasImpactMetrics ? "lg:col-span-7" : "lg:col-span-12"} space-y-6`}>
+          <div className={`${hasImpactMetrics ? "lg:col-span-7" : "lg:col-span-12"} space-y-6 reveal-left`}>
             {/* Common Questions Accordion */}
             {hasFaqs && (
               <div className="space-y-3">
@@ -241,7 +241,7 @@ export default function InitiativeCard({
 
           {/* Right Column: IMPACT METRICS Navy Card */}
           {hasImpactMetrics && (
-            <div className="lg:col-span-5">
+            <div className="lg:col-span-5 reveal-right delay-100">
               <div className="bg-[#0A1628] rounded-[28px] sm:rounded-[36px] p-6 sm:p-8 text-white shadow-xl">
                 <h3 className="text-xl sm:text-2xl font-serif font-semibold uppercase tracking-wider text-white mb-6">
                   Impact Metrics

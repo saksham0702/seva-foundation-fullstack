@@ -40,7 +40,9 @@ export default function CampaignsSection({
     let cancelled = false;
     (async () => {
       try {
-        setLoading(true);
+        if (initialFiltered.length === 0) {
+          setLoading(true);
+        }
         setError(null);
         const [campaignsResult, donationsResult] = await Promise.allSettled([
           getCampaigns(),
@@ -100,7 +102,7 @@ export default function CampaignsSection({
     <section className="bg-white py-5">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-12">
-          <div>
+          <div className="reveal-left">
             <span className="inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.18em] text-[#E8542A] mb-3">
               <span className="w-6 h-px bg-[#E8542A]" />
               Active Campaigns
@@ -117,7 +119,7 @@ export default function CampaignsSection({
           </div>
           <Link
             href="/campaigns"
-            className="flex-shrink-0 flex items-center gap-2 text-sm font-semibold text-[#1a3a6b] border-2 border-[#1a3a6b]/30 hover:border-[#1a3a6b] hover:bg-[#1a3a6b] hover:text-white px-5 py-2.5 rounded-xl transition-all duration-200"
+            className="flex-shrink-0 flex items-center gap-2 text-sm font-semibold text-[#1a3a6b] border-2 border-[#1a3a6b]/30 hover:border-[#1a3a6b] hover:bg-[#1a3a6b] hover:text-white px-5 py-2.5 rounded-xl transition-all duration-200 reveal-right delay-100"
           >
             View all campaigns
             <ArrowRight size={15} />
@@ -145,12 +147,19 @@ export default function CampaignsSection({
 
         {!loading && !error && campaigns.length > 0 && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {campaigns.map((campaign) => (
-              <CampaignCard
+            {campaigns.map((campaign, idx) => (
+              <div
                 key={campaign._id}
-                campaign={toCampaignCardData(campaign, donations)}
-                variant="website"
-              />
+                className={`${idx % 2 === 0 ? "reveal-left" : "reveal-right"} delay-${Math.min(
+                  (idx % 3) * 100,
+                  300
+                )}`}
+              >
+                <CampaignCard
+                  campaign={toCampaignCardData(campaign, donations)}
+                  variant="website"
+                />
+              </div>
             ))}
           </div>
         )}
