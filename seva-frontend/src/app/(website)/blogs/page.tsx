@@ -66,15 +66,13 @@ export default async function BlogListingPage() {
       </section>
 
       {/* Dynamic Tab & Category Media Explorer */}
-      <div className="scroll-reveal">
-        <MediaHubListingClient
-          initialTab="blogs"
-          blogs={blogs}
-          events={events}
-          news={news}
-          categories={categories}
-        />
-      </div>
+      <MediaHubListingClient
+        initialTab="blogs"
+        blogs={blogs}
+        events={events}
+        news={news}
+        categories={categories}
+      />
     </div>
   );
 }

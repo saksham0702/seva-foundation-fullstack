@@ -54,7 +54,7 @@ export default function HomeExcellenceSection({ section }: { section?: ICmsSecti
               </div>
 
               {item.year && (
-                <div className="flex items-center justify-between mt-6 pt-4 border-t border-white/5 text-[10px] uppercase font-bold text-blue-200/60">
+                <div className="flex items-center justify-between mt-6 pt-4 border-t border-white/5 text-[10px] uppercase font-bold text-white">
                   <span>YEAR</span>
                   <span className="text-white font-mono font-bold text-xs">{item.year}</span>
                 </div>

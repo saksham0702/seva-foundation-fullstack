@@ -197,9 +197,9 @@ export default function HeroSection({ section, initialCampaigns }: HeroSectionPr
           {/* ── LEFT: Content ── */}
           <div className="lg:col-span-5 space-y-8 animate-hero-left">
             {/* Trust badge */}
-            <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/5 backdrop-blur-sm border border-white/10 rounded-full">
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full">
               <Sparkles size={14} className="text-[#E8542A]" />
-              <span className="text-xs font-semibold text-white/80 tracking-wide">
+              <span className="text-xs font-bold text-white tracking-wide">
                 {badgeText}
               </span>
             </div>
@@ -217,7 +217,7 @@ export default function HeroSection({ section, initialCampaigns }: HeroSectionPr
                   {headlinePart2} <span className="text-[#E8542A]">{headlineHighlight2}</span>.
                 </h1>
               )}
-              <p className="text-base sm:text-lg text-white/50 leading-relaxed max-w-md">
+              <p className="text-base sm:text-lg text-white font-medium leading-relaxed max-w-md">
                 {description}
               </p>
             </div>
@@ -229,14 +229,14 @@ export default function HeroSection({ section, initialCampaigns }: HeroSectionPr
                 return (
                   <div
                     key={i}
-                    className="flex items-center gap-3 px-4 py-3 bg-white/5 border border-white/10 rounded-2xl hover:bg-white/10 hover:border-white/20 transition-all cursor-default shadow-sm"
+                    className="flex items-center gap-3 px-4 py-3 bg-white/10 border border-white/15 rounded-2xl hover:bg-white/20 hover:border-white/30 transition-all cursor-default shadow-sm"
                   >
                     <IconComponent size={20} className="text-[#E8542A] flex-shrink-0" />
                     <div className="min-w-0">
                       <p className="text-xs font-bold text-white truncate">
                         {signal.label}
                       </p>
-                      <p className="text-[10px] text-white/50 truncate">{signal.sub}</p>
+                      <p className="text-[11px] text-white/90 truncate font-medium">{signal.sub}</p>
                     </div>
                   </div>
                 );
@@ -258,7 +258,7 @@ export default function HeroSection({ section, initialCampaigns }: HeroSectionPr
               {secondaryCtaText && secondaryCtaLink && (
                 <Link
                   href={secondaryCtaLink}
-                  className="inline-flex items-center gap-2 text-white/70 hover:text-white font-semibold text-sm transition-colors px-4 py-3 rounded-xl border border-white/10 hover:border-white/20 bg-white/5"
+                  className="inline-flex items-center gap-2 text-white hover:text-white font-bold text-sm transition-colors px-4 py-3 rounded-xl border border-white/20 hover:border-white/30 bg-white/10"
                 >
                   <Heart size={16} className="text-[#E8542A]" />
                   {secondaryCtaText}
@@ -273,7 +273,7 @@ export default function HeroSection({ section, initialCampaigns }: HeroSectionPr
                 {stat1Value && (
                   <div>
                     <p className="text-2xl font-bold text-white">{stat1Value}</p>
-                    <p className="text-[11px] text-white/40 uppercase tracking-wider">
+                    <p className="text-[11px] text-white/90 font-bold uppercase tracking-wider">
                       {stat1Label}
                     </p>
                   </div>
@@ -282,7 +282,7 @@ export default function HeroSection({ section, initialCampaigns }: HeroSectionPr
                 {stat2Value && (
                   <div>
                     <p className="text-2xl font-bold text-white">{stat2Value}</p>
-                    <p className="text-[11px] text-white/40 uppercase tracking-wider">
+                    <p className="text-[11px] text-white/90 font-bold uppercase tracking-wider">
                       {stat2Label}
                     </p>
                   </div>
@@ -291,7 +291,7 @@ export default function HeroSection({ section, initialCampaigns }: HeroSectionPr
                 {stat3Value && (
                   <div>
                     <p className="text-2xl font-bold text-white">{stat3Value}</p>
-                    <p className="text-[11px] text-white/40 uppercase tracking-wider">
+                    <p className="text-[11px] text-white/90 font-bold uppercase tracking-wider">
                       {stat3Label}
                     </p>
                   </div>
@@ -303,14 +303,14 @@ export default function HeroSection({ section, initialCampaigns }: HeroSectionPr
           {/* ── RIGHT: Featured Campaign Card or Mission Card ── */}
           <div className="lg:col-span-7 relative animate-hero-right">
             {!campaign ? (
-              <div className="relative bg-white/5 border border-white/10 rounded-3xl p-8 sm:p-12 text-center space-y-6 backdrop-blur-md shadow-2xl">
+              <div className="relative bg-white/10 border border-white/15 rounded-3xl p-8 sm:p-12 text-center space-y-6 backdrop-blur-md shadow-2xl">
                 <div className="w-16 h-16 rounded-2xl bg-[#E8542A]/20 border border-[#E8542A]/40 flex items-center justify-center mx-auto text-[#E8542A]">
                   <ShieldCheck size={32} />
                 </div>
                 <h3 className="text-2xl sm:text-3xl font-bold text-white font-serif">
                   100% Transparent Grassroots Impact
                 </h3>
-                <p className="text-slate-300 text-sm sm:text-base max-w-md mx-auto leading-relaxed">
+                <p className="text-white text-sm sm:text-base max-w-md mx-auto leading-relaxed font-medium">
                   {description}
                 </p>
                 <div className="pt-2 flex justify-center gap-4">
@@ -356,7 +356,7 @@ export default function HeroSection({ section, initialCampaigns }: HeroSectionPr
                           />
                         ) : (
                           <div className="w-full h-full bg-gradient-to-br from-[#0a1628] via-[#1a3a6b] to-[#E8542A]/30 flex flex-col items-center justify-center p-6 text-center">
-                            <span className="text-white/40 text-xs uppercase tracking-widest font-semibold mb-2">
+                            <span className="text-white text-xs uppercase tracking-widest font-bold mb-2">
                               {c.category}
                             </span>
                             <span className="text-white font-bold text-lg sm:text-xl max-w-md">
@@ -511,7 +511,7 @@ export default function HeroSection({ section, initialCampaigns }: HeroSectionPr
             {/* Slide counter */}
             {featuredCampaigns.length > 1 && (
               <div className="text-center mt-3">
-                <span className="text-white/30 text-xs font-semibold tabular-nums">
+                <span className="text-white text-xs font-bold tabular-nums">
                   {String(current + 1).padStart(2, "0")} /{" "}
                   {String(featuredCampaigns.length).padStart(2, "0")}
                 </span>
@@ -525,7 +525,7 @@ export default function HeroSection({ section, initialCampaigns }: HeroSectionPr
 
       {/* ── Bottom trust bar (only if configured) ── */}
       {Array.isArray(section?.extra?.bottomTrustItems) && section.extra.bottomTrustItems.length > 0 && (
-        <div className="border-t border-white/5">
+        <div className="border-t border-white/10">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
             <div className="flex flex-wrap items-center justify-center gap-8 sm:gap-12">
               {section.extra.bottomTrustItems.map((item: any, idx: number) => {
@@ -544,8 +544,8 @@ export default function HeroSection({ section, initialCampaigns }: HeroSectionPr
                 }
 
                 return (
-                  <div key={idx} className="flex items-center gap-2 text-white/40 text-xs font-medium">
-                    <Icon size={14} className="text-[#E8542A]/80 flex-shrink-0" />
+                  <div key={idx} className="flex items-center gap-2 text-white text-xs font-bold">
+                    <Icon size={14} className="text-[#E8542A] flex-shrink-0" />
                     <span>{text}</span>
                   </div>
                 );

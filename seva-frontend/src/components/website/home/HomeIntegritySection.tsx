@@ -48,7 +48,7 @@ export default function HomeIntegritySection({ section }: { section?: ICmsSectio
               <h2 className="text-3xl md:text-5xl font-serif font-extrabold tracking-wide uppercase text-white">
                 {title}
               </h2>
-              <p className="text-blue-100/70 text-sm md:text-base leading-relaxed max-w-2xl font-normal">
+              <p className="text-white text-sm md:text-base leading-relaxed max-w-2xl font-normal">
                 {description}
               </p>
             </div>
@@ -58,7 +58,7 @@ export default function HomeIntegritySection({ section }: { section?: ICmsSectio
               {/* Program Support Bar */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between text-xs font-bold uppercase tracking-wider">
-                  <span className="text-blue-200">{programLabel}</span>
+                  <span className="text-white">{programLabel}</span>
                   <span className="text-[#f5a623] text-sm font-black font-mono">{programPercent}</span>
                 </div>
                 <div className="w-full h-3 bg-white/10 rounded-full overflow-hidden p-0.5">
@@ -72,12 +72,12 @@ export default function HomeIntegritySection({ section }: { section?: ICmsSectio
               {/* Admin & Fundraising Bar */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between text-xs font-bold uppercase tracking-wider">
-                  <span className="text-blue-300/80">{adminLabel}</span>
+                  <span className="text-white">{adminLabel}</span>
                   <span className="text-white text-sm font-black font-mono">{adminPercent}</span>
                 </div>
                 <div className="w-full h-3 bg-white/10 rounded-full overflow-hidden p-0.5">
                   <div
-                    className="h-full bg-slate-400 rounded-full transition-all duration-1000"
+                    className="h-full bg-slate-300 rounded-full transition-all duration-1000"
                     style={{ width: `${numAdmin}%` }}
                   />
                 </div>
@@ -140,9 +140,9 @@ export default function HomeIntegritySection({ section }: { section?: ICmsSectio
                 {officeTitle}
               </h3>
 
-              <div className="flex items-start gap-3.5 text-slate-200">
+              <div className="flex items-start gap-3.5 text-white">
                 <MapPin className="w-5 h-5 text-[#f5a623] shrink-0 mt-0.5" />
-                <p className="text-sm leading-relaxed text-slate-300">
+                <p className="text-sm leading-relaxed text-white">
                   {officeAddress}
                 </p>
               </div>

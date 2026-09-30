@@ -195,12 +195,12 @@ const HeaderContent = () => {
       {/* ============================================================ */}
       <div className="bg-[#0A1A2F]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between py-2 text-[12px] text-white/90">
+          <div className="flex items-center justify-between py-2 text-[12px] text-white">
             {/* Contact details */}
             <div className="flex items-center gap-5">
               <a
                 href={`tel:${phone.replace(/\s+/g, "")}`}
-                className="flex items-center gap-1.5 font-medium hover:text-[#F5A623] transition-colors"
+                className="flex items-center gap-1.5 font-bold hover:text-[#F5A623] transition-colors"
               >
                 <svg
                   className="w-3.5 h-3.5"
@@ -219,7 +219,7 @@ const HeaderContent = () => {
               </a>
               <a
                 href={`mailto:${email}`}
-                className="hidden sm:flex items-center gap-1.5 font-medium hover:text-[#F5A623] transition-colors uppercase"
+                className="hidden sm:flex items-center gap-1.5 font-bold hover:text-[#F5A623] transition-colors uppercase"
               >
                 <svg
                   className="w-3.5 h-3.5"
@@ -240,7 +240,7 @@ const HeaderContent = () => {
 
             {/* Follow us + social icons */}
             <div className="flex items-center gap-3">
-              <span className="hidden sm:inline text-white/50 text-[11px] uppercase tracking-widest">
+              <span className="hidden sm:inline text-white text-[11px] font-bold uppercase tracking-widest">
                 Follow Us:
               </span>
               <div className="flex items-center gap-1.5">
@@ -371,7 +371,7 @@ const HeaderContent = () => {
             {/* --- Right-side actions (Desktop) --- */}
             <div className="hidden lg:flex items-center gap-3 flex-shrink-0">
               <Link
-                href="/campaigns"
+                href="/donations"
                 className="bg-[#F5A623] hover:bg-[#e0951a] text-white text-[12.5px] rounded-lg font-semibold uppercase tracking-wider px-5 py-2.5 transition-colors shadow-sm whitespace-nowrap"
               >
                 Donate Now
@@ -381,7 +381,7 @@ const HeaderContent = () => {
             {/* --- Mobile actions & toggle --- */}
             <div className="flex lg:hidden items-center gap-2 sm:gap-3 flex-shrink-0">
               <Link
-                href="/campaigns"
+                href="/donations"
                 className="bg-[#F5A623] hover:bg-[#e0951a] active:scale-95 text-white text-[11px] sm:text-xs font-semibold uppercase tracking-wider px-3 sm:px-4 py-2 rounded-lg transition-all shadow-xs whitespace-nowrap flex items-center gap-1.5"
               >
                 <Heart size={13} className="fill-white" />
@@ -508,7 +508,7 @@ const HeaderContent = () => {
 
               <div className="pt-4">
                 <Link
-                  href="/campaigns"
+                  href="/donations"
                   onClick={() => setMenuOpen(false)}
                   className="block w-full text-center bg-[#F5A623] hover:bg-[#e0951a] text-white text-[13px] font-semibold uppercase tracking-wider py-3 rounded-lg transition-colors shadow-xs"
                 >

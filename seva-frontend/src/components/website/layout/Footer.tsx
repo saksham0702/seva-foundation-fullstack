@@ -160,7 +160,7 @@ const Footer = () => {
             <h3 className="text-xl sm:text-2xl font-serif font-semibold text-white mt-1">
               Subscribe to Seva Foundation Updates
             </h3>
-            <p className="text-xs sm:text-sm text-slate-300 mt-1.5 leading-relaxed">
+            <p className="text-xs sm:text-sm text-white mt-1.5 leading-relaxed font-normal">
               Receive quarterly impact disclosures, grassroots stories, and notifications on urgent humanitarian relief initiatives.
             </p>
           </div>

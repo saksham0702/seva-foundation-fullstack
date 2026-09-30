@@ -65,15 +65,13 @@ export default async function NewsListingPage() {
         </div>
       </section>
 
-      <div className="scroll-reveal">
-        <MediaHubListingClient
-          initialTab="news"
-          news={newsList}
-          blogs={blogs}
-          events={events}
-          categories={categories}
-        />
-      </div>
+      <MediaHubListingClient
+        initialTab="news"
+        news={newsList}
+        blogs={blogs}
+        events={events}
+        categories={categories}
+      />
     </div>
   );
 }

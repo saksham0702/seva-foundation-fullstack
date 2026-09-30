@@ -28,13 +28,11 @@ import { cmsAPI } from "@/app/api/cms";
 /*  CARD COMPONENTS (DISTINCT DESIGNS FOR BLOG, EVENT, NEWS)          */
 /* ------------------------------------------------------------------ */
 
-export function BlogCard({ post, index = 0 }: { post: CmsItem; index?: number }) {
-  const dirClass = index % 2 === 0 ? "reveal-left" : "reveal-right";
-  const delayClass = `delay-${Math.min((index % 3) * 100, 300)}`;
+export function BlogCard({ post }: { post: CmsItem; index?: number }) {
   return (
     <Link
       href={`/blogs/${post.slug}`}
-      className={`group bg-white rounded-3xl overflow-hidden border border-gray-100 hover:border-[#E8542A]/30 hover:shadow-2xl transition-all duration-300 flex flex-col justify-between ${dirClass} ${delayClass}`}
+      className="group bg-white rounded-3xl overflow-hidden border border-gray-100 hover:border-[#E8542A]/30 hover:shadow-2xl transition-all duration-300 flex flex-col justify-between transform hover:-translate-y-1"
     >
       <div>
         <div className="relative h-52 overflow-hidden bg-slate-100">
@@ -100,7 +98,6 @@ export function BlogCard({ post, index = 0 }: { post: CmsItem; index?: number })
 export function EventCard({
   event,
   onRegister,
-  index = 0,
 }: {
   event: CmsItem;
   onRegister: (e: CmsItem) => void;
@@ -111,11 +108,9 @@ export function EventCard({
     : true;
 
   const eventDateObj = event.eventDate ? new Date(event.eventDate) : null;
-  const dirClass = index % 2 === 0 ? "reveal-left" : "reveal-right";
-  const delayClass = `delay-${Math.min((index % 3) * 100, 300)}`;
 
   return (
-    <div className={`group bg-white rounded-3xl overflow-hidden border border-gray-100 hover:border-cyan-500/40 hover:shadow-2xl transition-all duration-300 flex flex-col justify-between ${dirClass} ${delayClass}`}>
+    <div className="group bg-white rounded-3xl overflow-hidden border border-gray-100 hover:border-cyan-500/40 hover:shadow-2xl transition-all duration-300 flex flex-col justify-between transform hover:-translate-y-1">
       <div>
         <div className="relative h-56 overflow-hidden bg-slate-100">
           <Image
@@ -211,13 +206,11 @@ export function EventCard({
   );
 }
 
-export function NewsCard({ item, index = 0 }: { item: CmsItem; index?: number }) {
-  const dirClass = index % 2 === 0 ? "reveal-left" : "reveal-right";
-  const delayClass = `delay-${Math.min((index % 3) * 100, 300)}`;
+export function NewsCard({ item }: { item: CmsItem; index?: number }) {
   return (
     <Link
       href={`/news/${item.slug}`}
-      className={`group bg-white rounded-3xl overflow-hidden border border-gray-100 hover:border-[#F5A623]/40 hover:shadow-2xl transition-all duration-300 flex flex-col justify-between ${dirClass} ${delayClass}`}
+      className="group bg-white rounded-3xl overflow-hidden border border-gray-100 hover:border-[#F5A623]/40 hover:shadow-2xl transition-all duration-300 flex flex-col justify-between transform hover:-translate-y-1"
     >
       <div>
         <div className="relative h-52 overflow-hidden bg-slate-100">
@@ -467,12 +460,12 @@ export default function MediaHubListingClient({
 
           {/* Bottom Row: Dynamic Category Filter Chips with View More */}
           <div className="space-y-2">
-            <div className={`flex items-center gap-2 pb-1 ${showAllCategories ? "flex-wrap" : "overflow-x-auto scrollbar-none"}`}>
-              <span className="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1.5 mr-1 shrink-0">
+            <div className="flex flex-wrap items-center gap-2 pt-1">
+              <span className="text-xs font-bold text-gray-500 uppercase tracking-wider flex items-center gap-1.5 mr-1 shrink-0">
                 <Filter size={12} /> Category:
               </span>
               
-              {(showAllCategories ? categoryList : categoryList.slice(0, 7)).map((cat) => {
+              {(showAllCategories ? categoryList : categoryList.slice(0, 8)).map((cat) => {
                 const isSelected = selectedCategory.toLowerCase() === cat.toLowerCase();
                 return (
                   <button
@@ -489,10 +482,10 @@ export default function MediaHubListingClient({
                 );
               })}
 
-              {/* Ensure currently selected category is visible even if not in first 7 */}
+              {/* Ensure currently selected category is visible even if not in first 8 */}
               {!showAllCategories &&
                 selectedCategory !== "all" &&
-                !categoryList.slice(0, 7).some((c) => c.toLowerCase() === selectedCategory.toLowerCase()) && (
+                !categoryList.slice(0, 8).some((c) => c.toLowerCase() === selectedCategory.toLowerCase()) && (
                   <button
                     onClick={() => setSelectedCategory(selectedCategory)}
                     className="text-xs font-bold px-4 py-1.5 rounded-full capitalize transition-all whitespace-nowrap border cursor-pointer bg-[#0A1A2F] border-[#0A1A2F] text-white shadow-xs"
@@ -501,12 +494,13 @@ export default function MediaHubListingClient({
                   </button>
                 )}
 
-              {categoryList.length > 7 && (
+              {categoryList.length > 8 && (
                 <button
+                  type="button"
                   onClick={() => setShowAllCategories((prev) => !prev)}
-                  className="text-xs font-bold px-3.5 py-1.5 rounded-full transition-all whitespace-nowrap border cursor-pointer bg-slate-100 hover:bg-slate-200 border-slate-300 text-[#0A1A2F] flex items-center gap-1 shrink-0 shadow-xs"
+                  className="text-xs font-bold px-4 py-1.5 rounded-full transition-all whitespace-nowrap border cursor-pointer bg-slate-100 hover:bg-slate-200 border-slate-300 text-[#0A1A2F] flex items-center gap-1.5 shrink-0 shadow-xs"
                 >
-                  {showAllCategories ? "Show Less ↑" : "+ View More Categories ↓"}
+                  <span>{showAllCategories ? "Show Less ↑" : `+ View More (${categoryList.length - 8} more) ↓`}</span>
                 </button>
               )}
             </div>

@@ -18,6 +18,7 @@ export function CampaignsListingClient({
 }: CampaignsListingClientProps) {
   const [search, setSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
+  const [showAllCategories, setShowAllCategories] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
 
   // Extract all categories dynamically from admin-created categories & campaigns
@@ -105,11 +106,11 @@ export function CampaignsListingClient({
 
         {/* Category Filter Chips */}
         {categories.length > 1 && (
-          <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none pt-2 border-t border-gray-200/60">
-            <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider shrink-0">
+          <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-gray-200/60">
+            <span className="text-[11px] font-bold text-gray-500 uppercase tracking-wider shrink-0 mr-1">
               Causes:
             </span>
-            {categories.map((cat) => {
+            {(showAllCategories ? categories : categories.slice(0, 8)).map((cat) => {
               const active = selectedCategory === cat;
               return (
                 <button
@@ -126,6 +127,29 @@ export function CampaignsListingClient({
                 </button>
               );
             })}
+
+            {/* Ensure selected category is visible if not in first 8 */}
+            {!showAllCategories &&
+              selectedCategory !== "all" &&
+              !categories.slice(0, 8).includes(selectedCategory) && (
+                <button
+                  type="button"
+                  onClick={() => handleCategoryChange(selectedCategory)}
+                  className="text-xs font-bold px-3.5 py-1.5 rounded-xl whitespace-nowrap transition-all capitalize bg-[#E8542A] text-white shadow-sm shadow-orange-500/20"
+                >
+                  {selectedCategory}
+                </button>
+              )}
+
+            {categories.length > 8 && (
+              <button
+                type="button"
+                onClick={() => setShowAllCategories((prev) => !prev)}
+                className="text-xs font-bold px-3.5 py-1.5 rounded-xl whitespace-nowrap border cursor-pointer bg-slate-100 hover:bg-slate-200 border-slate-300 text-[#0f2347] flex items-center gap-1.5 shrink-0 shadow-xs"
+              >
+                <span>{showAllCategories ? "Show Less ↑" : `+ View More (${categories.length - 8} more) ↓`}</span>
+              </button>
+            )}
           </div>
         )}
       </div>
@@ -152,13 +176,10 @@ export function CampaignsListingClient({
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {paginatedCampaigns.map((campaign, idx) => (
+          {paginatedCampaigns.map((campaign) => (
             <div
               key={campaign._id}
-              className={`${idx % 2 === 0 ? "reveal-left" : "reveal-right"} delay-${Math.min(
-                (idx % 3) * 100,
-                300
-              )}`}
+              className="transition-all duration-300"
             >
               <CampaignCard
                 campaign={toCampaignCardData(campaign)}

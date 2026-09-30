@@ -85,7 +85,7 @@ export default function HomePatronSection({ section }: { section?: ICmsSection }
 
                 <div className="w-12 h-0.5 bg-white/20" />
 
-                <p className="text-slate-300 italic text-sm md:text-base leading-relaxed">
+                <p className="text-white italic text-sm md:text-base leading-relaxed">
                   {cardQuote}
                 </p>
               </div>
