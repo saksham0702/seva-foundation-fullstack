@@ -1,7 +1,7 @@
 import React, { Suspense } from "react";
 import { Metadata } from "next";
 import Image from "next/image";
-import { Heart, ArrowRight, ChevronDown } from "lucide-react";
+import { Heart, ArrowRight } from "lucide-react";
 import {
   getServerCmsPage,
   getServerPublicVolunteerCategories,
@@ -65,6 +65,22 @@ export default async function GetInvolvedPage() {
   const impactNumbers =
     (cmsPage?.sections?.find((s) => s.key === "impact_numbers")?.items as any[]) || [];
 
+  const perksSection = cmsPage?.sections?.find(
+    (s) => s.key === "volunteer_perks" || s.key === "why_volunteer"
+  );
+  const volunteerPerks = (perksSection?.items as any[]) || [];
+  const perksTitle = perksSection?.title || "This is not charity. This is community.";
+  const perksSubtitle =
+    perksSection?.subtitle || (perksSection as any)?.extra?.subtitle || "Why Volunteer With Us";
+
+  const testimonialsSection = cmsPage?.sections?.find(
+    (s) => s.key === "testimonials" || s.key === "volunteer_stories"
+  );
+  const testimonials = (testimonialsSection?.items as any[]) || [];
+  const testimonialsTitle = testimonialsSection?.title || "Voices from the Ground";
+  const testimonialsSubtitle =
+    testimonialsSection?.subtitle || (testimonialsSection as any)?.extra?.subtitle || "Hear From Our Community";
+
   const rawFaqs =
     (cmsPage?.sections?.find((s) => s.key === "faqs")?.items as any[]) || [];
   const faqs = rawFaqs.map((f: any) => ({
@@ -127,20 +143,13 @@ export default async function GetInvolvedPage() {
             <p className="text-lg text-gray-200 leading-relaxed mb-8 max-w-lg">
               {heroSubtitle}
             </p>
-            <div className="flex flex-wrap gap-4">
+            <div>
               <a
-                href="#select-and-apply"
+                href="#volunteer-form"
                 className="inline-flex items-center gap-2 px-7 py-3.5 bg-[#E8542A] hover:bg-[#c9431d] text-white font-bold rounded-xl transition-colors shadow-xl shadow-orange-900/30"
               >
                 Join as Volunteer
                 <ArrowRight size={18} />
-              </a>
-              <a
-                href="#select-and-apply"
-                className="inline-flex items-center gap-2 px-7 py-3.5 bg-white/10 hover:bg-white/20 backdrop-blur-sm text-white font-bold rounded-xl transition-colors border border-white/20"
-              >
-                Explore Roles
-                <ChevronDown size={18} />
               </a>
             </div>
           </div>
@@ -171,9 +180,52 @@ export default async function GetInvolvedPage() {
         </section>
       )}
 
+      {/* ── Volunteer Culture & Perks (Why Volunteer With Us) ── */}
+      {volunteerPerks.length > 0 && (
+        <section className="py-20 bg-slate-50/70 border-b border-slate-100">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center max-w-2xl mx-auto mb-14">
+              <span className="text-xs font-bold uppercase tracking-[0.2em] text-[#E8542A] mb-3 block">
+                {perksSubtitle}
+              </span>
+              <h2 className="text-3xl sm:text-4xl font-serif font-bold text-[#0f2347] leading-tight">
+                {perksTitle}
+              </h2>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {volunteerPerks.map((perk, i) => (
+                <div
+                  key={i}
+                  className="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col justify-between group hover:-translate-y-1"
+                >
+                  <div>
+                    <div className="w-12 h-12 rounded-xl bg-orange-50 border border-orange-100 text-[#E8542A] flex items-center justify-center font-bold text-lg mb-5 group-hover:bg-[#E8542A] group-hover:text-white transition-colors">
+                      0{i + 1}
+                    </div>
+                    <h3 className="text-lg font-bold text-[#0f2347] mb-2.5">
+                      {perk.title}
+                    </h3>
+                    <p className="text-sm text-slate-600 leading-relaxed font-normal">
+                      {perk.desc || perk.description}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* ── Interactive Selection Grid & Form ── */}
       <Suspense fallback={<div className="py-20 text-center text-gray-400">Loading volunteer categories...</div>}>
-        <GetInvolvedClient categories={categories} faqs={faqs} />
+        <GetInvolvedClient
+          categories={categories}
+          faqs={faqs}
+          testimonials={testimonials}
+          testimonialsTitle={testimonialsTitle}
+          testimonialsSubtitle={testimonialsSubtitle}
+        />
       </Suspense>
     </div>
   );

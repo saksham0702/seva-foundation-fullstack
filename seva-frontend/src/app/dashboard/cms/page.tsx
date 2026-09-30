@@ -20,6 +20,7 @@ import {
   HelpCircle,
   Share2,
   HeartHandshake,
+  Quote,
   Plus,
   Trash2,
   Upload,
@@ -4241,7 +4242,7 @@ export default function CmsDashboardPage() {
                           </div>
                           <span className="text-xs bg-orange-50 text-[#E8542A] border border-orange-200 px-3 py-1.5 rounded-xl font-semibold flex items-center gap-1.5 self-start sm:self-auto">
                             <span className="w-2 h-2 rounded-full bg-[#E8542A] animate-pulse" />
-                            4 Sections Active
+                            5 Sections Active
                           </span>
                         </div>
                       </div>
@@ -4253,7 +4254,8 @@ export default function CmsDashboardPage() {
                           { id: "hero", label: "1. Hero Banner & Header" },
                           { id: "impact_numbers", label: "2. Impact Numbers" },
                           { id: "volunteer_perks", label: "3. Volunteer Perks & Culture" },
-                          { id: "faqs", label: "4. Frequently Asked Questions" },
+                          { id: "testimonials", label: "4. Testimonials & Stories" },
+                          { id: "faqs", label: "5. Frequently Asked Questions" },
                         ].map((tab) => {
                           const isActive = getInvolvedSubTab === tab.id;
                           return (
@@ -4569,21 +4571,59 @@ export default function CmsDashboardPage() {
                           </div>
 
                           <div className="space-y-4">
+                            {/* Perks Section Title & Subtitle */}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 bg-white dark:bg-panel rounded-xl border border-gray-200 dark:border-border">
+                              <div>
+                                <label className="block text-[10px] font-semibold text-slate-600 uppercase mb-1">
+                                  Section Heading / Catchphrase
+                                </label>
+                                <input
+                                  type="text"
+                                  value={getSection("volunteer_perks")?.title || getSection("why_volunteer")?.title || ""}
+                                  onChange={(e) => {
+                                    updateSection("volunteer_perks", (sec) => ({
+                                      title: e.target.value,
+                                    }));
+                                  }}
+                                  placeholder="This is not charity. This is community."
+                                  className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-border bg-white dark:bg-bg text-xs font-bold text-[#0f2347] dark:text-text-primary focus:outline-none"
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-[10px] font-semibold text-slate-600 uppercase mb-1">
+                                  Section Eyebrow / Tagline
+                                </label>
+                                <input
+                                  type="text"
+                                  value={getSection("volunteer_perks")?.subtitle || (getSection("volunteer_perks") as any)?.extra?.subtitle || ""}
+                                  onChange={(e) => {
+                                    updateSection("volunteer_perks", (sec) => ({
+                                      subtitle: e.target.value,
+                                      extra: { ...(sec.extra || {}), subtitle: e.target.value },
+                                    }));
+                                  }}
+                                  placeholder="Why Volunteer With Us"
+                                  className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-border bg-white dark:bg-bg text-xs font-semibold text-[#0f2347] dark:text-text-primary focus:outline-none"
+                                />
+                              </div>
+                            </div>
+
                             <div className="flex items-center justify-between">
                               <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
-                                Volunteer Perks &amp; Growth Highlights ({getSection("volunteer_perks")?.items?.length || 0})
+                                Volunteer Perks &amp; Growth Highlights ({(getSection("volunteer_perks") || getSection("why_volunteer"))?.items?.length || 0})
                               </label>
                               <button
                                 type="button"
                                 onClick={() => {
-                                  const curr = getSection("volunteer_perks")?.items || [
+                                  const sec = getSection("volunteer_perks") || getSection("why_volunteer");
+                                  const curr = sec?.items || [
                                     { title: "Direct Field Work", desc: "No middle layers — you work directly with rural families and children in need." },
                                     { title: "Flexible Commitment", desc: "Whether you have 2 hours a weekend or 6 months for a full sabbatical, there is an impactful role for you." },
                                     { title: "Official Certification", desc: "Receive recognized certificates, recommendation letters, and leadership credentials." },
                                     { title: "Skill Exchange", desc: "Apply and hone your professional skillsets in real-world grassroots and crisis zones." },
                                   ];
                                   updateSection("volunteer_perks", () => ({
-                                    items: [...curr, { title: "NEW BENEFIT", desc: "Description of the volunteering perk." }],
+                                    items: [...curr, { title: "New Benefit", desc: "Description of the volunteering perk." }],
                                   }));
                                 }}
                                 className="inline-flex items-center gap-1 px-3 py-1.5 bg-[#0f2347] text-white rounded-lg text-xs font-semibold hover:bg-[#1a3a6b] cursor-pointer"
@@ -4594,7 +4634,8 @@ export default function CmsDashboardPage() {
 
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                               {(() => {
-                                const perksList = getSection("volunteer_perks")?.items || [
+                                const sec = getSection("volunteer_perks") || getSection("why_volunteer");
+                                const perksList = sec?.items || [
                                   { title: "Direct Field Work", desc: "No middle layers — you work directly with rural families, learning centres, and children in need." },
                                   { title: "Flexible Commitment", desc: "Whether you have 2 hours a weekend or 6 months for a full sabbatical, there is an impactful role for you." },
                                   { title: "Official Certification", desc: "Receive recognized certificates, recommendation letters, and leadership credentials for your service." },
@@ -4648,10 +4689,14 @@ export default function CmsDashboardPage() {
                                       </label>
                                       <textarea
                                         rows={2}
-                                        value={pk.desc || ""}
+                                        value={pk.desc || pk.description || ""}
                                         onChange={(e) => {
                                           const updated = [...perksList];
-                                          updated[idx] = { ...updated[idx], desc: e.target.value };
+                                          updated[idx] = {
+                                            ...updated[idx],
+                                            desc: e.target.value,
+                                            description: e.target.value,
+                                          };
                                           updateSection("volunteer_perks", () => ({ items: updated }));
                                         }}
                                         placeholder="No middle layers — you work directly with beneficiaries..."
@@ -4666,7 +4711,294 @@ export default function CmsDashboardPage() {
                         </div>
                       )}
 
-                      {/* Section 4: Frequently Asked Questions (FAQs) */}
+                      {/* Section 4: Volunteer Testimonials & Stories */}
+                      {(getInvolvedSubTab === "all" || getInvolvedSubTab === "testimonials") && (
+                        <div className="p-5 rounded-2xl bg-gray-50 dark:bg-bg border border-gray-200 dark:border-border space-y-4 shadow-sm">
+                          <div className="flex items-center justify-between pb-3 border-b border-gray-200 dark:border-border">
+                            <div className="flex items-center gap-2">
+                              <div className="w-8 h-8 rounded-lg bg-rose-100 dark:bg-rose-950/40 flex items-center justify-center">
+                                <Quote size={15} className="text-[#E8542A]" />
+                              </div>
+                              <div>
+                                <h4 className="text-xs font-bold text-[#0f2347] dark:text-text-primary uppercase tracking-wider">
+                                  4. Volunteer Testimonials &amp; Stories
+                                </h4>
+                                <span className="text-[10px] text-gray-400 font-mono">Key: testimonials</span>
+                              </div>
+                            </div>
+                            <button
+                              type="button"
+                              disabled={savingSectionKey === "testimonials"}
+                              onClick={() => handleSaveSection("testimonials", "Volunteer Testimonials")}
+                              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 transition-all shadow-sm cursor-pointer ${
+                                savedSectionKey === "testimonials"
+                                  ? "bg-emerald-500 text-white"
+                                  : "bg-[#E8542A] hover:bg-[#d4431b] text-white"
+                              }`}
+                            >
+                              {savingSectionKey === "testimonials" ? (
+                                <>
+                                  <Loader2 size={13} className="animate-spin" />
+                                  <span>Saving...</span>
+                                </>
+                              ) : savedSectionKey === "testimonials" ? (
+                                <>
+                                  <Check size={13} />
+                                  <span>Saved!</span>
+                                </>
+                              ) : (
+                                <>
+                                  <Save size={13} />
+                                  <span>Save Testimonials</span>
+                                </>
+                              )}
+                            </button>
+                          </div>
+
+                          <div className="space-y-4">
+                            {/* Testimonials Header Inputs */}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 bg-white dark:bg-panel rounded-xl border border-gray-200 dark:border-border">
+                              <div>
+                                <label className="block text-[10px] font-semibold text-slate-600 uppercase mb-1">
+                                  Section Heading / Title
+                                </label>
+                                <input
+                                  type="text"
+                                  value={getSection("testimonials")?.title || ""}
+                                  onChange={(e) => {
+                                    updateSection("testimonials", () => ({
+                                      title: e.target.value,
+                                    }));
+                                  }}
+                                  placeholder="Voices from the Ground"
+                                  className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-border bg-white dark:bg-bg text-xs font-bold text-[#0f2347] dark:text-text-primary focus:outline-none"
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-[10px] font-semibold text-slate-600 uppercase mb-1">
+                                  Section Subtitle / Eyebrow
+                                </label>
+                                <input
+                                  type="text"
+                                  value={getSection("testimonials")?.subtitle || ""}
+                                  onChange={(e) => {
+                                    updateSection("testimonials", () => ({
+                                      subtitle: e.target.value,
+                                    }));
+                                  }}
+                                  placeholder="Hear From Our Community"
+                                  className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-border bg-white dark:bg-bg text-xs font-semibold text-[#0f2347] dark:text-text-primary focus:outline-none"
+                                />
+                              </div>
+                            </div>
+
+                            <div className="flex items-center justify-between">
+                              <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+                                Volunteer Stories ({getSection("testimonials")?.items?.length || 0})
+                              </label>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const curr = getSection("testimonials")?.items || [];
+                                  updateSection("testimonials", () => ({
+                                    items: [
+                                      ...curr,
+                                      {
+                                        name: "Aarav Sharma",
+                                        role: "Education Volunteer",
+                                        since: "2023",
+                                        hours: "250+",
+                                        quote: "Being part of Seva Foundation gives me purpose. Seeing young children learn to read is priceless.",
+                                        avatar: "",
+                                      },
+                                    ],
+                                  }));
+                                }}
+                                className="inline-flex items-center gap-1 px-3 py-1.5 bg-[#0f2347] text-white rounded-lg text-xs font-semibold hover:bg-[#1a3a6b] cursor-pointer"
+                              >
+                                <Plus size={12} /> Add Testimonial Story
+                              </button>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              {(() => {
+                                const testimonialsList = getSection("testimonials")?.items || [
+                                  {
+                                    name: "Ananya Mishra",
+                                    role: "Education Coordinator",
+                                    since: "2018",
+                                    hours: "2,400+",
+                                    quote: "I started as a weekend tutor. Six years later, I design the curriculum for 8 centres. Seva India grows you as you grow it.",
+                                    avatar: "",
+                                  },
+                                  {
+                                    name: "Vikram Singh Rawat",
+                                    role: "Field Operations",
+                                    since: "2019",
+                                    hours: "3,100+",
+                                    quote: "I know every village road in Tehri district. The best part? The chai and stories at every home we visit.",
+                                    avatar: "",
+                                  },
+                                  {
+                                    name: "Amit Khanna",
+                                    role: "Community Kitchen",
+                                    since: "2019",
+                                    hours: "1,800+",
+                                    quote: "Every Sunday at 6 AM, I am at the kitchen. It is the most honest work I do all week. No meetings. Just meals.",
+                                    avatar: "",
+                                  },
+                                  {
+                                    name: "Priya Nair",
+                                    role: "Health Camp Nurse",
+                                    since: "2021",
+                                    hours: "950+",
+                                    quote: "I am a full-time nurse at Doon Hospital. Weekends, I am in villages with Seva India. Both jobs save lives.",
+                                    avatar: "",
+                                  },
+                                ];
+
+                                return testimonialsList.map((item: any, idx: number) => (
+                                  <div
+                                    key={idx}
+                                    className="p-4 bg-white dark:bg-panel rounded-xl border border-gray-200 dark:border-border space-y-3 shadow-sm"
+                                  >
+                                    <div className="flex items-center justify-between pb-2 border-b border-gray-100 dark:border-border">
+                                      <span className="text-[11px] font-bold text-[#E8542A] uppercase flex items-center gap-1.5">
+                                        <Quote size={12} />
+                                        Testimonial #{idx + 1}
+                                      </span>
+                                      {testimonialsList.length > 1 && (
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            const updated = testimonialsList.filter((_: any, i: number) => i !== idx);
+                                            updateSection("testimonials", () => ({ items: updated }));
+                                          }}
+                                          className="text-slate-400 hover:text-red-500 p-1 rounded-lg cursor-pointer"
+                                          title="Remove Testimonial"
+                                        >
+                                          <Trash2 size={14} />
+                                        </button>
+                                      )}
+                                    </div>
+
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                                      <div>
+                                        <label className="block text-[10px] font-semibold text-slate-600 uppercase mb-1">
+                                          Volunteer Name *
+                                        </label>
+                                        <input
+                                          type="text"
+                                          value={item.name || ""}
+                                          onChange={(e) => {
+                                            const updated = [...testimonialsList];
+                                            updated[idx] = { ...updated[idx], name: e.target.value };
+                                            updateSection("testimonials", () => ({ items: updated }));
+                                          }}
+                                          placeholder="e.g. Ananya Mishra"
+                                          className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-border bg-white dark:bg-bg text-xs font-bold text-[#0f2347] dark:text-text-primary focus:outline-none"
+                                        />
+                                      </div>
+                                      <div>
+                                        <label className="block text-[10px] font-semibold text-slate-600 uppercase mb-1">
+                                          Role / Designation *
+                                        </label>
+                                        <input
+                                          type="text"
+                                          value={item.role || ""}
+                                          onChange={(e) => {
+                                            const updated = [...testimonialsList];
+                                            updated[idx] = { ...updated[idx], role: e.target.value };
+                                            updateSection("testimonials", () => ({ items: updated }));
+                                          }}
+                                          placeholder="e.g. Education Coordinator"
+                                          className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-border bg-white dark:bg-bg text-xs text-[#0f2347] dark:text-text-primary font-medium focus:outline-none"
+                                        />
+                                      </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-2.5">
+                                      <div>
+                                        <label className="block text-[10px] font-semibold text-slate-600 uppercase mb-1">
+                                          Contributing Since
+                                        </label>
+                                        <input
+                                          type="text"
+                                          value={item.since || ""}
+                                          onChange={(e) => {
+                                            const updated = [...testimonialsList];
+                                            updated[idx] = { ...updated[idx], since: e.target.value };
+                                            updateSection("testimonials", () => ({ items: updated }));
+                                          }}
+                                          placeholder="e.g. 2018"
+                                          className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-border bg-white dark:bg-bg text-xs text-slate-700 dark:text-text-primary focus:outline-none"
+                                        />
+                                      </div>
+                                      <div>
+                                        <label className="block text-[10px] font-semibold text-slate-600 uppercase mb-1">
+                                          Total Hours
+                                        </label>
+                                        <input
+                                          type="text"
+                                          value={item.hours || ""}
+                                          onChange={(e) => {
+                                            const updated = [...testimonialsList];
+                                            updated[idx] = { ...updated[idx], hours: e.target.value };
+                                            updateSection("testimonials", () => ({ items: updated }));
+                                          }}
+                                          placeholder="e.g. 2,400+"
+                                          className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-border bg-white dark:bg-bg text-xs text-slate-700 dark:text-text-primary focus:outline-none"
+                                        />
+                                      </div>
+                                    </div>
+
+                                    <div>
+                                      <label className="block text-[10px] font-semibold text-slate-600 uppercase mb-1">
+                                        Volunteer Quote / Story *
+                                      </label>
+                                      <textarea
+                                        rows={3}
+                                        value={item.quote || item.content || ""}
+                                        onChange={(e) => {
+                                          const updated = [...testimonialsList];
+                                          updated[idx] = {
+                                            ...updated[idx],
+                                            quote: e.target.value,
+                                            content: e.target.value,
+                                          };
+                                          updateSection("testimonials", () => ({ items: updated }));
+                                        }}
+                                        placeholder="I started as a weekend tutor. Six years later, I design the curriculum..."
+                                        className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-border bg-white dark:bg-bg text-xs text-slate-700 dark:text-muted focus:outline-none leading-relaxed font-normal"
+                                      />
+                                    </div>
+
+                                    <div>
+                                      <CmsImageField
+                                        label="Volunteer Photo (Optional)"
+                                        value={item.avatar || item.image || ""}
+                                        onChange={(url) => {
+                                          const updated = [...testimonialsList];
+                                          updated[idx] = {
+                                            ...updated[idx],
+                                            avatar: url,
+                                            image: url,
+                                          };
+                                          updateSection("testimonials", () => ({ items: updated }));
+                                        }}
+                                        recommendedDimensions="Square 400 × 400 px · Max 3MB"
+                                        placeholder="Upload volunteer portrait..."
+                                      />
+                                    </div>
+                                  </div>
+                                ));
+                              })()}
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Section 5: Frequently Asked Questions (FAQs) */}
                       {(getInvolvedSubTab === "all" || getInvolvedSubTab === "faqs") && (
                         <div className="p-5 rounded-2xl bg-gray-50 dark:bg-bg border border-gray-200 dark:border-border space-y-4 shadow-sm">
                           <div className="flex items-center justify-between pb-3 border-b border-gray-200 dark:border-border">
@@ -4676,7 +5008,7 @@ export default function CmsDashboardPage() {
                               </div>
                               <div>
                                 <h4 className="text-xs font-bold text-[#0f2347] dark:text-text-primary uppercase tracking-wider">
-                                  4. Frequently Asked Questions (Accordion)
+                                  5. Frequently Asked Questions (Accordion)
                                 </h4>
                                 <span className="text-[10px] text-gray-400 font-mono">Key: faqs</span>
                               </div>
@@ -4795,7 +5127,7 @@ export default function CmsDashboardPage() {
                           <div>
                             <h4 className="text-sm font-bold text-white">Save All Get Involved Sections</h4>
                             <p className="text-xs text-gray-300">
-                              One-click save: Updates volunteer hero banner, live impact stats, volunteer perks, and FAQs live on website.
+                              One-click save: Updates volunteer hero banner, live impact stats, perks &amp; culture, volunteer testimonials, and FAQs live on website.
                             </p>
                           </div>
                         </div>

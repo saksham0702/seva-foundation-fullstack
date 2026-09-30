@@ -33,6 +33,7 @@ import {
   Availability,
   FormType,
 } from "@/app/api/volunteer";
+import { getImageUrl } from "@/lib/image";
 
 const ACTIVE_VOLUNTEERS = [
   {
@@ -98,11 +99,17 @@ const getCategoryIcon = (title: string, formType: FormType) => {
 interface GetInvolvedClientProps {
   categories: VolunteerCategory[];
   faqs: { q: string; a: string }[];
+  testimonials?: any[];
+  testimonialsTitle?: string;
+  testimonialsSubtitle?: string;
 }
 
 export default function GetInvolvedClient({
   categories,
   faqs,
+  testimonials,
+  testimonialsTitle,
+  testimonialsSubtitle,
 }: GetInvolvedClientProps) {
   const searchParams = useSearchParams();
   const urlType = searchParams.get("type") || searchParams.get("tab") || searchParams.get("formType");
@@ -198,6 +205,25 @@ export default function GetInvolvedClient({
   });
 
   const formRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const handleHashOrQuery = () => {
+      if (
+        typeof window !== "undefined" &&
+        (window.location.hash === "#volunteer-form" ||
+          window.location.hash === "#apply-volunteer" ||
+          window.location.hash === "#form")
+      ) {
+        setActiveFormType("volunteer");
+        setTimeout(() => {
+          formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+        }, 120);
+      }
+    };
+    handleHashOrQuery();
+    window.addEventListener("hashchange", handleHashOrQuery);
+    return () => window.removeEventListener("hashchange", handleHashOrQuery);
+  }, []);
 
   const handleTabChange = (type: FormType) => {
     const targetType = type === ("support" as any) ? "individual" : type;
@@ -814,7 +840,7 @@ export default function GetInvolvedClient({
             {/* ======================================================== */}
             {/* RIGHT 6 COLUMNS: DYNAMIC PIXEL-PERFECT FORM PANEL        */}
             {/* ======================================================== */}
-            <div ref={formRef} className="lg:col-span-6">
+            <div ref={formRef} id="volunteer-form" className="lg:col-span-6 scroll-mt-28">
               <div className="bg-white rounded-3xl p-6 sm:p-10 border border-slate-200 shadow-xl shadow-slate-200/50 relative">
                 
                 {submitted ? (
@@ -1583,38 +1609,72 @@ export default function GetInvolvedClient({
       </section>
 
       {/* ── Testimonials & Impact ── */}
-      <section className="py-20 bg-slate-50 border-t border-slate-100">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-2xl mx-auto mb-14">
-            <span className="text-xs font-bold uppercase tracking-[0.2em] text-[#E8542A] mb-2 block">
-              Voices from the Ground
-            </span>
-            <h2 className="font-serif text-3xl sm:text-4xl font-bold text-[#0f2347]">
-              Hear From Our Community
-            </h2>
-          </div>
+      {(() => {
+        const volunteersList =
+          testimonials && testimonials.length > 0
+            ? testimonials
+            : ACTIVE_VOLUNTEERS;
 
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {ACTIVE_VOLUNTEERS.map((v) => (
-              <div
-                key={v.name}
-                className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex flex-col justify-between space-y-4"
-              >
-                <p className="text-xs sm:text-sm text-slate-600 leading-relaxed italic">
-                  &ldquo;{v.quote}&rdquo;
-                </p>
-                <div className="pt-4 border-t border-slate-100">
-                  <h4 className="font-bold text-sm text-[#0f2347]">{v.name}</h4>
-                  <p className="text-[11px] text-[#E8542A] font-semibold">{v.role}</p>
-                  <p className="text-[10px] text-slate-400 mt-0.5">
-                    Contributing since {v.since} • {v.hours} hours
-                  </p>
-                </div>
+        if (!volunteersList || volunteersList.length === 0) return null;
+
+        return (
+          <section className="py-20 bg-slate-50 border-t border-slate-100">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <div className="text-center max-w-2xl mx-auto mb-14">
+                <span className="text-xs font-bold uppercase tracking-[0.2em] text-[#E8542A] mb-2 block">
+                  {testimonialsTitle || "Voices from the Ground"}
+                </span>
+                <h2 className="font-serif text-3xl sm:text-4xl font-bold text-[#0f2347]">
+                  {testimonialsSubtitle || "Hear From Our Community"}
+                </h2>
               </div>
-            ))}
-          </div>
-        </div>
-      </section>
+
+              <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                {volunteersList.map((v: any, idx: number) => {
+                  const avatarUrl = v.avatar || v.image;
+                  return (
+                    <div
+                      key={v.name || idx}
+                      className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex flex-col justify-between space-y-4 hover:shadow-md transition-all duration-300"
+                    >
+                      <p className="text-xs sm:text-sm text-slate-600 leading-relaxed italic">
+                        &ldquo;{v.quote || v.content}&rdquo;
+                      </p>
+                      <div className="pt-4 border-t border-slate-100 flex items-center gap-3">
+                        {avatarUrl ? (
+                          <div className="relative w-11 h-11 rounded-full overflow-hidden shrink-0 border border-orange-200">
+                            <Image
+                              src={getImageUrl(avatarUrl)}
+                              alt={v.name || "Volunteer"}
+                              fill
+                              className="object-cover"
+                            />
+                          </div>
+                        ) : (
+                          <div className="w-10 h-10 rounded-full bg-orange-100 text-[#E8542A] flex items-center justify-center font-bold text-sm shrink-0">
+                            {v.name ? v.name.charAt(0) : "V"}
+                          </div>
+                        )}
+                        <div className="min-w-0">
+                          <h4 className="font-bold text-sm text-[#0f2347] truncate">{v.name}</h4>
+                          <p className="text-[11px] text-[#E8542A] font-semibold truncate">{v.role}</p>
+                          {(v.since || v.hours) && (
+                            <p className="text-[10px] text-slate-400 mt-0.5 truncate">
+                              {v.since ? `Contributing since ${v.since}` : ""}
+                              {v.since && v.hours ? " • " : ""}
+                              {v.hours ? `${v.hours} hours` : ""}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </section>
+        );
+      })()}
 
       {/* ── FAQs Accordion ── */}
       {faqs && faqs.length > 0 && (

@@ -9,6 +9,7 @@ import TrustStewardship from "./sections/TrustStewardship";
 import AwardsRecognition from "./sections/AwardsRecognition";
 import AlliesInImpact from "./sections/AlliesInImpact";
 import Transparency from "./sections/Transparency";
+import Testimonials from "./sections/Testimonials";
 
 type SectionComponent = React.ComponentType<{ section: ICmsSection }>;
 
@@ -26,6 +27,8 @@ const REGISTRY: Record<string, SectionComponent> = {
   allies_in_impact: AlliesInImpact,
   allies: AlliesInImpact,
   transparency: Transparency,
+  testimonials: Testimonials,
+  volunteer_stories: Testimonials,
 };
 
 export function SectionRenderer({ sections }: { sections: ICmsSection[] }) {
