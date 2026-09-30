@@ -594,9 +594,19 @@ const getPageBySlug = async (slug: string) => {
 
 const savePage = async (slug: string, payload: Partial<ICmsPage>, userId?: string) => {
   const cleanSlug = slug.toLowerCase().trim();
+  const { _id, id, __v, createdAt, updatedAt, ...restPayload } = payload as any;
+
+  // Clean sections to avoid subdocument _id collision
+  if (Array.isArray(restPayload.sections)) {
+    restPayload.sections = restPayload.sections.map((s: any) => {
+      if (!s) return s;
+      const { _id: secId, ...cleanSec } = s;
+      return secId && typeof secId === "string" && secId.length === 24 ? { _id: secId, ...cleanSec } : cleanSec;
+    });
+  }
 
   const updateData: Record<string, any> = {
-    ...payload,
+    ...restPayload,
     pageSlug: cleanSlug,
     pageName: payload.pageName || cleanSlug.replace(/-/g, " ").replace(/\b\w/g, (l) => l.toUpperCase()),
   };
@@ -635,16 +645,15 @@ const saveSection = async (
     (s: any) => (s.key || "").toLowerCase() === cleanKey
   );
 
+  const { _id, id, ...cleanSectionPayload } = sectionPayload as any;
   const prevSec = idx >= 0 ? (existingSections[idx]?.toObject?.() || existingSections[idx]) : {};
 
   const mergedSection: any = {
     ...prevSec,
-    ...sectionPayload,
-    key: prevSec.key || sectionKey || cleanKey,
-    extra: {
-      ...(prevSec.extra || {}),
-      ...(sectionPayload.extra || {}),
-    },
+    ...cleanSectionPayload,
+    key: cleanSectionPayload.key || prevSec.key || sectionKey || cleanKey,
+    extra: cleanSectionPayload.extra !== undefined ? cleanSectionPayload.extra : prevSec.extra,
+    items: cleanSectionPayload.items !== undefined ? cleanSectionPayload.items : prevSec.items,
   };
 
   if (idx >= 0) {

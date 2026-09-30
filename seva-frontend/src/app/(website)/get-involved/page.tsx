@@ -65,8 +65,12 @@ export default async function GetInvolvedPage() {
   const impactNumbers =
     (cmsPage?.sections?.find((s) => s.key === "impact_numbers")?.items as any[]) || [];
 
-  const faqs =
+  const rawFaqs =
     (cmsPage?.sections?.find((s) => s.key === "faqs")?.items as any[]) || [];
+  const faqs = rawFaqs.map((f: any) => ({
+    q: f.q || f.question || "",
+    a: f.a || f.answer || "",
+  }));
 
   const getInvolvedSchema = getWebPageSchema({
     title: heroTitle,

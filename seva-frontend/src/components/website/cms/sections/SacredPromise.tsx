@@ -19,6 +19,7 @@ export default function SacredPromise({ section }: { section?: ICmsSection }) {
   const year = section.extra?.year || "2026";
   const badgeText = section.extra?.badgeText || "Born of Student Empathy";
   const customStory = section.description;
+  const paragraph2 = section.extra?.paragraph2 || section.extra?.secondParagraph || section.extra?.blueParagraph;
 
   return (
     <section className="py-20 lg:py-28 bg-white">
@@ -31,9 +32,16 @@ export default function SacredPromise({ section }: { section?: ICmsSection }) {
           {/* LEFT: Story */}
           <div className="space-y-6">
             {customStory && (
-              <div className="bg-gray-50 border-l-4 border-blue-500 rounded-r-xl p-6 md:p-8">
+              <div className="bg-gray-50 border-l-4 border-slate-300 rounded-r-xl p-6 md:p-8">
                 <p className="text-[#0B1120] italic leading-relaxed text-base md:text-lg whitespace-pre-wrap">
                   {customStory}
+                </p>
+              </div>
+            )}
+            {paragraph2 && (
+              <div className="bg-[#0f2347]/5 border-l-4 border-[#0f2347] rounded-r-xl p-6 md:p-8 shadow-xs">
+                <p className="text-[#0f2347] font-semibold leading-relaxed text-base md:text-lg whitespace-pre-wrap">
+                  {paragraph2}
                 </p>
               </div>
             )}

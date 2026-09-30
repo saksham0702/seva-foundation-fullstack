@@ -128,13 +128,13 @@ function mapBackendToCmsItem(backendItem: any, contentType: CmsContentType): Cms
 }
 
 export async function getServerCmsItems(type: CmsContentType): Promise<CmsItem[]> {
-  const data = await safeServerFetch<any[]>(`/cms/type/${type}`, 60, [`cms-${type}`]);
+  const data = await safeServerFetch<any[]>(`/cms/type/${type}`, 0, [`cms-${type}`]);
   if (!Array.isArray(data)) return [];
   return data.map((item) => mapBackendToCmsItem(item, type));
 }
 
 export async function getServerRecentBlogs(limit: number = 4): Promise<CmsItem[]> {
-  const data = await safeServerFetch<any[]>(`/blogs/recent?limit=${limit}`, 60, ["recent-blogs"]);
+  const data = await safeServerFetch<any[]>(`/blogs/recent?limit=${limit}`, 0, ["recent-blogs"]);
   if (Array.isArray(data) && data.length > 0) {
     return data.map((item) => mapBackendToCmsItem(item, item.type || "blog"));
   }
@@ -147,15 +147,15 @@ export async function getServerCmsItemBySlug(
   type: CmsContentType,
   slug: string
 ): Promise<CmsItem | null> {
-  const data = await safeServerFetch<any>(`/cms/type/${type}/${slug}`, 60, [
+  const data = await safeServerFetch<any>(`/cms/type/${type}/${slug}`, 0, [
     `cms-${type}-${slug}`,
   ]);
   return data ? mapBackendToCmsItem(data, type) : null;
 }
 
-// ── CMS Pages (About / Our Work / Get Involved / Privacy / Terms) ─────────────
+// ── CMS Pages (About / Our Work / Get Involved / Privacy / Terms / Home) ─────
 export async function getServerCmsPage(slug: string): Promise<CmsPage | null> {
-  const data = await safeServerFetch<CmsPage>(`/cms/pages/${slug}`, 60, [`cms-page-${slug}`]);
+  const data = await safeServerFetch<CmsPage>(`/cms/pages/${slug}`, 0, [`cms-page-${slug}`]);
   return data;
 }
 

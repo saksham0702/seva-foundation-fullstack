@@ -427,6 +427,10 @@ export default function CmsDashboardPage() {
   const [formData, setFormData] = useState<Partial<CmsPage>>({});
   const [activeInitiativeIndex, setActiveInitiativeIndex] = useState(0);
   const [policyViewMode, setPolicyViewMode] = useState<"edit" | "preview">("edit");
+  const [homeSubTab, setHomeSubTab] = useState<string>("all");
+  const [aboutSubTab, setAboutSubTab] = useState<string>("all");
+  const [ourWorkSubTab, setOurWorkSubTab] = useState<string>("all");
+  const [getInvolvedSubTab, setGetInvolvedSubTab] = useState<string>("all");
 
   const getSection = (key: string): CmsSection | undefined => {
     return (formData.sections || []).find((s) => s.key === key);
@@ -527,6 +531,8 @@ export default function CmsDashboardPage() {
     },
   });
 
+  const isSaving = saveMutation.isPending;
+
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
     saveMutation.mutate(formData);
@@ -540,17 +546,24 @@ export default function CmsDashboardPage() {
     setSavingSectionKey(sectionKey);
     setErrorMessage(null);
     try {
-      const targetSection = (formData.sections || []).find((s) => s.key === sectionKey);
-      if (!targetSection) {
-        throw new Error(`Section "${sectionKey}" not found in page data.`);
-      }
-
       let updatedPage: CmsPage;
-      try {
-        updatedPage = await saveCmsSection(activeSlug, sectionKey, targetSection);
-      } catch (subErr) {
-        console.warn("saveCmsSection endpoint fallback to saveCmsPage", subErr);
+      const isBannerOrPageField =
+        sectionKey.includes("hero") ||
+        sectionKey.includes("banner") ||
+        sectionKey.includes("header");
+
+      const targetSection = (formData.sections || []).find((s) => s.key === sectionKey);
+
+      if (!targetSection || isBannerOrPageField) {
+        // Page level or banner fields (title, subtitle, bannerImage, bannerVideo, etc.)
         updatedPage = await saveCmsPage(activeSlug, formData);
+      } else {
+        try {
+          updatedPage = await saveCmsSection(activeSlug, sectionKey, targetSection);
+        } catch (subErr) {
+          console.warn("saveCmsSection endpoint fallback to saveCmsPage", subErr);
+          updatedPage = await saveCmsPage(activeSlug, formData);
+        }
       }
 
       if (updatedPage) {
@@ -687,7 +700,7 @@ export default function CmsDashboardPage() {
               ) : (
                 <form onSubmit={handleSave} className="space-y-6">
                   {/* 1. Header & Banner Card */}
-                  {activeSlug !== "header-footer" && activeSlug !== "footer-settings" && activeSlug !== "home" && (
+                  {activeSlug !== "header-footer" && activeSlug !== "footer-settings" && activeSlug !== "home" && activeSlug !== "about" && activeSlug !== "our-work" && activeSlug !== "get-involved" && (
                     <div className="bg-white dark:bg-panel rounded-2xl border border-gray-100 dark:border-border p-6 shadow-sm">
                       <h3 className="text-sm font-bold text-[#0f2347] dark:text-text-primary mb-4 pb-3 border-b border-gray-100 dark:border-border flex items-center gap-2">
                         <ImageIcon size={16} className="text-[#E8542A]" />
@@ -766,7 +779,7 @@ export default function CmsDashboardPage() {
                             Section-Wise Home Page Controller
                           </h2>
                           <p className="text-xs text-white/70 mt-1 max-w-2xl leading-relaxed">
-                            Each section below is visually separated with its own dedicated <span className="font-semibold text-orange-400">Save Section</span> button. You can update and save individual sections independently without affecting other sections.
+                            Each section below is visually separated with its own dedicated <span className="font-semibold text-orange-400">Save Section</span> button. You can update and save individual sections independently, or use the bottom bar to save all sections at once.
                           </p>
                         </div>
                         <div className="flex items-center gap-2">
@@ -777,9 +790,38 @@ export default function CmsDashboardPage() {
                         </div>
                       </div>
 
+                      {/* Home Section Navigation Sub-Tabs */}
+                      <div className="flex items-center gap-1.5 p-1.5 bg-white rounded-xl border border-slate-200 overflow-x-auto shadow-xs">
+                        {[
+                          { id: "all", label: "All Sections" },
+                          { id: "hero", label: "1. Hero Section" },
+                          { id: "featured_in", label: "2. Featured In Media" },
+                          { id: "patron_samiti", label: "3. Dev Bhoomi Patron" },
+                          { id: "excellence_awards", label: "4. Excellence Awards" },
+                          { id: "integrity_compliance", label: "5. Integrity & Compliance" },
+                        ].map((tab) => {
+                          const isActive = homeSubTab === tab.id;
+                          return (
+                            <button
+                              key={tab.id}
+                              type="button"
+                              onClick={() => setHomeSubTab(tab.id)}
+                              className={`px-3.5 py-2 rounded-lg text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 cursor-pointer ${
+                                isActive
+                                  ? "bg-[#0f2347] text-white shadow-xs"
+                                  : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+                              }`}
+                            >
+                              <span>{tab.label}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+
                       {/* ─────────────────────────────────────────────────────────────
                         SECTION 1: HERO SECTION
                     ────────────────────────────────────────────────────────────── */}
+                      {(homeSubTab === "all" || homeSubTab === "hero") && (
                       <div className="bg-white rounded-2xl border-2 border-slate-200 overflow-hidden shadow-sm hover:shadow-md transition-shadow">
                         {/* Section Header */}
                         <div className="bg-gradient-to-r from-[#0a1628] via-[#0f2347] to-[#1a3a6b] p-5 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -801,27 +843,30 @@ export default function CmsDashboardPage() {
                               </h3>
                             </div>
                           </div>
-
                           <button
                             type="button"
-                            onClick={() => handleSaveSection("hero", "Hero Section")}
                             disabled={savingSectionKey === "hero"}
-                            className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-md ${savedSectionKey === "hero"
-                                ? "bg-emerald-600 text-white"
-                                : "bg-[#E8542A] hover:bg-[#c9431d] text-white"
-                              }`}
+                            onClick={() => handleSaveSection("hero", "Hero Section")}
+                            className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 transition-all shadow-sm cursor-pointer ${
+                              savedSectionKey === "hero"
+                                ? "bg-emerald-500 text-white"
+                                : "bg-[#E8542A] hover:bg-[#d4431b] text-white"
+                            }`}
                           >
                             {savingSectionKey === "hero" ? (
                               <>
-                                <Loader2 size={13} className="animate-spin" /> Saving...
+                                <Loader2 size={13} className="animate-spin" />
+                                <span>Saving...</span>
                               </>
                             ) : savedSectionKey === "hero" ? (
                               <>
-                                <CheckCircle2 size={14} /> Saved!
+                                <Check size={13} />
+                                <span>Saved!</span>
                               </>
                             ) : (
                               <>
-                                <Save size={13} /> Save Hero Section
+                                <Save size={13} />
+                                <span>Save Hero Section</span>
                               </>
                             )}
                           </button>
@@ -840,7 +885,7 @@ export default function CmsDashboardPage() {
                             </label>
                             <input
                               type="text"
-                              value={getSection("hero")?.extra?.badgeText ?? "India's Most Trusted Crowdfunding Platform"}
+                              value={getSection("hero")?.extra?.badgeText ?? ""}
                               onChange={(e) =>
                                 updateSection("hero", (sec) => ({
                                   extra: { ...sec.extra, badgeText: e.target.value },
@@ -863,7 +908,7 @@ export default function CmsDashboardPage() {
                                 </span>
                                 <input
                                   type="text"
-                                  value={getSection("hero")?.extra?.headlinePart1 ?? "Give with"}
+                                  value={getSection("hero")?.extra?.headlinePart1 ?? ""}
                                   onChange={(e) =>
                                     updateSection("hero", (sec) => ({
                                       extra: { ...sec.extra, headlinePart1: e.target.value },
@@ -879,7 +924,7 @@ export default function CmsDashboardPage() {
                                 </span>
                                 <input
                                   type="text"
-                                  value={getSection("hero")?.extra?.headlineHighlight1 ?? "confidence"}
+                                  value={getSection("hero")?.extra?.headlineHighlight1 ?? ""}
                                   onChange={(e) =>
                                     updateSection("hero", (sec) => ({
                                       extra: { ...sec.extra, headlineHighlight1: e.target.value },
@@ -895,7 +940,7 @@ export default function CmsDashboardPage() {
                                 </span>
                                 <input
                                   type="text"
-                                  value={getSection("hero")?.extra?.headlinePart2 ?? "See the"}
+                                  value={getSection("hero")?.extra?.headlinePart2 ?? ""}
                                   onChange={(e) =>
                                     updateSection("hero", (sec) => ({
                                       extra: { ...sec.extra, headlinePart2: e.target.value },
@@ -911,7 +956,7 @@ export default function CmsDashboardPage() {
                                 </span>
                                 <input
                                   type="text"
-                                  value={getSection("hero")?.extra?.headlineHighlight2 ?? "impact"}
+                                  value={getSection("hero")?.extra?.headlineHighlight2 ?? ""}
                                   onChange={(e) =>
                                     updateSection("hero", (sec) => ({
                                       extra: { ...sec.extra, headlineHighlight2: e.target.value },
@@ -931,13 +976,13 @@ export default function CmsDashboardPage() {
                             </label>
                             <textarea
                               rows={3}
-                              value={getSection("hero")?.description ?? "Seva India Foundation connects you directly to verified campaigns in Uttarakhand. Every rupee tracked. Every life changed."}
+                              value={getSection("hero")?.description ?? ""}
                               onChange={(e) =>
                                 updateSection("hero", () => ({
                                   description: e.target.value,
                                 }))
                               }
-                              placeholder="Seva India Foundation connects you directly to verified campaigns in Uttarakhand..."
+                              placeholder="Seva India Foundation connects you directly to verified campaigns in Uttarakhand. Every rupee tracked. Every life changed."
                               className="w-full px-4 py-2.5 rounded-xl border border-slate-300 bg-white text-xs text-slate-900 focus:outline-none focus:border-[#0f2347] leading-relaxed"
                             />
                           </div>
@@ -954,7 +999,7 @@ export default function CmsDashboardPage() {
                                 </span>
                                 <input
                                   type="text"
-                                  value={getSection("hero")?.extra?.primaryCtaText ?? "Browse Campaigns"}
+                                  value={getSection("hero")?.extra?.primaryCtaText ?? ""}
                                   onChange={(e) =>
                                     updateSection("hero", (sec) => ({
                                       extra: { ...sec.extra, primaryCtaText: e.target.value },
@@ -970,7 +1015,7 @@ export default function CmsDashboardPage() {
                                 </span>
                                 <input
                                   type="text"
-                                  value={getSection("hero")?.extra?.primaryCtaLink ?? "/campaigns"}
+                                  value={getSection("hero")?.extra?.primaryCtaLink ?? ""}
                                   onChange={(e) =>
                                     updateSection("hero", (sec) => ({
                                       extra: { ...sec.extra, primaryCtaLink: e.target.value },
@@ -1007,7 +1052,7 @@ export default function CmsDashboardPage() {
                                   </label>
                                   <input
                                     type="text"
-                                    value={getSection("hero")?.extra?.stat1Value ?? "₹4.2Cr+"}
+                                    value={getSection("hero")?.extra?.stat1Value ?? ""}
                                     onChange={(e) =>
                                       updateSection("hero", (sec) => ({
                                         extra: { ...sec.extra, stat1Value: e.target.value },
@@ -1023,7 +1068,7 @@ export default function CmsDashboardPage() {
                                   </label>
                                   <input
                                     type="text"
-                                    value={getSection("hero")?.extra?.stat1Label ?? "Raised"}
+                                    value={getSection("hero")?.extra?.stat1Label ?? ""}
                                     onChange={(e) =>
                                       updateSection("hero", (sec) => ({
                                         extra: { ...sec.extra, stat1Label: e.target.value },
@@ -1046,7 +1091,7 @@ export default function CmsDashboardPage() {
                                   </label>
                                   <input
                                     type="text"
-                                    value={getSection("hero")?.extra?.stat2Value ?? "38,000+"}
+                                    value={getSection("hero")?.extra?.stat2Value ?? ""}
                                     onChange={(e) =>
                                       updateSection("hero", (sec) => ({
                                         extra: { ...sec.extra, stat2Value: e.target.value },
@@ -1062,7 +1107,7 @@ export default function CmsDashboardPage() {
                                   </label>
                                   <input
                                     type="text"
-                                    value={getSection("hero")?.extra?.stat2Label ?? "Lives Impacted"}
+                                    value={getSection("hero")?.extra?.stat2Label ?? ""}
                                     onChange={(e) =>
                                       updateSection("hero", (sec) => ({
                                         extra: { ...sec.extra, stat2Label: e.target.value },
@@ -1085,7 +1130,7 @@ export default function CmsDashboardPage() {
                                   </label>
                                   <input
                                     type="text"
-                                    value={getSection("hero")?.extra?.stat3Value ?? "120+"}
+                                    value={getSection("hero")?.extra?.stat3Value ?? ""}
                                     onChange={(e) =>
                                       updateSection("hero", (sec) => ({
                                         extra: { ...sec.extra, stat3Value: e.target.value },
@@ -1101,7 +1146,7 @@ export default function CmsDashboardPage() {
                                   </label>
                                   <input
                                     type="text"
-                                    value={getSection("hero")?.extra?.stat3Label ?? "Campaigns"}
+                                    value={getSection("hero")?.extra?.stat3Label ?? ""}
                                     onChange={(e) =>
                                       updateSection("hero", (sec) => ({
                                         extra: { ...sec.extra, stat3Label: e.target.value },
@@ -1284,14 +1329,14 @@ export default function CmsDashboardPage() {
                             </label>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                               {[0, 1, 2, 3].map((idx) => {
-                                const defaultItems = [
+                                const defaultPlaceholders = [
                                   "Verified by Seva India Foundation",
                                   "Zero platform fees on donations",
                                   "12,000+ verified donors",
                                   "80G tax benefit on every donation",
                                 ];
-                                const currentList = getSection("hero")?.extra?.bottomTrustItems || defaultItems;
-                                const val = currentList[idx] ?? defaultItems[idx];
+                                const currentList = getSection("hero")?.extra?.bottomTrustItems || [];
+                                const val = currentList[idx] ?? "";
 
                                 return (
                                   <div key={idx} className="flex items-center gap-2">
@@ -1301,6 +1346,7 @@ export default function CmsDashboardPage() {
                                     <input
                                       type="text"
                                       value={val}
+                                      placeholder={defaultPlaceholders[idx]}
                                       onChange={(e) => {
                                         const updated = [...currentList];
                                         updated[idx] = e.target.value;
@@ -1315,39 +1361,14 @@ export default function CmsDashboardPage() {
                               })}
                             </div>
                           </div>
-
-                          {/* Bottom Card Action Footer */}
-                          <div className="pt-2 flex items-center justify-between border-t border-slate-200">
-                            <span className="text-xs text-slate-400">
-                              Updates reflect instantly on the landing page hero section.
-                            </span>
-                            <button
-                              type="button"
-                              onClick={() => handleSaveSection("hero", "Hero Section")}
-                              disabled={savingSectionKey === "hero"}
-                              className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#0f2347] hover:bg-[#1a3a6b] text-white rounded-xl text-xs font-bold transition-all shadow-sm"
-                            >
-                              {savingSectionKey === "hero" ? (
-                                <>
-                                  <Loader2 size={13} className="animate-spin" /> Saving...
-                                </>
-                              ) : savedSectionKey === "hero" ? (
-                                <>
-                                  <CheckCircle2 size={14} className="text-emerald-400" /> Saved!
-                                </>
-                              ) : (
-                                <>
-                                  <Save size={13} /> Save Hero Section
-                                </>
-                              )}
-                            </button>
-                          </div>
                         </div>
                       </div>
+                      )}
 
                       {/* ─────────────────────────────────────────────────────────────
                         SECTION 2: FEATURED IN MEDIA MARQUEE
                     ────────────────────────────────────────────────────────────── */}
+                      {(homeSubTab === "all" || homeSubTab === "featured_in") && (
                       <div className="bg-white rounded-2xl border-2 border-slate-200 overflow-hidden shadow-sm hover:shadow-md transition-shadow">
                         {/* Section Header */}
                         <div className="bg-gradient-to-r from-[#1e1b4b] to-[#3730a3] p-5 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -1369,27 +1390,30 @@ export default function CmsDashboardPage() {
                               </h3>
                             </div>
                           </div>
-
                           <button
                             type="button"
-                            onClick={() => handleSaveSection("featured_in", "Featured In Media")}
                             disabled={savingSectionKey === "featured_in"}
-                            className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-md ${savedSectionKey === "featured_in"
-                                ? "bg-emerald-600 text-white"
-                                : "bg-indigo-600 hover:bg-indigo-700 text-white"
-                              }`}
+                            onClick={() => handleSaveSection("featured_in", "Featured In Media")}
+                            className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 transition-all shadow-sm cursor-pointer ${
+                              savedSectionKey === "featured_in"
+                                ? "bg-emerald-500 text-white"
+                                : "bg-[#E8542A] hover:bg-[#d4431b] text-white"
+                            }`}
                           >
                             {savingSectionKey === "featured_in" ? (
                               <>
-                                <Loader2 size={13} className="animate-spin" /> Saving...
+                                <Loader2 size={13} className="animate-spin" />
+                                <span>Saving...</span>
                               </>
                             ) : savedSectionKey === "featured_in" ? (
                               <>
-                                <CheckCircle2 size={14} /> Saved!
+                                <Check size={13} />
+                                <span>Saved!</span>
                               </>
                             ) : (
                               <>
-                                <Save size={13} /> Save Media Marquee
+                                <Save size={13} />
+                                <span>Save Featured In</span>
                               </>
                             )}
                           </button>
@@ -1407,7 +1431,7 @@ export default function CmsDashboardPage() {
                             </label>
                             <input
                               type="text"
-                              value={getSection("featured_in")?.title ?? "Featured In"}
+                              value={getSection("featured_in")?.title ?? ""}
                               onChange={(e) =>
                                 updateSection("featured_in", () => ({
                                   title: e.target.value,
@@ -1524,39 +1548,14 @@ export default function CmsDashboardPage() {
                               ))}
                             </div>
                           </div>
-
-                          {/* Bottom Card Action Footer */}
-                          <div className="pt-2 flex items-center justify-between border-t border-slate-200">
-                            <span className="text-xs text-slate-400">
-                              Saves the media marquee items array directly.
-                            </span>
-                            <button
-                              type="button"
-                              onClick={() => handleSaveSection("featured_in", "Featured In Media")}
-                              disabled={savingSectionKey === "featured_in"}
-                              className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#0f2347] hover:bg-[#1a3a6b] text-white rounded-xl text-xs font-bold transition-all shadow-sm"
-                            >
-                              {savingSectionKey === "featured_in" ? (
-                                <>
-                                  <Loader2 size={13} className="animate-spin" /> Saving...
-                                </>
-                              ) : savedSectionKey === "featured_in" ? (
-                                <>
-                                  <CheckCircle2 size={14} className="text-emerald-400" /> Saved!
-                                </>
-                              ) : (
-                                <>
-                                  <Save size={13} /> Save Media Marquee
-                                </>
-                              )}
-                            </button>
-                          </div>
                         </div>
                       </div>
+                      )}
 
                       {/* ─────────────────────────────────────────────────────────────
                         SECTION 3: PRINCIPAL PATRON (DEV BHOOMI SAMITI)
                     ────────────────────────────────────────────────────────────── */}
+                      {(homeSubTab === "all" || homeSubTab === "patron_samiti") && (
                       <div className="bg-white rounded-2xl border-2 border-slate-200 overflow-hidden shadow-sm hover:shadow-md transition-shadow">
                         {/* Section Header */}
                         <div className="bg-gradient-to-r from-[#064e3b] to-[#047857] p-5 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -1578,27 +1577,30 @@ export default function CmsDashboardPage() {
                               </h3>
                             </div>
                           </div>
-
                           <button
                             type="button"
-                            onClick={() => handleSaveSection("patron_samiti", "Principal Patron")}
                             disabled={savingSectionKey === "patron_samiti"}
-                            className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-md ${savedSectionKey === "patron_samiti"
-                                ? "bg-emerald-600 text-white"
-                                : "bg-emerald-600 hover:bg-emerald-700 text-white"
-                              }`}
+                            onClick={() => handleSaveSection("patron_samiti", "Principal Patron")}
+                            className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 transition-all shadow-sm cursor-pointer ${
+                              savedSectionKey === "patron_samiti"
+                                ? "bg-emerald-500 text-white"
+                                : "bg-[#E8542A] hover:bg-[#d4431b] text-white"
+                            }`}
                           >
                             {savingSectionKey === "patron_samiti" ? (
                               <>
-                                <Loader2 size={13} className="animate-spin" /> Saving...
+                                <Loader2 size={13} className="animate-spin" />
+                                <span>Saving...</span>
                               </>
                             ) : savedSectionKey === "patron_samiti" ? (
                               <>
-                                <CheckCircle2 size={14} /> Saved!
+                                <Check size={13} />
+                                <span>Saved!</span>
                               </>
                             ) : (
                               <>
-                                <Save size={13} /> Save Patron Section
+                                <Save size={13} />
+                                <span>Save Patron Section</span>
                               </>
                             )}
                           </button>
@@ -1617,7 +1619,7 @@ export default function CmsDashboardPage() {
                               </label>
                               <input
                                 type="text"
-                                value={getSection("patron_samiti")?.extra?.badgeText ?? "PRINCIPAL PATRON"}
+                                value={getSection("patron_samiti")?.extra?.badgeText ?? ""}
                                 onChange={(e) =>
                                   updateSection("patron_samiti", (sec) => ({
                                     extra: { ...sec.extra, badgeText: e.target.value },
@@ -1634,7 +1636,7 @@ export default function CmsDashboardPage() {
                               </label>
                               <input
                                 type="text"
-                                value={getSection("patron_samiti")?.title ?? "DEV BHOOMI SAMITI"}
+                                value={getSection("patron_samiti")?.title ?? ""}
                                 onChange={(e) =>
                                   updateSection("patron_samiti", () => ({
                                     title: e.target.value,
@@ -1670,7 +1672,7 @@ export default function CmsDashboardPage() {
                               </label>
                               <input
                                 type="text"
-                                value={getSection("patron_samiti")?.extra?.buttonText ?? "Learn More"}
+                                value={getSection("patron_samiti")?.extra?.buttonText ?? ""}
                                 onChange={(e) =>
                                   updateSection("patron_samiti", (sec) => ({
                                     extra: { ...sec.extra, buttonText: e.target.value },
@@ -1686,7 +1688,7 @@ export default function CmsDashboardPage() {
                               </label>
                               <input
                                 type="text"
-                                value={getSection("patron_samiti")?.extra?.buttonLink ?? "/about"}
+                                value={getSection("patron_samiti")?.extra?.buttonLink ?? ""}
                                 onChange={(e) =>
                                   updateSection("patron_samiti", (sec) => ({
                                     extra: { ...sec.extra, buttonLink: e.target.value },
@@ -1710,7 +1712,7 @@ export default function CmsDashboardPage() {
                                 </label>
                                 <input
                                   type="text"
-                                  value={getSection("patron_samiti")?.extra?.cardEyebrow ?? "OUR VISIONARY BACKBONE"}
+                                  value={getSection("patron_samiti")?.extra?.cardEyebrow ?? ""}
                                   onChange={(e) =>
                                     updateSection("patron_samiti", (sec) => ({
                                       extra: { ...sec.extra, cardEyebrow: e.target.value },
@@ -1726,7 +1728,7 @@ export default function CmsDashboardPage() {
                                 </label>
                                 <input
                                   type="text"
-                                  value={getSection("patron_samiti")?.extra?.cardTitle ?? "Spiritual & Social Support"}
+                                  value={getSection("patron_samiti")?.extra?.cardTitle ?? ""}
                                   onChange={(e) =>
                                     updateSection("patron_samiti", (sec) => ({
                                       extra: { ...sec.extra, cardTitle: e.target.value },
@@ -1754,39 +1756,14 @@ export default function CmsDashboardPage() {
                               />
                             </div>
                           </div>
-
-                          {/* Bottom Card Action Footer */}
-                          <div className="pt-2 flex items-center justify-between border-t border-slate-200">
-                            <span className="text-xs text-slate-400">
-                              Saves the Principal Patron section independently.
-                            </span>
-                            <button
-                              type="button"
-                              onClick={() => handleSaveSection("patron_samiti", "Principal Patron")}
-                              disabled={savingSectionKey === "patron_samiti"}
-                              className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#0f2347] hover:bg-[#1a3a6b] text-white rounded-xl text-xs font-bold transition-all shadow-sm"
-                            >
-                              {savingSectionKey === "patron_samiti" ? (
-                                <>
-                                  <Loader2 size={13} className="animate-spin" /> Saving...
-                                </>
-                              ) : savedSectionKey === "patron_samiti" ? (
-                                <>
-                                  <CheckCircle2 size={14} className="text-emerald-400" /> Saved!
-                                </>
-                              ) : (
-                                <>
-                                  <Save size={13} /> Save Patron Section
-                                </>
-                              )}
-                            </button>
-                          </div>
                         </div>
                       </div>
+                      )}
 
                       {/* ─────────────────────────────────────────────────────────────
                         SECTION 4: HONORS & GLOBAL RECOGNITION (AWARDS)
                     ────────────────────────────────────────────────────────────── */}
+                      {(homeSubTab === "all" || homeSubTab === "excellence_awards") && (
                       <div className="bg-white rounded-2xl border-2 border-slate-200 overflow-hidden shadow-sm hover:shadow-md transition-shadow">
                         {/* Section Header */}
                         <div className="bg-gradient-to-r from-[#78350f] to-[#b45309] p-5 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -1808,27 +1785,30 @@ export default function CmsDashboardPage() {
                               </h3>
                             </div>
                           </div>
-
                           <button
                             type="button"
-                            onClick={() => handleSaveSection("excellence_awards", "Honors & Awards")}
                             disabled={savingSectionKey === "excellence_awards"}
-                            className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-md ${savedSectionKey === "excellence_awards"
-                                ? "bg-emerald-600 text-white"
-                                : "bg-amber-600 hover:bg-amber-700 text-white"
-                              }`}
+                            onClick={() => handleSaveSection("excellence_awards", "Excellence Awards")}
+                            className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 transition-all shadow-sm cursor-pointer ${
+                              savedSectionKey === "excellence_awards"
+                                ? "bg-emerald-500 text-white"
+                                : "bg-[#E8542A] hover:bg-[#d4431b] text-white"
+                            }`}
                           >
                             {savingSectionKey === "excellence_awards" ? (
                               <>
-                                <Loader2 size={13} className="animate-spin" /> Saving...
+                                <Loader2 size={13} className="animate-spin" />
+                                <span>Saving...</span>
                               </>
                             ) : savedSectionKey === "excellence_awards" ? (
                               <>
-                                <CheckCircle2 size={14} /> Saved!
+                                <Check size={13} />
+                                <span>Saved!</span>
                               </>
                             ) : (
                               <>
-                                <Save size={13} /> Save Awards Section
+                                <Save size={13} />
+                                <span>Save Awards Section</span>
                               </>
                             )}
                           </button>
@@ -1843,7 +1823,7 @@ export default function CmsDashboardPage() {
                               </label>
                               <input
                                 type="text"
-                                value={getSection("excellence_awards")?.subtitle ?? "HONORS & GLOBAL RECOGNITION"}
+                                value={getSection("excellence_awards")?.subtitle ?? ""}
                                 onChange={(e) =>
                                   updateSection("excellence_awards", () => ({
                                     subtitle: e.target.value,
@@ -1859,7 +1839,7 @@ export default function CmsDashboardPage() {
                               </label>
                               <input
                                 type="text"
-                                value={getSection("excellence_awards")?.title ?? "EXCELLENCE IN HUMAN SERVICE"}
+                                value={getSection("excellence_awards")?.title ?? ""}
                                 onChange={(e) =>
                                   updateSection("excellence_awards", () => ({
                                     title: e.target.value,
@@ -1875,7 +1855,7 @@ export default function CmsDashboardPage() {
                               </label>
                               <input
                                 type="text"
-                                value={getSection("excellence_awards")?.extra?.watermarkText ?? "2026"}
+                                value={getSection("excellence_awards")?.extra?.watermarkText ?? ""}
                                 onChange={(e) =>
                                   updateSection("excellence_awards", (sec) => ({
                                     extra: { ...sec.extra, watermarkText: e.target.value },
@@ -1985,39 +1965,14 @@ export default function CmsDashboardPage() {
                               ))}
                             </div>
                           </div>
-
-                          {/* Bottom Card Action Footer */}
-                          <div className="pt-2 flex items-center justify-between border-t border-slate-200">
-                            <span className="text-xs text-slate-400">
-                              Saves the honors &amp; awards section independently.
-                            </span>
-                            <button
-                              type="button"
-                              onClick={() => handleSaveSection("excellence_awards", "Honors & Awards")}
-                              disabled={savingSectionKey === "excellence_awards"}
-                              className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#0f2347] hover:bg-[#1a3a6b] text-white rounded-xl text-xs font-bold transition-all shadow-sm"
-                            >
-                              {savingSectionKey === "excellence_awards" ? (
-                                <>
-                                  <Loader2 size={13} className="animate-spin" /> Saving...
-                                </>
-                              ) : savedSectionKey === "excellence_awards" ? (
-                                <>
-                                  <CheckCircle2 size={14} className="text-emerald-400" /> Saved!
-                                </>
-                              ) : (
-                                <>
-                                  <Save size={13} /> Save Awards Section
-                                </>
-                              )}
-                            </button>
-                          </div>
                         </div>
                       </div>
+                      )}
 
                       {/* ─────────────────────────────────────────────────────────────
                         SECTION 5: INTEGRITY & COMPLIANCE (LEGAL & TRANSPARENCY)
                     ────────────────────────────────────────────────────────────── */}
+                      {(homeSubTab === "all" || homeSubTab === "integrity_compliance") && (
                       <div className="bg-white rounded-2xl border-2 border-slate-200 overflow-hidden shadow-sm hover:shadow-md transition-shadow">
                         {/* Section Header */}
                         <div className="bg-gradient-to-r from-[#0f172a] to-[#334155] p-5 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -2039,27 +1994,30 @@ export default function CmsDashboardPage() {
                               </h3>
                             </div>
                           </div>
-
                           <button
                             type="button"
-                            onClick={() => handleSaveSection("integrity_compliance", "Integrity & Compliance")}
                             disabled={savingSectionKey === "integrity_compliance"}
-                            className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-md ${savedSectionKey === "integrity_compliance"
-                                ? "bg-emerald-600 text-white"
-                                : "bg-slate-700 hover:bg-slate-800 text-white"
-                              }`}
+                            onClick={() => handleSaveSection("integrity_compliance", "Integrity & Compliance")}
+                            className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 transition-all shadow-sm cursor-pointer ${
+                              savedSectionKey === "integrity_compliance"
+                                ? "bg-emerald-500 text-white"
+                                : "bg-[#E8542A] hover:bg-[#d4431b] text-white"
+                            }`}
                           >
                             {savingSectionKey === "integrity_compliance" ? (
                               <>
-                                <Loader2 size={13} className="animate-spin" /> Saving...
+                                <Loader2 size={13} className="animate-spin" />
+                                <span>Saving...</span>
                               </>
                             ) : savedSectionKey === "integrity_compliance" ? (
                               <>
-                                <CheckCircle2 size={14} /> Saved!
+                                <Check size={13} />
+                                <span>Saved!</span>
                               </>
                             ) : (
                               <>
-                                <Save size={13} /> Save Compliance Section
+                                <Save size={13} />
+                                <span>Save Integrity Section</span>
                               </>
                             )}
                           </button>
@@ -2074,7 +2032,7 @@ export default function CmsDashboardPage() {
                               </label>
                               <input
                                 type="text"
-                                value={getSection("integrity_compliance")?.title ?? "INTEGRITY & COMPLIANCE"}
+                                value={getSection("integrity_compliance")?.title ?? ""}
                                 onChange={(e) =>
                                   updateSection("integrity_compliance", () => ({
                                     title: e.target.value,
@@ -2091,7 +2049,7 @@ export default function CmsDashboardPage() {
                               </label>
                               <input
                                 type="text"
-                                value={getSection("integrity_compliance")?.extra?.officeTitle ?? "REGISTERED OFFICE"}
+                                value={getSection("integrity_compliance")?.extra?.officeTitle ?? ""}
                                 onChange={(e) =>
                                   updateSection("integrity_compliance", (sec) => ({
                                     extra: { ...sec.extra, officeTitle: e.target.value },
@@ -2133,7 +2091,7 @@ export default function CmsDashboardPage() {
                                   </label>
                                   <input
                                     type="text"
-                                    value={getSection("integrity_compliance")?.extra?.programSupportLabel ?? "DIRECT PROGRAM SUPPORT"}
+                                    value={getSection("integrity_compliance")?.extra?.programSupportLabel ?? ""}
                                     onChange={(e) =>
                                       updateSection("integrity_compliance", (sec) => ({
                                         extra: { ...sec.extra, programSupportLabel: e.target.value },
@@ -2149,7 +2107,7 @@ export default function CmsDashboardPage() {
                                   </label>
                                   <input
                                     type="text"
-                                    value={getSection("integrity_compliance")?.extra?.programSupportPercent ?? "90%"}
+                                    value={getSection("integrity_compliance")?.extra?.programSupportPercent ?? ""}
                                     onChange={(e) =>
                                       updateSection("integrity_compliance", (sec) => ({
                                         extra: { ...sec.extra, programSupportPercent: e.target.value },
@@ -2168,7 +2126,7 @@ export default function CmsDashboardPage() {
                                   </label>
                                   <input
                                     type="text"
-                                    value={getSection("integrity_compliance")?.extra?.adminLabel ?? "FUNDRAISING & ADMIN"}
+                                    value={getSection("integrity_compliance")?.extra?.adminLabel ?? ""}
                                     onChange={(e) =>
                                       updateSection("integrity_compliance", (sec) => ({
                                         extra: { ...sec.extra, adminLabel: e.target.value },
@@ -2184,7 +2142,7 @@ export default function CmsDashboardPage() {
                                   </label>
                                   <input
                                     type="text"
-                                    value={getSection("integrity_compliance")?.extra?.adminPercent ?? "10%"}
+                                    value={getSection("integrity_compliance")?.extra?.adminPercent ?? ""}
                                     onChange={(e) =>
                                       updateSection("integrity_compliance", (sec) => ({
                                         extra: { ...sec.extra, adminPercent: e.target.value },
@@ -2210,7 +2168,7 @@ export default function CmsDashboardPage() {
                                 </label>
                                 <input
                                   type="text"
-                                  value={getSection("integrity_compliance")?.extra?.darpanId ?? "UK/2026/0993905"}
+                                  value={getSection("integrity_compliance")?.extra?.darpanId ?? ""}
                                   onChange={(e) =>
                                     updateSection("integrity_compliance", (sec) => ({
                                       extra: { ...sec.extra, darpanId: e.target.value },
@@ -2227,7 +2185,7 @@ export default function CmsDashboardPage() {
                                 </label>
                                 <input
                                   type="text"
-                                  value={getSection("integrity_compliance")?.extra?.cin ?? "U88900UT2026NPL020825"}
+                                  value={getSection("integrity_compliance")?.extra?.cin ?? ""}
                                   onChange={(e) =>
                                     updateSection("integrity_compliance", (sec) => ({
                                       extra: { ...sec.extra, cin: e.target.value },
@@ -2244,7 +2202,7 @@ export default function CmsDashboardPage() {
                                 </label>
                                 <input
                                   type="text"
-                                  value={getSection("integrity_compliance")?.extra?.licenseNo ?? "No. 179973"}
+                                  value={getSection("integrity_compliance")?.extra?.licenseNo ?? ""}
                                   onChange={(e) =>
                                     updateSection("integrity_compliance", (sec) => ({
                                       extra: { ...sec.extra, licenseNo: e.target.value },
@@ -2261,7 +2219,7 @@ export default function CmsDashboardPage() {
                                 </label>
                                 <input
                                   type="text"
-                                  value={getSection("integrity_compliance")?.extra?.panNumber ?? "ABSCS7219M"}
+                                  value={getSection("integrity_compliance")?.extra?.panNumber ?? ""}
                                   onChange={(e) =>
                                     updateSection("integrity_compliance", (sec) => ({
                                       extra: { ...sec.extra, panNumber: e.target.value },
@@ -2278,7 +2236,7 @@ export default function CmsDashboardPage() {
                                 </label>
                                 <input
                                   type="text"
-                                  value={getSection("integrity_compliance")?.extra?.tanNumber ?? "MRTS38379F"}
+                                  value={getSection("integrity_compliance")?.extra?.tanNumber ?? ""}
                                   onChange={(e) =>
                                     updateSection("integrity_compliance", (sec) => ({
                                       extra: { ...sec.extra, tanNumber: e.target.value },
@@ -2295,7 +2253,7 @@ export default function CmsDashboardPage() {
                                 </label>
                                 <input
                                   type="text"
-                                  value={getSection("integrity_compliance")?.extra?.complianceDocLink ?? "/about"}
+                                  value={getSection("integrity_compliance")?.extra?.complianceDocLink ?? ""}
                                   onChange={(e) =>
                                     updateSection("integrity_compliance", (sec) => ({
                                       extra: { ...sec.extra, complianceDocLink: e.target.value },
@@ -2325,34 +2283,36 @@ export default function CmsDashboardPage() {
                               className="w-full px-4 py-2.5 rounded-xl border border-slate-300 bg-white text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#0f2347] leading-relaxed"
                             />
                           </div>
-
-                          {/* Bottom Card Action Footer */}
-                          <div className="pt-2 flex items-center justify-between border-t border-slate-200">
-                            <span className="text-xs text-slate-400">
-                              Saves the legal and compliance credentials directly.
-                            </span>
-                            <button
-                              type="button"
-                              onClick={() => handleSaveSection("integrity_compliance", "Integrity & Compliance")}
-                              disabled={savingSectionKey === "integrity_compliance"}
-                              className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#0f2347] hover:bg-[#1a3a6b] text-white rounded-xl text-xs font-bold transition-all shadow-sm"
-                            >
-                              {savingSectionKey === "integrity_compliance" ? (
-                                <>
-                                  <Loader2 size={13} className="animate-spin" /> Saving...
-                                </>
-                              ) : savedSectionKey === "integrity_compliance" ? (
-                                <>
-                                  <CheckCircle2 size={14} className="text-emerald-400" /> Saved!
-                                </>
-                              ) : (
-                                <>
-                                  <Save size={13} /> Save Compliance Section
-                                </>
-                              )}
-                            </button>
-                          </div>
                         </div>
+                      </div>
+                      )}
+
+                      {/* Unified Home Save Bar at Bottom */}
+                      <div className="bg-white rounded-2xl border-2 border-slate-200 p-6 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-lg sticky bottom-4 z-20">
+                        <div>
+                          <h4 className="text-sm font-bold text-[#0f2347]">
+                            Ready to publish Home Page changes?
+                          </h4>
+                          <p className="text-xs text-slate-500 mt-0.5">
+                            Click below to save and update all home page sections to the live database immediately.
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={handleSave}
+                          disabled={saveMutation.isPending}
+                          className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-3.5 bg-[#E8542A] hover:bg-[#c9431d] disabled:opacity-60 text-white rounded-xl text-sm font-bold transition-all shadow-lg shadow-orange-500/25 cursor-pointer"
+                        >
+                          {saveMutation.isPending ? (
+                            <>
+                              <Loader2 size={16} className="animate-spin" /> Saving all sections...
+                            </>
+                          ) : (
+                            <>
+                              <Save size={16} /> Save All Home Sections
+                            </>
+                          )}
+                        </button>
                       </div>
                     </div>
                   )}
@@ -2360,40 +2320,233 @@ export default function CmsDashboardPage() {
                   {activeSlug === "about" && (
                     <div className="bg-white dark:bg-panel rounded-2xl border border-gray-100 dark:border-border p-6 shadow-sm space-y-8">
                       <div className="border-b border-gray-100 dark:border-border pb-4">
-                        <h3 className="text-sm font-bold text-[#0f2347] dark:text-text-primary flex items-center gap-2">
-                          <FileText size={16} className="text-[#E8542A]" />
-                          About Us Page - Section-wise Content Manager
-                        </h3>
-                        <p className="text-xs text-gray-500 mt-1">
-                          Edit each section individually. Data entered here updates dynamically on the live website.
-                        </p>
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                          <div>
+                            <h3 className="text-sm font-bold text-[#0f2347] dark:text-text-primary flex items-center gap-2">
+                              <FileText size={16} className="text-[#E8542A]" />
+                              About Us Page - Section-wise Content Manager
+                            </h3>
+                            <p className="text-xs text-gray-500 mt-1">
+                              Edit each section individually. Data entered here updates dynamically on the live website.
+                            </p>
+                          </div>
+                          <span className="text-xs bg-blue-50 text-[#0f2347] border border-blue-200 px-3 py-1.5 rounded-xl font-semibold flex items-center gap-1.5 self-start sm:self-auto">
+                            <span className="w-2 h-2 rounded-full bg-blue-600 animate-pulse" />
+                            8 Sections Active
+                          </span>
+                        </div>
                       </div>
 
-                      {/* Section 1: Sacred Promise Story */}
-                      <div className="p-5 rounded-2xl bg-gray-50 dark:bg-bg border border-gray-100 dark:border-border space-y-4">
-                        <div className="flex items-center justify-between">
-                          <h4 className="text-xs font-bold text-[#0f2347] dark:text-text-primary uppercase tracking-wider flex items-center gap-2">
-                            <Heart size={14} className="text-[#E8542A]" />
-                            1. The Sacred Promise Story
-                          </h4>
-                          <span className="text-[10px] text-gray-400 font-semibold uppercase">Key: sacred_promise</span>
+                      {/* About Section Navigation Sub-Tabs */}
+                      <div className="flex items-center gap-1.5 p-1.5 bg-gray-50 dark:bg-bg rounded-xl border border-gray-200 dark:border-border overflow-x-auto shadow-xs">
+                        {[
+                          { id: "all", label: "All Sections" },
+                          { id: "hero", label: "0. Hero Banner & Header" },
+                          { id: "sacred_promise", label: "1. Sacred Promise" },
+                          { id: "vision_mission", label: "2. Vision & Mission" },
+                          { id: "areas_of_focus", label: "3. Areas of Focus" },
+                          { id: "leadership", label: "4. Leadership & Stewards" },
+                          { id: "trust_stewardship", label: "5. Stewardship of Trust" },
+                          { id: "awards_recognition", label: "6. Awards & Recognition" },
+                          { id: "allies_in_impact", label: "7. Allies in Impact" },
+                          { id: "transparency", label: "8. Transparency & Governance" },
+                        ].map((tab) => {
+                          const isActive = aboutSubTab === tab.id;
+                          return (
+                            <button
+                              key={tab.id}
+                              type="button"
+                              onClick={() => setAboutSubTab(tab.id)}
+                              className={`px-3.5 py-2 rounded-lg text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 cursor-pointer ${
+                                isActive
+                                  ? "bg-[#0f2347] text-white shadow-xs"
+                                  : "text-gray-600 dark:text-muted hover:text-[#0f2347] hover:bg-white dark:hover:bg-panel"
+                              }`}
+                            >
+                              <span>{tab.label}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+
+                      {/* Section 0: Hero Banner & Header */}
+                      {(aboutSubTab === "all" || aboutSubTab === "hero") && (
+                      <div className="p-5 rounded-2xl bg-gray-50 dark:bg-bg border border-gray-200 dark:border-border space-y-4 shadow-sm">
+                        <div className="flex items-center justify-between pb-3 border-b border-gray-200 dark:border-border">
+                          <div className="flex items-center gap-2">
+                            <div className="w-8 h-8 rounded-lg bg-orange-100 dark:bg-orange-950/40 flex items-center justify-center">
+                              <ImageIcon size={15} className="text-[#E8542A]" />
+                            </div>
+                            <div>
+                              <h4 className="text-xs font-bold text-[#0f2347] dark:text-text-primary uppercase tracking-wider">
+                                0. Hero Banner &amp; Header
+                              </h4>
+                              <span className="text-[10px] text-gray-400 font-mono">Page Top Header</span>
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            disabled={savingSectionKey === "about_hero"}
+                            onClick={() => handleSaveSection("about_hero", "About Us Hero Banner")}
+                            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 transition-all shadow-sm cursor-pointer ${
+                              savedSectionKey === "about_hero"
+                                ? "bg-emerald-500 text-white"
+                                : "bg-[#E8542A] hover:bg-[#d4431b] text-white"
+                            }`}
+                          >
+                            {savingSectionKey === "about_hero" ? (
+                              <>
+                                <Loader2 size={13} className="animate-spin" />
+                                <span>Saving...</span>
+                              </>
+                            ) : savedSectionKey === "about_hero" ? (
+                              <>
+                                <Check size={13} />
+                                <span>Saved!</span>
+                              </>
+                            ) : (
+                              <>
+                                <Save size={13} />
+                                <span>Save Hero Banner</span>
+                              </>
+                            )}
+                          </button>
                         </div>
 
-                        <div>
-                          <label className="block text-xs font-semibold text-gray-600 dark:text-muted mb-1">
-                            Story Narrative Paragraphs
-                          </label>
-                          <textarea
-                            rows={4}
-                            value={getSection("sacred_promise")?.description || ""}
-                            onChange={(e) =>
-                              updateSection("sacred_promise", () => ({
-                                description: e.target.value,
-                              }))
-                            }
-                            placeholder="In 2026, when we were just school students..."
-                            className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-border bg-white dark:bg-panel text-sm text-[#0f2347] dark:text-text-primary focus:outline-none"
-                          />
+                        <div className="space-y-4">
+                          <div>
+                            <label className="block text-xs font-semibold text-gray-700 dark:text-muted mb-1">
+                              Page Main Title
+                            </label>
+                            <input
+                              type="text"
+                              value={formData.title || ""}
+                              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                              placeholder="e.g. OUR LEGACY"
+                              className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-border bg-white dark:bg-panel text-xs text-[#0f2347] dark:text-text-primary font-semibold focus:outline-none"
+                            />
+                          </div>
+
+                          <div className="space-y-4">
+                            <CmsImageField
+                              label="Hero Banner Background Image"
+                              value={formData.bannerImage || ""}
+                              onChange={(url) => setFormData({ ...formData, bannerImage: url })}
+                              recommendedDimensions="1920 × 600 px · Max 5MB"
+                              placeholder="Upload banner image or enter custom URL..."
+                            />
+
+                            <CmsVideoField
+                              label="Hero Banner Video (Optional)"
+                              value={formData.bannerVideo || ""}
+                              onChange={(url) => setFormData({ ...formData, bannerVideo: url })}
+                              recommended="MP4 / WebM video URL · Takes priority over image in hero background"
+                              placeholder="Paste video URL (e.g. /uploads/video.mp4 or https://...)"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-xs font-semibold text-gray-700 dark:text-muted mb-1">
+                              Subtitle / Tagline
+                            </label>
+                            <textarea
+                              rows={2}
+                              value={formData.subtitle || ""}
+                              onChange={(e) => setFormData({ ...formData, subtitle: e.target.value })}
+                              placeholder="A promise made in the streets of Dehradun..."
+                              className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-border bg-white dark:bg-panel text-xs text-[#0f2347] dark:text-text-primary focus:outline-none leading-relaxed"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                      )}
+
+                      {/* Section 1: Sacred Promise Story */}
+                      {(aboutSubTab === "all" || aboutSubTab === "sacred_promise") && (
+                      <div className="p-5 rounded-2xl bg-gray-50 dark:bg-bg border border-gray-200 dark:border-border space-y-4 shadow-sm">
+                        <div className="flex items-center justify-between pb-3 border-b border-gray-200 dark:border-border">
+                          <div className="flex items-center gap-2">
+                            <div className="w-8 h-8 rounded-lg bg-orange-100 dark:bg-orange-950/40 flex items-center justify-center">
+                              <Heart size={15} className="text-[#E8542A]" />
+                            </div>
+                            <div>
+                              <h4 className="text-xs font-bold text-[#0f2347] dark:text-text-primary uppercase tracking-wider">
+                                1. The Sacred Promise Story
+                              </h4>
+                              <span className="text-[10px] text-gray-400 font-mono">Key: sacred_promise</span>
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            disabled={savingSectionKey === "sacred_promise"}
+                            onClick={() => handleSaveSection("sacred_promise", "Sacred Promise Story")}
+                            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 transition-all shadow-sm cursor-pointer ${
+                              savedSectionKey === "sacred_promise"
+                                ? "bg-emerald-500 text-white"
+                                : "bg-[#E8542A] hover:bg-[#d4431b] text-white"
+                            }`}
+                          >
+                            {savingSectionKey === "sacred_promise" ? (
+                              <>
+                                <Loader2 size={13} className="animate-spin" />
+                                <span>Saving...</span>
+                              </>
+                            ) : savedSectionKey === "sacred_promise" ? (
+                              <>
+                                <Check size={13} />
+                                <span>Saved!</span>
+                              </>
+                            ) : (
+                              <>
+                                <Save size={13} />
+                                <span>Save Sacred Promise</span>
+                              </>
+                            )}
+                          </button>
+                        </div>
+
+                        <div className="space-y-4">
+                          <div>
+                            <label className="block text-xs font-semibold text-gray-700 dark:text-muted mb-1">
+                              Story Narrative — Paragraph 1 (Main Story)
+                            </label>
+                            <textarea
+                              rows={3}
+                              value={getSection("sacred_promise")?.description || ""}
+                              onChange={(e) =>
+                                updateSection("sacred_promise", () => ({
+                                  description: e.target.value,
+                                }))
+                              }
+                              placeholder="In 2026, when we were just school students walking the quiet streets of Dehradun..."
+                              className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-border bg-white dark:bg-panel text-xs text-[#0f2347] dark:text-text-primary focus:outline-none leading-relaxed"
+                            />
+                          </div>
+
+                          <div>
+                            <div className="flex items-center justify-between mb-1">
+                              <label className="block text-xs font-bold text-[#0f2347] dark:text-blue-300">
+                                Story Narrative — Paragraph 2 (Blue Highlight on Website)
+                              </label>
+                              <span className="text-[10px] text-[#0f2347] bg-blue-100 dark:bg-blue-950/60 dark:text-blue-300 px-2 py-0.5 rounded font-bold">
+                                Theme Blue Card Highlight
+                              </span>
+                            </div>
+                            <textarea
+                              rows={3}
+                              value={getSection("sacred_promise")?.extra?.paragraph2 ?? ""}
+                              onChange={(e) =>
+                                updateSection("sacred_promise", (sec) => ({
+                                  extra: { ...sec.extra, paragraph2: e.target.value },
+                                }))
+                              }
+                              placeholder="When you donate, your support directly fuels these grassroots interventions across Uttarakhand..."
+                              className="w-full px-4 py-2.5 rounded-xl border-2 border-blue-200 dark:border-blue-900 bg-blue-50/40 dark:bg-blue-950/20 text-xs text-[#0f2347] dark:text-blue-200 font-medium focus:outline-none focus:border-[#0f2347] leading-relaxed"
+                            />
+                            <p className="text-[10px] text-gray-400 mt-1">
+                              Rendered immediately after Paragraph 1 inside a styled blue quote container on the website.
+                            </p>
+                          </div>
                         </div>
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -2403,7 +2556,7 @@ export default function CmsDashboardPage() {
                             </label>
                             <input
                               type="text"
-                              value={getSection("sacred_promise")?.extra?.year || "2026"}
+                              value={getSection("sacred_promise")?.extra?.year ?? ""}
                               onChange={(e) =>
                                 updateSection("sacred_promise", (sec) => ({
                                   extra: { ...sec.extra, year: e.target.value },
@@ -2419,7 +2572,7 @@ export default function CmsDashboardPage() {
                             </label>
                             <input
                               type="text"
-                              value={getSection("sacred_promise")?.extra?.badgeText || "Born of Student Empathy"}
+                              value={getSection("sacred_promise")?.extra?.badgeText ?? ""}
                               onChange={(e) =>
                                 updateSection("sacred_promise", (sec) => ({
                                   extra: { ...sec.extra, badgeText: e.target.value },
@@ -2441,15 +2594,50 @@ export default function CmsDashboardPage() {
                           placeholder="Upload story image or paste URL..."
                         />
                       </div>
+                      )}
 
                       {/* Section 2: Vision & Mission */}
-                      <div className="p-5 rounded-2xl bg-gray-50 dark:bg-bg border border-gray-100 dark:border-border space-y-4">
-                        <div className="flex items-center justify-between">
-                          <h4 className="text-xs font-bold text-[#0f2347] dark:text-text-primary uppercase tracking-wider flex items-center gap-2">
-                            <Eye size={14} className="text-[#E8542A]" />
-                            2. Vision &amp; Mission Statements
-                          </h4>
-                          <span className="text-[10px] text-gray-400 font-semibold uppercase">Key: vision_mission</span>
+                      {(aboutSubTab === "all" || aboutSubTab === "vision_mission") && (
+                      <div className="p-5 rounded-2xl bg-gray-50 dark:bg-bg border border-gray-200 dark:border-border space-y-4 shadow-sm">
+                        <div className="flex items-center justify-between pb-3 border-b border-gray-200 dark:border-border">
+                          <div className="flex items-center gap-2">
+                            <div className="w-8 h-8 rounded-lg bg-indigo-100 dark:bg-indigo-950/40 flex items-center justify-center">
+                              <Eye size={15} className="text-indigo-600" />
+                            </div>
+                            <div>
+                              <h4 className="text-xs font-bold text-[#0f2347] dark:text-text-primary uppercase tracking-wider">
+                                2. Vision &amp; Mission Statements
+                              </h4>
+                              <span className="text-[10px] text-gray-400 font-mono">Key: vision_mission</span>
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            disabled={savingSectionKey === "vision_mission"}
+                            onClick={() => handleSaveSection("vision_mission", "Vision & Mission")}
+                            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 transition-all shadow-sm cursor-pointer ${
+                              savedSectionKey === "vision_mission"
+                                ? "bg-emerald-500 text-white"
+                                : "bg-[#E8542A] hover:bg-[#d4431b] text-white"
+                            }`}
+                          >
+                            {savingSectionKey === "vision_mission" ? (
+                              <>
+                                <Loader2 size={13} className="animate-spin" />
+                                <span>Saving...</span>
+                              </>
+                            ) : savedSectionKey === "vision_mission" ? (
+                              <>
+                                <Check size={13} />
+                                <span>Saved!</span>
+                              </>
+                            ) : (
+                              <>
+                                <Save size={13} />
+                                <span>Save Vision & Mission</span>
+                              </>
+                            )}
+                          </button>
                         </div>
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -2488,15 +2676,50 @@ export default function CmsDashboardPage() {
                           </div>
                         </div>
                       </div>
+                      )}
 
-                      {/* Section 3: Areas of Focus (Screenshot 1) */}
-                      <div className="p-5 rounded-2xl bg-gray-50 dark:bg-bg border border-gray-100 dark:border-border space-y-4">
-                        <div className="flex items-center justify-between">
-                          <h4 className="text-xs font-bold text-[#0f2347] dark:text-text-primary uppercase tracking-wider flex items-center gap-2">
-                            <Check size={14} className="text-[#E8542A]" />
-                            3. Areas of Focus Cards
-                          </h4>
-                          <span className="text-[10px] text-gray-400 font-semibold uppercase">Key: areas_of_focus</span>
+                      {/* Section 3: Areas of Focus */}
+                      {(aboutSubTab === "all" || aboutSubTab === "areas_of_focus") && (
+                      <div className="p-5 rounded-2xl bg-gray-50 dark:bg-bg border border-gray-200 dark:border-border space-y-4 shadow-sm">
+                        <div className="flex items-center justify-between pb-3 border-b border-gray-200 dark:border-border">
+                          <div className="flex items-center gap-2">
+                            <div className="w-8 h-8 rounded-lg bg-emerald-100 dark:bg-emerald-950/40 flex items-center justify-center">
+                              <Check size={15} className="text-emerald-600" />
+                            </div>
+                            <div>
+                              <h4 className="text-xs font-bold text-[#0f2347] dark:text-text-primary uppercase tracking-wider">
+                                3. Areas of Focus Cards
+                              </h4>
+                              <span className="text-[10px] text-gray-400 font-mono">Key: areas_of_focus</span>
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            disabled={savingSectionKey === "areas_of_focus"}
+                            onClick={() => handleSaveSection("areas_of_focus", "Areas of Focus")}
+                            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 transition-all shadow-sm cursor-pointer ${
+                              savedSectionKey === "areas_of_focus"
+                                ? "bg-emerald-500 text-white"
+                                : "bg-[#E8542A] hover:bg-[#d4431b] text-white"
+                            }`}
+                          >
+                            {savingSectionKey === "areas_of_focus" ? (
+                              <>
+                                <Loader2 size={13} className="animate-spin" />
+                                <span>Saving...</span>
+                              </>
+                            ) : savedSectionKey === "areas_of_focus" ? (
+                              <>
+                                <Check size={13} />
+                                <span>Saved!</span>
+                              </>
+                            ) : (
+                              <>
+                                <Save size={13} />
+                                <span>Save Focus Areas</span>
+                              </>
+                            )}
+                          </button>
                         </div>
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -2506,10 +2729,11 @@ export default function CmsDashboardPage() {
                             </label>
                             <input
                               type="text"
-                              value={getSection("areas_of_focus")?.title || "AREAS OF FOCUS"}
+                              value={getSection("areas_of_focus")?.title ?? ""}
                               onChange={(e) =>
                                 updateSection("areas_of_focus", () => ({ title: e.target.value }))
                               }
+                              placeholder="AREAS OF FOCUS"
                               className="w-full px-4 py-2 rounded-xl border border-gray-200 dark:border-border bg-white dark:bg-panel text-xs text-[#0f2347] dark:text-text-primary focus:outline-none font-semibold"
                             />
                           </div>
@@ -2519,10 +2743,11 @@ export default function CmsDashboardPage() {
                             </label>
                             <input
                               type="text"
-                              value={getSection("areas_of_focus")?.subtitle || "Our organization's efforts are concentrated on these key areas."}
+                              value={getSection("areas_of_focus")?.subtitle ?? ""}
                               onChange={(e) =>
                                 updateSection("areas_of_focus", () => ({ subtitle: e.target.value }))
                               }
+                              placeholder="Our organization's efforts are concentrated on these key areas."
                               className="w-full px-4 py-2 rounded-xl border border-gray-200 dark:border-border bg-white dark:bg-panel text-xs text-[#0f2347] dark:text-text-primary focus:outline-none"
                             />
                           </div>
@@ -2603,15 +2828,50 @@ export default function CmsDashboardPage() {
                           )}
                         </div>
                       </div>
+                      )}
 
-                      {/* Section 4: Stewards / Leadership (Screenshot 2) */}
-                      <div className="p-5 rounded-2xl bg-gray-50 dark:bg-bg border border-gray-100 dark:border-border space-y-4">
-                        <div className="flex items-center justify-between">
-                          <h4 className="text-xs font-bold text-[#0f2347] dark:text-text-primary uppercase tracking-wider flex items-center gap-2">
-                            <Users size={14} className="text-[#E8542A]" />
-                            4. Stewards of the Mission / Leadership (Pravesh Uniyal &amp; People)
-                          </h4>
-                          <span className="text-[10px] text-gray-400 font-semibold uppercase">Key: leadership</span>
+                      {/* Section 4: Stewards / Leadership */}
+                      {(aboutSubTab === "all" || aboutSubTab === "leadership") && (
+                      <div className="p-5 rounded-2xl bg-gray-50 dark:bg-bg border border-gray-200 dark:border-border space-y-4 shadow-sm">
+                        <div className="flex items-center justify-between pb-3 border-b border-gray-200 dark:border-border">
+                          <div className="flex items-center gap-2">
+                            <div className="w-8 h-8 rounded-lg bg-teal-100 dark:bg-teal-950/40 flex items-center justify-center">
+                              <Users size={15} className="text-teal-700" />
+                            </div>
+                            <div>
+                              <h4 className="text-xs font-bold text-[#0f2347] dark:text-text-primary uppercase tracking-wider">
+                                4. Stewards of the Mission / Leadership
+                              </h4>
+                              <span className="text-[10px] text-gray-400 font-mono">Key: leadership</span>
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            disabled={savingSectionKey === "leadership"}
+                            onClick={() => handleSaveSection("leadership", "Stewards of the Mission")}
+                            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 transition-all shadow-sm cursor-pointer ${
+                              savedSectionKey === "leadership"
+                                ? "bg-emerald-500 text-white"
+                                : "bg-[#E8542A] hover:bg-[#d4431b] text-white"
+                            }`}
+                          >
+                            {savingSectionKey === "leadership" ? (
+                              <>
+                                <Loader2 size={13} className="animate-spin" />
+                                <span>Saving...</span>
+                              </>
+                            ) : savedSectionKey === "leadership" ? (
+                              <>
+                                <Check size={13} />
+                                <span>Saved!</span>
+                              </>
+                            ) : (
+                              <>
+                                <Save size={13} />
+                                <span>Save Leadership</span>
+                              </>
+                            )}
+                          </button>
                         </div>
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -2621,10 +2881,11 @@ export default function CmsDashboardPage() {
                             </label>
                             <input
                               type="text"
-                              value={getSection("leadership")?.title || "STEWARDS OF THE MISSION"}
+                              value={getSection("leadership")?.title ?? ""}
                               onChange={(e) =>
                                 updateSection("leadership", () => ({ title: e.target.value }))
                               }
+                              placeholder="STEWARDS OF THE MISSION"
                               className="w-full px-4 py-2 rounded-xl border border-gray-200 dark:border-border bg-white dark:bg-panel text-xs text-[#0f2347] dark:text-text-primary focus:outline-none font-semibold"
                             />
                           </div>
@@ -2634,10 +2895,11 @@ export default function CmsDashboardPage() {
                             </label>
                             <input
                               type="text"
-                              value={getSection("leadership")?.subtitle || "Our leadership is a blend of seasoned social architects and corporate experts, all united by a singular commitment to ethical service."}
+                              value={getSection("leadership")?.subtitle ?? ""}
                               onChange={(e) =>
                                 updateSection("leadership", () => ({ subtitle: e.target.value }))
                               }
+                              placeholder="Our leadership is a blend of seasoned social architects and corporate experts, all united by a singular commitment to ethical service."
                               className="w-full px-4 py-2 rounded-xl border border-gray-200 dark:border-border bg-white dark:bg-panel text-xs text-[#0f2347] dark:text-text-primary focus:outline-none"
                             />
                           </div>
@@ -2747,15 +3009,50 @@ export default function CmsDashboardPage() {
                           )}
                         </div>
                       </div>
+                      )}
 
-                      {/* Section 5: The Stewardship of Your Trust (Screenshot 3) */}
-                      <div className="p-5 rounded-2xl bg-gray-50 dark:bg-bg border border-gray-100 dark:border-border space-y-4">
-                        <div className="flex items-center justify-between">
-                          <h4 className="text-xs font-bold text-[#0f2347] dark:text-text-primary uppercase tracking-wider flex items-center gap-2">
-                            <Percent size={14} className="text-[#E8542A]" />
-                            5. The Stewardship of Your Trust &amp; Fund Allocation
-                          </h4>
-                          <span className="text-[10px] text-gray-400 font-semibold uppercase">Key: trust_stewardship</span>
+                      {/* Section 5: The Stewardship of Your Trust */}
+                      {(aboutSubTab === "all" || aboutSubTab === "trust_stewardship") && (
+                      <div className="p-5 rounded-2xl bg-gray-50 dark:bg-bg border border-gray-200 dark:border-border space-y-4 shadow-sm">
+                        <div className="flex items-center justify-between pb-3 border-b border-gray-200 dark:border-border">
+                          <div className="flex items-center gap-2">
+                            <div className="w-8 h-8 rounded-lg bg-amber-100 dark:bg-amber-950/40 flex items-center justify-center">
+                              <Percent size={15} className="text-amber-700" />
+                            </div>
+                            <div>
+                              <h4 className="text-xs font-bold text-[#0f2347] dark:text-text-primary uppercase tracking-wider">
+                                5. The Stewardship of Your Trust &amp; Fund Allocation
+                              </h4>
+                              <span className="text-[10px] text-gray-400 font-mono">Key: trust_stewardship</span>
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            disabled={savingSectionKey === "trust_stewardship"}
+                            onClick={() => handleSaveSection("trust_stewardship", "Stewardship of Trust")}
+                            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 transition-all shadow-sm cursor-pointer ${
+                              savedSectionKey === "trust_stewardship"
+                                ? "bg-emerald-500 text-white"
+                                : "bg-[#E8542A] hover:bg-[#d4431b] text-white"
+                            }`}
+                          >
+                            {savingSectionKey === "trust_stewardship" ? (
+                              <>
+                                <Loader2 size={13} className="animate-spin" />
+                                <span>Saving...</span>
+                              </>
+                            ) : savedSectionKey === "trust_stewardship" ? (
+                              <>
+                                <Check size={13} />
+                                <span>Saved!</span>
+                              </>
+                            ) : (
+                              <>
+                                <Save size={13} />
+                                <span>Save Trust Section</span>
+                              </>
+                            )}
+                          </button>
                         </div>
 
                         <div className="space-y-3">
@@ -2765,10 +3062,11 @@ export default function CmsDashboardPage() {
                             </label>
                             <input
                               type="text"
-                              value={getSection("trust_stewardship")?.title || "THE STEWARDSHIP OF YOUR TRUST"}
+                              value={getSection("trust_stewardship")?.title ?? ""}
                               onChange={(e) =>
                                 updateSection("trust_stewardship", () => ({ title: e.target.value }))
                               }
+                              placeholder="THE STEWARDSHIP OF YOUR TRUST"
                               className="w-full px-4 py-2 rounded-xl border border-gray-200 dark:border-border bg-white dark:bg-panel text-xs text-[#0f2347] dark:text-text-primary focus:outline-none font-semibold"
                             />
                           </div>
@@ -2779,10 +3077,11 @@ export default function CmsDashboardPage() {
                             </label>
                             <textarea
                               rows={3}
-                              value={getSection("trust_stewardship")?.description || "At Seva India Foundation, trust isn't a promise—it's a practice. Your donation is 100% safe with us, and we ensure it reaches the ground where it is needed most, with 100% updates sent to you via WhatsApp and email."}
+                              value={getSection("trust_stewardship")?.description ?? ""}
                               onChange={(e) =>
                                 updateSection("trust_stewardship", () => ({ description: e.target.value }))
                               }
+                              placeholder="At Seva India Foundation, trust isn't a promise—it's a practice. Your donation is 100% safe with us, and we ensure it reaches the ground where it is needed most, with 100% updates sent to you via WhatsApp and email."
                               className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-border bg-white dark:bg-panel text-xs text-[#0f2347] dark:text-text-primary focus:outline-none leading-relaxed"
                             />
                           </div>
@@ -2795,7 +3094,7 @@ export default function CmsDashboardPage() {
                               <div className="flex gap-2">
                                 <input
                                   type="text"
-                                  value={getSection("trust_stewardship")?.extra?.programSupportPercent || "90%"}
+                                  value={getSection("trust_stewardship")?.extra?.programSupportPercent ?? ""}
                                   onChange={(e) =>
                                     updateSection("trust_stewardship", (sec) => ({
                                       extra: { ...sec.extra, programSupportPercent: e.target.value },
@@ -2806,7 +3105,7 @@ export default function CmsDashboardPage() {
                                 />
                                 <input
                                   type="text"
-                                  value={getSection("trust_stewardship")?.extra?.programSupportTitle || "DIRECT PROGRAM SUPPORT"}
+                                  value={getSection("trust_stewardship")?.extra?.programSupportTitle ?? ""}
                                   onChange={(e) =>
                                     updateSection("trust_stewardship", (sec) => ({
                                       extra: { ...sec.extra, programSupportTitle: e.target.value },
@@ -2818,13 +3117,13 @@ export default function CmsDashboardPage() {
                               </div>
                               <textarea
                                 rows={2}
-                                value={getSection("trust_stewardship")?.extra?.programSupportDesc || "Goes directly to funding our on-the-ground projects, resources, and beneficiary aid."}
+                                value={getSection("trust_stewardship")?.extra?.programSupportDesc ?? ""}
                                 onChange={(e) =>
                                   updateSection("trust_stewardship", (sec) => ({
                                     extra: { ...sec.extra, programSupportDesc: e.target.value },
                                   }))
                                 }
-                                placeholder="Description..."
+                                placeholder="Goes directly to funding our on-the-ground projects, resources, and beneficiary aid."
                                 className="w-full px-3 py-1.5 rounded-lg border border-gray-200 dark:border-border text-xs text-[#0f2347] dark:text-text-primary focus:outline-none"
                               />
                             </div>
@@ -2835,7 +3134,7 @@ export default function CmsDashboardPage() {
                               <div className="flex gap-2">
                                 <input
                                   type="text"
-                                  value={getSection("trust_stewardship")?.extra?.adminPercent || "10%"}
+                                  value={getSection("trust_stewardship")?.extra?.adminPercent ?? ""}
                                   onChange={(e) =>
                                     updateSection("trust_stewardship", (sec) => ({
                                       extra: { ...sec.extra, adminPercent: e.target.value },
@@ -2846,7 +3145,7 @@ export default function CmsDashboardPage() {
                                 />
                                 <input
                                   type="text"
-                                  value={getSection("trust_stewardship")?.extra?.adminTitle || "ADMIN & FUNDRAISING"}
+                                  value={getSection("trust_stewardship")?.extra?.adminTitle ?? ""}
                                   onChange={(e) =>
                                     updateSection("trust_stewardship", (sec) => ({
                                       extra: { ...sec.extra, adminTitle: e.target.value },
@@ -2858,28 +3157,63 @@ export default function CmsDashboardPage() {
                               </div>
                               <textarea
                                 rows={2}
-                                value={getSection("trust_stewardship")?.extra?.adminDesc || "Essential operations, technology, and compliance to ensure radical transparency."}
+                                value={getSection("trust_stewardship")?.extra?.adminDesc ?? ""}
                                 onChange={(e) =>
                                   updateSection("trust_stewardship", (sec) => ({
                                     extra: { ...sec.extra, adminDesc: e.target.value },
                                   }))
                                 }
-                                placeholder="Description..."
+                                placeholder="Essential operations, technology, and compliance to ensure radical transparency."
                                 className="w-full px-3 py-1.5 rounded-lg border border-gray-200 dark:border-border text-xs text-[#0f2347] dark:text-text-primary focus:outline-none"
                               />
                             </div>
                           </div>
                         </div>
                       </div>
+                      )}
 
-                      {/* Section 6: Awards & Recognition (Screenshot 4) */}
-                      <div className="p-5 rounded-2xl bg-gray-50 dark:bg-bg border border-gray-100 dark:border-border space-y-4">
-                        <div className="flex items-center justify-between">
-                          <h4 className="text-xs font-bold text-[#0f2347] dark:text-text-primary uppercase tracking-wider flex items-center gap-2">
-                            <Award size={14} className="text-[#E8542A]" />
-                            6. Awards &amp; Recognition
-                          </h4>
-                          <span className="text-[10px] text-gray-400 font-semibold uppercase">Key: awards_recognition</span>
+                      {/* Section 6: Awards & Recognition */}
+                      {(aboutSubTab === "all" || aboutSubTab === "awards_recognition") && (
+                      <div className="p-5 rounded-2xl bg-gray-50 dark:bg-bg border border-gray-200 dark:border-border space-y-4 shadow-sm">
+                        <div className="flex items-center justify-between pb-3 border-b border-gray-200 dark:border-border">
+                          <div className="flex items-center gap-2">
+                            <div className="w-8 h-8 rounded-lg bg-yellow-100 dark:bg-yellow-950/40 flex items-center justify-center">
+                              <Award size={15} className="text-yellow-700" />
+                            </div>
+                            <div>
+                              <h4 className="text-xs font-bold text-[#0f2347] dark:text-text-primary uppercase tracking-wider">
+                                6. Awards &amp; Recognition
+                              </h4>
+                              <span className="text-[10px] text-gray-400 font-mono">Key: awards_recognition</span>
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            disabled={savingSectionKey === "awards_recognition"}
+                            onClick={() => handleSaveSection("awards_recognition", "Awards & Recognition")}
+                            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 transition-all shadow-sm cursor-pointer ${
+                              savedSectionKey === "awards_recognition"
+                                ? "bg-emerald-500 text-white"
+                                : "bg-[#E8542A] hover:bg-[#d4431b] text-white"
+                            }`}
+                          >
+                            {savingSectionKey === "awards_recognition" ? (
+                              <>
+                                <Loader2 size={13} className="animate-spin" />
+                                <span>Saving...</span>
+                              </>
+                            ) : savedSectionKey === "awards_recognition" ? (
+                              <>
+                                <Check size={13} />
+                                <span>Saved!</span>
+                              </>
+                            ) : (
+                              <>
+                                <Save size={13} />
+                                <span>Save Awards</span>
+                              </>
+                            )}
+                          </button>
                         </div>
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -2889,10 +3223,11 @@ export default function CmsDashboardPage() {
                             </label>
                             <input
                               type="text"
-                              value={getSection("awards_recognition")?.title || "Awards & Recognition"}
+                              value={getSection("awards_recognition")?.title ?? ""}
                               onChange={(e) =>
                                 updateSection("awards_recognition", () => ({ title: e.target.value }))
                               }
+                              placeholder="Awards & Recognition"
                               className="w-full px-4 py-2 rounded-xl border border-gray-200 dark:border-border bg-white dark:bg-panel text-xs text-[#0f2347] dark:text-text-primary focus:outline-none font-semibold"
                             />
                           </div>
@@ -2968,15 +3303,50 @@ export default function CmsDashboardPage() {
                           </div>
                         </div>
                       </div>
+                      )}
 
-                      {/* Section 7: Allies in Impact (Screenshot 5) */}
-                      <div className="p-5 rounded-2xl bg-gray-50 dark:bg-bg border border-gray-100 dark:border-border space-y-4">
-                        <div className="flex items-center justify-between">
-                          <h4 className="text-xs font-bold text-[#0f2347] dark:text-text-primary uppercase tracking-wider flex items-center gap-2">
-                            <HeartHandshake size={14} className="text-[#E8542A]" />
-                            7. Allies in Impact (Dev Bhoomi Samiti &amp; Core Strength)
-                          </h4>
-                          <span className="text-[10px] text-gray-400 font-semibold uppercase">Key: allies_in_impact</span>
+                      {/* Section 7: Allies in Impact */}
+                      {(aboutSubTab === "all" || aboutSubTab === "allies_in_impact") && (
+                      <div className="p-5 rounded-2xl bg-gray-50 dark:bg-bg border border-gray-200 dark:border-border space-y-4 shadow-sm">
+                        <div className="flex items-center justify-between pb-3 border-b border-gray-200 dark:border-border">
+                          <div className="flex items-center gap-2">
+                            <div className="w-8 h-8 rounded-lg bg-pink-100 dark:bg-pink-950/40 flex items-center justify-center">
+                              <HeartHandshake size={15} className="text-pink-600" />
+                            </div>
+                            <div>
+                              <h4 className="text-xs font-bold text-[#0f2347] dark:text-text-primary uppercase tracking-wider">
+                                7. Allies in Impact (Dev Bhoomi Samiti)
+                              </h4>
+                              <span className="text-[10px] text-gray-400 font-mono">Key: allies_in_impact</span>
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            disabled={savingSectionKey === "allies_in_impact"}
+                            onClick={() => handleSaveSection("allies_in_impact", "Allies in Impact")}
+                            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 transition-all shadow-sm cursor-pointer ${
+                              savedSectionKey === "allies_in_impact"
+                                ? "bg-emerald-500 text-white"
+                                : "bg-[#E8542A] hover:bg-[#d4431b] text-white"
+                            }`}
+                          >
+                            {savingSectionKey === "allies_in_impact" ? (
+                              <>
+                                <Loader2 size={13} className="animate-spin" />
+                                <span>Saving...</span>
+                              </>
+                            ) : savedSectionKey === "allies_in_impact" ? (
+                              <>
+                                <Check size={13} />
+                                <span>Saved!</span>
+                              </>
+                            ) : (
+                              <>
+                                <Save size={13} />
+                                <span>Save Allies</span>
+                              </>
+                            )}
+                          </button>
                         </div>
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -2986,10 +3356,11 @@ export default function CmsDashboardPage() {
                             </label>
                             <input
                               type="text"
-                              value={getSection("allies_in_impact")?.title || "ALLIES IN IMPACT"}
+                              value={getSection("allies_in_impact")?.title ?? ""}
                               onChange={(e) =>
                                 updateSection("allies_in_impact", () => ({ title: e.target.value }))
                               }
+                              placeholder="ALLIES IN IMPACT"
                               className="w-full px-4 py-2 rounded-xl border border-gray-200 dark:border-border bg-white dark:bg-panel text-xs text-[#0f2347] dark:text-text-primary focus:outline-none font-semibold"
                             />
                           </div>
@@ -2999,10 +3370,11 @@ export default function CmsDashboardPage() {
                             </label>
                             <input
                               type="text"
-                              value={getSection("allies_in_impact")?.subtitle || "Powered by organizations that prioritize direct, ground-level action over corporate lip-service."}
+                              value={getSection("allies_in_impact")?.subtitle ?? ""}
                               onChange={(e) =>
                                 updateSection("allies_in_impact", () => ({ subtitle: e.target.value }))
                               }
+                              placeholder="Powered by organizations that prioritize direct, ground-level action over corporate lip-service."
                               className="w-full px-4 py-2 rounded-xl border border-gray-200 dark:border-border bg-white dark:bg-panel text-xs text-[#0f2347] dark:text-text-primary focus:outline-none"
                             />
                           </div>
@@ -3016,7 +3388,7 @@ export default function CmsDashboardPage() {
                               <label className="block text-[11px] font-semibold text-gray-500 mb-1">Partner Organization Name</label>
                               <input
                                 type="text"
-                                value={getSection("allies_in_impact")?.extra?.partnerName || "DEV BHOOMI SAMITI"}
+                                value={getSection("allies_in_impact")?.extra?.partnerName ?? ""}
                                 onChange={(e) =>
                                   updateSection("allies_in_impact", (sec) => ({
                                     extra: { ...sec.extra, partnerName: e.target.value },
@@ -3030,12 +3402,13 @@ export default function CmsDashboardPage() {
                               <label className="block text-[11px] font-semibold text-gray-500 mb-1">Strategic Pillar Narrative</label>
                               <textarea
                                 rows={3}
-                                value={getSection("allies_in_impact")?.extra?.partnerPillar || "Strategic Pillar: The immense contribution of Dev Bhoomi Samiti is what makes our mission possible. As our principal patron, they provide the visionary leadership and total support that fuels every project, every camp, and every life we touch."}
+                                value={getSection("allies_in_impact")?.extra?.partnerPillar ?? ""}
                                 onChange={(e) =>
                                   updateSection("allies_in_impact", (sec) => ({
                                     extra: { ...sec.extra, partnerPillar: e.target.value },
                                   }))
                                 }
+                                placeholder="Strategic Pillar: The immense contribution of Dev Bhoomi Samiti is what makes our mission possible. As our principal patron, they provide the visionary leadership and total support that fuels every project, every camp, and every life we touch."
                                 className="w-full px-3 py-1.5 rounded-lg border border-gray-200 dark:border-border text-xs text-[#0f2347] dark:text-text-primary focus:outline-none leading-relaxed"
                               />
                             </div>
@@ -3043,13 +3416,13 @@ export default function CmsDashboardPage() {
                               <label className="block text-[11px] font-semibold text-gray-500 mb-1">Official Website Link</label>
                               <input
                                 type="text"
-                                value={getSection("allies_in_impact")?.extra?.partnerWebsiteUrl || "https://devbhoomisamiti.org"}
+                                value={getSection("allies_in_impact")?.extra?.partnerWebsiteUrl ?? ""}
                                 onChange={(e) =>
                                   updateSection("allies_in_impact", (sec) => ({
                                     extra: { ...sec.extra, partnerWebsiteUrl: e.target.value },
                                   }))
                                 }
-                                placeholder="https://..."
+                                placeholder="https://devbhoomisamiti.org"
                                 className="w-full px-3 py-1.5 rounded-lg border border-gray-200 dark:border-border text-xs text-[#0f2347] dark:text-text-primary focus:outline-none font-mono"
                               />
                             </div>
@@ -3062,7 +3435,7 @@ export default function CmsDashboardPage() {
                               <label className="block text-[11px] font-semibold text-gray-500 mb-1">Card Title</label>
                               <input
                                 type="text"
-                                value={getSection("allies_in_impact")?.extra?.coreStrengthTitle || "FOUNDATION'S CORE STRENGTH"}
+                                value={getSection("allies_in_impact")?.extra?.coreStrengthTitle ?? ""}
                                 onChange={(e) =>
                                   updateSection("allies_in_impact", (sec) => ({
                                     extra: { ...sec.extra, coreStrengthTitle: e.target.value },
@@ -3076,12 +3449,13 @@ export default function CmsDashboardPage() {
                               <label className="block text-[11px] font-semibold text-gray-500 mb-1">Operational Model Narrative</label>
                               <textarea
                                 rows={3}
-                                value={getSection("allies_in_impact")?.extra?.coreStrengthDesc || "Our operational model is built on the immense contribution and full visionary backing of Dev Bhoomi Samiti. This unique alliance allows us to focus 100% of our energy on ground-level implementation, ensuring that every resource is utilized for maximum social impact."}
+                                value={getSection("allies_in_impact")?.extra?.coreStrengthDesc ?? ""}
                                 onChange={(e) =>
                                   updateSection("allies_in_impact", (sec) => ({
                                     extra: { ...sec.extra, coreStrengthDesc: e.target.value },
                                   }))
                                 }
+                                placeholder="Our operational model is built on the immense contribution and full visionary backing of Dev Bhoomi Samiti. This unique alliance allows us to focus 100% of our energy on ground-level implementation, ensuring that every resource is utilized for maximum social impact."
                                 className="w-full px-3 py-1.5 rounded-lg border border-gray-200 dark:border-border text-xs text-[#0f2347] dark:text-text-primary focus:outline-none leading-relaxed"
                               />
                             </div>
@@ -3090,12 +3464,13 @@ export default function CmsDashboardPage() {
                                 <label className="block text-[10px] font-semibold text-gray-500 mb-1">Status Label</label>
                                 <input
                                   type="text"
-                                  value={getSection("allies_in_impact")?.extra?.partnershipStatusLabel || "PARTNERSHIP STATUS"}
+                                  value={getSection("allies_in_impact")?.extra?.partnershipStatusLabel ?? ""}
                                   onChange={(e) =>
                                     updateSection("allies_in_impact", (sec) => ({
                                       extra: { ...sec.extra, partnershipStatusLabel: e.target.value },
                                     }))
                                   }
+                                  placeholder="PARTNERSHIP STATUS"
                                   className="w-full px-2.5 py-1.5 rounded-lg border border-gray-200 dark:border-border text-xs text-[#0f2347] dark:text-text-primary focus:outline-none"
                                 />
                               </div>
@@ -3103,12 +3478,13 @@ export default function CmsDashboardPage() {
                                 <label className="block text-[10px] font-semibold text-gray-500 mb-1">Status Value</label>
                                 <input
                                   type="text"
-                                  value={getSection("allies_in_impact")?.extra?.partnershipStatusValue || "CORE STRATEGIC ALLIANCE"}
+                                  value={getSection("allies_in_impact")?.extra?.partnershipStatusValue ?? ""}
                                   onChange={(e) =>
                                     updateSection("allies_in_impact", (sec) => ({
                                       extra: { ...sec.extra, partnershipStatusValue: e.target.value },
                                     }))
                                   }
+                                  placeholder="CORE STRATEGIC ALLIANCE"
                                   className="w-full px-2.5 py-1.5 rounded-lg border border-gray-200 dark:border-border text-xs font-bold text-[#0f2347] dark:text-text-primary focus:outline-none"
                                 />
                               </div>
@@ -3116,15 +3492,50 @@ export default function CmsDashboardPage() {
                           </div>
                         </div>
                       </div>
+                      )}
 
                       {/* Section 8: 100% Transparency & Governance Compliance */}
-                      <div className="p-5 rounded-2xl bg-gray-50 dark:bg-bg border border-gray-100 dark:border-border space-y-4">
-                        <div className="flex items-center justify-between">
-                          <h4 className="text-xs font-bold text-[#0f2347] dark:text-text-primary uppercase tracking-wider flex items-center gap-2">
-                            <ShieldCheck size={14} className="text-[#E8542A]" />
-                            8. 100% Transparency &amp; Governance Compliance Box
-                          </h4>
-                          <span className="text-[10px] text-gray-400 font-semibold uppercase">Key: transparency</span>
+                      {(aboutSubTab === "all" || aboutSubTab === "transparency") && (
+                      <div className="p-5 rounded-2xl bg-gray-50 dark:bg-bg border border-gray-200 dark:border-border space-y-4 shadow-sm">
+                        <div className="flex items-center justify-between pb-3 border-b border-gray-200 dark:border-border">
+                          <div className="flex items-center gap-2">
+                            <div className="w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-950/40 flex items-center justify-center">
+                              <ShieldCheck size={15} className="text-blue-700" />
+                            </div>
+                            <div>
+                              <h4 className="text-xs font-bold text-[#0f2347] dark:text-text-primary uppercase tracking-wider">
+                                8. 100% Transparency &amp; Governance Compliance Box
+                              </h4>
+                              <span className="text-[10px] text-gray-400 font-mono">Key: transparency</span>
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            disabled={savingSectionKey === "transparency"}
+                            onClick={() => handleSaveSection("transparency", "100% Transparency & Governance")}
+                            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 transition-all shadow-sm cursor-pointer ${
+                              savedSectionKey === "transparency"
+                                ? "bg-emerald-500 text-white"
+                                : "bg-[#E8542A] hover:bg-[#d4431b] text-white"
+                            }`}
+                          >
+                            {savingSectionKey === "transparency" ? (
+                              <>
+                                <Loader2 size={13} className="animate-spin" />
+                                <span>Saving...</span>
+                              </>
+                            ) : savedSectionKey === "transparency" ? (
+                              <>
+                                <Check size={13} />
+                                <span>Saved!</span>
+                              </>
+                            ) : (
+                              <>
+                                <Save size={13} />
+                                <span>Save Transparency</span>
+                              </>
+                            )}
+                          </button>
                         </div>
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -3134,10 +3545,11 @@ export default function CmsDashboardPage() {
                             </label>
                             <input
                               type="text"
-                              value={getSection("transparency")?.title || "100% TRANSPARENT & ACCOUNTABLE"}
+                              value={getSection("transparency")?.title ?? ""}
                               onChange={(e) =>
                                 updateSection("transparency", () => ({ title: e.target.value }))
                               }
+                              placeholder="100% TRANSPARENT & ACCOUNTABLE"
                               className="w-full px-4 py-2 rounded-xl border border-gray-200 dark:border-border bg-white dark:bg-panel text-xs text-[#0f2347] dark:text-text-primary focus:outline-none font-semibold"
                             />
                           </div>
@@ -3147,10 +3559,11 @@ export default function CmsDashboardPage() {
                             </label>
                             <textarea
                               rows={2}
-                              value={getSection("transparency")?.description || "At Seva India Foundation, trust isn't a promise—it's a practice. As a registered Section 8 NGO, we protect your trust through meticulous accountability and radical transparency."}
+                              value={getSection("transparency")?.description ?? ""}
                               onChange={(e) =>
                                 updateSection("transparency", () => ({ description: e.target.value }))
                               }
+                              placeholder="At Seva India Foundation, trust isn't a promise—it's a practice. As a registered Section 8 NGO, we protect your trust through meticulous accountability and radical transparency."
                               className="w-full px-4 py-2 rounded-xl border border-gray-200 dark:border-border bg-white dark:bg-panel text-xs text-[#0f2347] dark:text-text-primary focus:outline-none leading-relaxed"
                             />
                           </div>
@@ -3164,28 +3577,30 @@ export default function CmsDashboardPage() {
                             </label>
                             <input
                               type="text"
-                              value={getSection("transparency")?.extra?.darpanId || "UK/2026/0993905"}
+                              value={getSection("transparency")?.extra?.darpanId ?? ""}
                               onChange={(e) =>
                                 updateSection("transparency", (sec) => ({
                                   extra: { ...sec.extra, darpanId: e.target.value },
                                 }))
                               }
+                              placeholder="UK/2026/0993905"
                               className="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-border bg-white dark:bg-panel text-xs font-mono font-bold text-[#0f2347] dark:text-text-primary focus:outline-none"
                             />
                           </div>
 
                           <div>
                             <label className="block text-[11px] font-semibold text-gray-500 mb-1">
-                              CIN Number (Auto word-wrap fixed)
+                              CIN Number
                             </label>
                             <input
                               type="text"
-                              value={getSection("transparency")?.extra?.cin || "U88900UT2026NPL020825"}
+                              value={getSection("transparency")?.extra?.cin ?? ""}
                               onChange={(e) =>
                                 updateSection("transparency", (sec) => ({
                                   extra: { ...sec.extra, cin: e.target.value },
                                 }))
                               }
+                              placeholder="U88900UT2026NPL020825"
                               className="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-border bg-white dark:bg-panel text-xs font-mono font-bold text-[#0f2347] dark:text-text-primary focus:outline-none"
                             />
                           </div>
@@ -3196,12 +3611,13 @@ export default function CmsDashboardPage() {
                             </label>
                             <input
                               type="text"
-                              value={getSection("transparency")?.extra?.taxExemption || "80G & 12A"}
+                              value={getSection("transparency")?.extra?.taxExemption ?? ""}
                               onChange={(e) =>
                                 updateSection("transparency", (sec) => ({
                                   extra: { ...sec.extra, taxExemption: e.target.value },
                                 }))
                               }
+                              placeholder="80G & 12A"
                               className="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-border bg-white dark:bg-panel text-xs font-semibold text-[#0f2347] dark:text-text-primary focus:outline-none"
                             />
                           </div>
@@ -3212,16 +3628,50 @@ export default function CmsDashboardPage() {
                             </label>
                             <input
                               type="text"
-                              value={getSection("transparency")?.extra?.legalStatus || "Section 8 Company"}
+                              value={getSection("transparency")?.extra?.legalStatus ?? ""}
                               onChange={(e) =>
                                 updateSection("transparency", (sec) => ({
                                   extra: { ...sec.extra, legalStatus: e.target.value },
                                 }))
                               }
+                              placeholder="Section 8 Company"
                               className="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-border bg-white dark:bg-panel text-xs font-semibold text-[#0f2347] dark:text-text-primary focus:outline-none"
                             />
                           </div>
                         </div>
+                      </div>
+                      )}
+
+                      {/* Unified Bottom Save Bar for About Us */}
+                      <div className="p-4 rounded-2xl bg-[#0f2347] text-white flex flex-col sm:flex-row items-center justify-between gap-4 shadow-lg sticky bottom-4 z-20">
+                        <div className="flex items-center gap-3 text-left">
+                          <div className="w-10 h-10 rounded-xl bg-[#E8542A] flex items-center justify-center shrink-0">
+                            <Save size={20} className="text-white" />
+                          </div>
+                          <div>
+                            <h4 className="text-sm font-bold text-white">Save All About Us Sections</h4>
+                            <p className="text-xs text-gray-300">
+                              One-click save: Updates all narrative, leadership, focus areas, allies, and compliance data live on website.
+                            </p>
+                          </div>
+                        </div>
+                        <button
+                          type="submit"
+                          disabled={isSaving}
+                          className="w-full sm:w-auto px-6 py-2.5 bg-[#E8542A] hover:bg-[#d4431b] disabled:opacity-50 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2 shrink-0 cursor-pointer"
+                        >
+                          {isSaving ? (
+                            <>
+                              <Loader2 size={16} className="animate-spin" />
+                              <span>Saving Live Data...</span>
+                            </>
+                          ) : (
+                            <>
+                              <Save size={16} />
+                              <span>Save All About Us Sections</span>
+                            </>
+                          )}
+                        </button>
                       </div>
                     </div>
                   )}
@@ -3233,10 +3683,10 @@ export default function CmsDashboardPage() {
                         <div>
                           <h3 className="text-sm font-bold text-[#0f2347] dark:text-text-primary flex items-center gap-2">
                             <Layout size={16} className="text-[#E8542A]" />
-                            Our Work & Initiatives Management
+                            Our Work &amp; Initiatives Management
                           </h3>
                           <p className="text-xs text-gray-500 mt-1">
-                            Configure all 7 core pillars, lead paragraphs, imagery, alt tags, FAQs, and impact metrics.
+                            Configure page hero banner, core pillars, lead paragraphs, imagery, alt tags, FAQs, and impact metrics.
                           </p>
                         </div>
                         <button
@@ -3265,18 +3715,177 @@ export default function CmsDashboardPage() {
                             const nextSections = [...currentSections, newSec];
                             setFormData({ ...formData, sections: nextSections });
                             setActiveInitiativeIndex(nextSections.length - 1);
+                            setOurWorkSubTab(newKey);
                           }}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#0f2347] hover:bg-[#1a3a6b] text-white text-xs font-bold rounded-lg transition-colors"
+                          className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-[#0f2347] hover:bg-[#1a3a6b] text-white text-xs font-bold rounded-xl transition-colors cursor-pointer"
                         >
                           <Plus size={14} />
                           Add Initiative
                         </button>
                       </div>
 
-                      {/* Initiative Tabs with Quick Delete Icons */}
-                      <div className="flex flex-wrap gap-2 pb-2">
-                        {(formData.sections || []).map((sec, idx) => {
-                          const isSelected = activeInitiativeIndex === idx;
+                      {/* Our Work Section Navigation Sub-Tabs */}
+                      <div className="flex items-center gap-1.5 p-1.5 bg-gray-50 dark:bg-bg rounded-xl border border-gray-200 dark:border-border overflow-x-auto shadow-xs">
+                        {[
+                          { id: "all", label: "All Initiatives & Banner" },
+                          { id: "hero", label: "0. Hero Banner & Header" },
+                          ...(formData.sections || []).map((sec, idx) => ({
+                            id: sec.key || String(idx),
+                            label: `${idx + 1}. ${sec.title || sec.name || `Initiative ${idx + 1}`}`,
+                            rawSec: sec,
+                            idx,
+                          })),
+                        ].map((tab: any) => {
+                          const isActive = ourWorkSubTab === tab.id;
+                          return (
+                            <div key={tab.id} className="relative inline-flex items-center">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setOurWorkSubTab(tab.id);
+                                  if (tab.idx !== undefined) {
+                                    setActiveInitiativeIndex(tab.idx);
+                                  }
+                                }}
+                                className={`px-3.5 py-2 rounded-lg text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 cursor-pointer ${
+                                  isActive
+                                    ? "bg-[#0f2347] text-white shadow-xs"
+                                    : "text-gray-600 dark:text-muted hover:text-[#0f2347] hover:bg-white dark:hover:bg-panel"
+                                }`}
+                              >
+                                <span>{tab.label}</span>
+                              </button>
+                            </div>
+                          );
+                        })}
+                      </div>
+
+                      {/* Section 0: Hero Banner & Header */}
+                      {(ourWorkSubTab === "all" || ourWorkSubTab === "hero") && (
+                        <div className="p-5 rounded-2xl bg-gray-50 dark:bg-bg border border-gray-200 dark:border-border space-y-4 shadow-sm">
+                          <div className="flex items-center justify-between pb-3 border-b border-gray-200 dark:border-border">
+                            <div className="flex items-center gap-2">
+                              <div className="w-8 h-8 rounded-lg bg-orange-100 dark:bg-orange-950/40 flex items-center justify-center">
+                                <ImageIcon size={15} className="text-[#E8542A]" />
+                              </div>
+                              <div>
+                                <h4 className="text-xs font-bold text-[#0f2347] dark:text-text-primary uppercase tracking-wider">
+                                  0. Hero Banner &amp; Header
+                                </h4>
+                                <span className="text-[10px] text-gray-400 font-mono">Our Work Top Banner</span>
+                              </div>
+                            </div>
+                            <button
+                              type="button"
+                              disabled={savingSectionKey === "our_work_hero"}
+                              onClick={() => handleSaveSection("our_work_hero", "Our Work Hero Banner")}
+                              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 transition-all shadow-sm cursor-pointer ${
+                                savedSectionKey === "our_work_hero"
+                                  ? "bg-emerald-500 text-white"
+                                  : "bg-[#E8542A] hover:bg-[#d4431b] text-white"
+                              }`}
+                            >
+                              {savingSectionKey === "our_work_hero" ? (
+                                <>
+                                  <Loader2 size={13} className="animate-spin" />
+                                  <span>Saving...</span>
+                                </>
+                              ) : savedSectionKey === "our_work_hero" ? (
+                                <>
+                                  <Check size={13} />
+                                  <span>Saved!</span>
+                                </>
+                              ) : (
+                                <>
+                                  <Save size={13} />
+                                  <span>Save Hero Banner</span>
+                                </>
+                              )}
+                            </button>
+                          </div>
+
+                          <div className="space-y-4">
+                            <div>
+                              <label className="block text-xs font-semibold text-gray-700 dark:text-muted mb-1">
+                                Page Main Title
+                              </label>
+                              <input
+                                type="text"
+                                value={formData.title || ""}
+                                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                                placeholder="e.g. OUR WORK & IMPACT"
+                                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-border bg-white dark:bg-panel text-xs text-[#0f2347] dark:text-text-primary font-semibold focus:outline-none"
+                              />
+                            </div>
+
+                            <div className="space-y-4">
+                              <CmsImageField
+                                label="Hero Banner Background Image"
+                                value={formData.bannerImage || ""}
+                                onChange={(url) => setFormData({ ...formData, bannerImage: url })}
+                                recommendedDimensions="1920 × 600 px · Max 5MB"
+                                placeholder="Upload banner image or enter custom URL..."
+                              />
+
+                              <CmsVideoField
+                                label="Hero Banner Video (Optional)"
+                                value={formData.bannerVideo || ""}
+                                onChange={(url) => setFormData({ ...formData, bannerVideo: url })}
+                                recommended="MP4 / WebM video URL · Takes priority over image in hero background"
+                                placeholder="Paste video URL (e.g. /uploads/video.mp4 or https://...)"
+                              />
+                            </div>
+
+                            <div>
+                              <label className="block text-xs font-semibold text-gray-700 dark:text-muted mb-1">
+                                Subtitle / Tagline
+                              </label>
+                              <textarea
+                                rows={2}
+                                value={formData.subtitle || ""}
+                                onChange={(e) => setFormData({ ...formData, subtitle: e.target.value })}
+                                placeholder="Transforming communities through dedicated grassroots initiatives across Uttarakhand and beyond."
+                                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-border bg-white dark:bg-panel text-xs text-[#0f2347] dark:text-text-primary focus:outline-none leading-relaxed"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Initiative Sections List / Selected Initiative */}
+                      {(() => {
+                        const sectionsList = formData.sections || [];
+                        const displayList =
+                          ourWorkSubTab === "all"
+                            ? sectionsList.map((sec, idx) => ({ sec, idx }))
+                            : ourWorkSubTab === "hero"
+                            ? []
+                            : sectionsList
+                                .map((sec, idx) => ({ sec, idx }))
+                                .filter((item) => (item.sec.key || String(item.idx)) === ourWorkSubTab);
+
+                        return displayList.map(({ sec, idx }) => {
+                          const updateCurrentSec = (partial: Partial<CmsSection>) => {
+                            const updated = [...(formData.sections || [])];
+                            updated[idx] = {
+                              ...updated[idx],
+                              ...partial,
+                            };
+                            setFormData({ ...formData, sections: updated });
+                          };
+
+                          const updateExtra = (partialExtra: Record<string, any>) => {
+                            const updated = [...(formData.sections || [])];
+                            updated[idx] = {
+                              ...updated[idx],
+                              extra: {
+                                ...(updated[idx].extra || {}),
+                                ...partialExtra,
+                              },
+                            };
+                            setFormData({ ...formData, sections: updated });
+                          };
+
                           const isThisDeleting =
                             isDeletingInitiative &&
                             deletingInitiativeKey === (sec.key || String(idx));
@@ -3284,325 +3893,930 @@ export default function CmsDashboardPage() {
                           return (
                             <div
                               key={sec.key || idx}
-                              className={`group/tab relative inline-flex items-center rounded-lg transition-all border ${isSelected
-                                ? "bg-[#E8542A] border-[#E8542A] text-white shadow-sm"
-                                : "bg-white dark:bg-bg border-slate-200 dark:border-border text-slate-700 dark:text-gray-300 hover:bg-slate-50"
-                                }`}
+                              className="p-5 rounded-2xl bg-gray-50 dark:bg-bg border border-gray-200 dark:border-border space-y-5 shadow-sm"
                             >
-                              <button
-                                type="button"
-                                onClick={() => setActiveInitiativeIndex(idx)}
-                                className="px-3 py-1.5 text-xs font-bold uppercase tracking-wider pr-7"
-                              >
-                                {sec.name || sec.title || `Initiative ${idx + 1}`}
-                              </button>
-                              <button
-                                type="button"
-                                title={`Delete ${sec.name || sec.title || sec.key}`}
-                                disabled={isDeletingInitiative}
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleDeleteInitiative(sec, idx);
-                                }}
-                                className={`absolute right-1 p-1 rounded transition-opacity ${isSelected
-                                  ? "text-white/80 hover:text-white hover:bg-black/20 opacity-90"
-                                  : "text-slate-400 hover:text-red-600 hover:bg-red-50 opacity-0 group-hover/tab:opacity-100"
-                                  }`}
-                              >
-                                {isThisDeleting ? (
-                                  <Loader2 size={11} className="animate-spin text-white" />
-                                ) : (
-                                  <Trash2 size={11} />
-                                )}
-                              </button>
+                              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-gray-200 dark:border-border">
+                                <div className="flex items-center gap-2">
+                                  <div className="w-8 h-8 rounded-lg bg-orange-100 dark:bg-orange-950/40 flex items-center justify-center">
+                                    <Layout size={15} className="text-[#E8542A]" />
+                                  </div>
+                                  <div>
+                                    <h4 className="text-xs font-bold text-[#0f2347] dark:text-text-primary uppercase tracking-wider">
+                                      {idx + 1}. {sec.name || sec.title || `Initiative ${idx + 1}`}
+                                    </h4>
+                                    <span className="text-[10px] text-gray-400 font-mono">Key: {sec.key || `initiative-${idx}`}</span>
+                                  </div>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <button
+                                    type="button"
+                                    disabled={savingSectionKey === sec.key}
+                                    onClick={() => handleSaveSection(sec.key, sec.title || sec.name)}
+                                    className={`px-3.5 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 transition-all shadow-sm cursor-pointer ${
+                                      savedSectionKey === sec.key
+                                        ? "bg-emerald-500 text-white"
+                                        : "bg-[#E8542A] hover:bg-[#d4431b] text-white"
+                                    }`}
+                                  >
+                                    {savingSectionKey === sec.key ? (
+                                      <>
+                                        <Loader2 size={13} className="animate-spin" />
+                                        <span>Saving...</span>
+                                      </>
+                                    ) : savedSectionKey === sec.key ? (
+                                      <>
+                                        <Check size={13} />
+                                        <span>Saved!</span>
+                                      </>
+                                    ) : (
+                                      <>
+                                        <Save size={13} />
+                                        <span>Save This Initiative</span>
+                                      </>
+                                    )}
+                                  </button>
+                                  <button
+                                    type="button"
+                                    disabled={isDeletingInitiative}
+                                    onClick={() => handleDeleteInitiative(sec, idx)}
+                                    className="text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/20 px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-colors disabled:opacity-50 cursor-pointer"
+                                  >
+                                    {isThisDeleting ? (
+                                      <>
+                                        <Loader2 size={13} className="animate-spin" />
+                                        <span>Deleting...</span>
+                                      </>
+                                    ) : (
+                                      <>
+                                        <Trash2 size={13} />
+                                        <span>Delete</span>
+                                      </>
+                                    )}
+                                  </button>
+                                </div>
+                              </div>
+
+                              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                <div>
+                                  <label className="block text-xs font-bold text-slate-900 dark:text-text-primary uppercase mb-1">
+                                    Initiative Name / Title
+                                  </label>
+                                  <input
+                                    type="text"
+                                    value={sec.title || sec.name || ""}
+                                    onChange={(e) => updateCurrentSec({ title: e.target.value, name: e.target.value })}
+                                    placeholder="e.g. VIDHYA (EDUCATION)"
+                                    className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-border bg-white dark:bg-bg text-xs font-bold text-slate-900 dark:text-text-primary placeholder:text-slate-400 focus:outline-none focus:border-slate-800"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-xs font-bold text-slate-900 dark:text-text-primary uppercase mb-1">
+                                    Slug / Key (URL Identifier)
+                                  </label>
+                                  <input
+                                    type="text"
+                                    value={sec.key || ""}
+                                    onChange={(e) => updateCurrentSec({ key: e.target.value.toLowerCase().replace(/\s+/g, "-") })}
+                                    placeholder="e.g. vidhya"
+                                    className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-border bg-white dark:bg-bg text-xs font-mono text-slate-900 dark:text-text-primary placeholder:text-slate-400 focus:outline-none focus:border-slate-800"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-xs font-bold text-slate-900 dark:text-text-primary uppercase mb-1">
+                                    Eyebrow Tag
+                                  </label>
+                                  <input
+                                    type="text"
+                                    value={sec.extra?.eyebrow ?? ""}
+                                    onChange={(e) => updateExtra({ eyebrow: e.target.value })}
+                                    placeholder="e.g. OUR INITIATIVES"
+                                    className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-border bg-white dark:bg-bg text-xs font-semibold text-slate-900 dark:text-text-primary placeholder:text-slate-400 focus:outline-none focus:border-slate-800"
+                                  />
+                                </div>
+                              </div>
+
+                              {/* Subtitle / Lead Quote */}
+                              <div>
+                                <label className="block text-xs font-bold text-slate-900 dark:text-text-primary uppercase mb-1">
+                                  Lead Summary / Quote (Paragraph 1)
+                                </label>
+                                <textarea
+                                  rows={2}
+                                  value={sec.subtitle || ""}
+                                  onChange={(e) => updateCurrentSec({ subtitle: e.target.value })}
+                                  placeholder="Rural children often leave school to support their families..."
+                                  className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-border bg-white dark:bg-bg text-xs text-slate-900 dark:text-text-primary placeholder:text-slate-400 focus:outline-none focus:border-slate-800 leading-relaxed font-medium"
+                                />
+                              </div>
+
+                              {/* Full Story / Description */}
+                              <div>
+                                <label className="block text-xs font-bold text-slate-900 dark:text-text-primary uppercase mb-1">
+                                  Detailed Description Narrative (Paragraph 2)
+                                </label>
+                                <textarea
+                                  rows={4}
+                                  value={sec.description || ""}
+                                  onChange={(e) => updateCurrentSec({ description: e.target.value })}
+                                  placeholder="The 'Vidhya (Education)' Program is a robust, nationwide initiative..."
+                                  className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-border bg-white dark:bg-bg text-xs text-slate-900 dark:text-text-primary placeholder:text-slate-400 focus:outline-none focus:border-slate-800 leading-relaxed font-medium"
+                                />
+                              </div>
+
+                              {/* Image & Alt Tag */}
+                              <div className="p-4 rounded-xl bg-orange-50/40 dark:bg-bg border border-orange-100 dark:border-border space-y-4">
+                                <h4 className="text-xs font-bold text-slate-900 dark:text-text-primary uppercase flex items-center gap-1.5">
+                                  <ImageIcon size={14} className="text-[#E8542A]" />
+                                  Initiative Photo &amp; SEO Alt Tag
+                                </h4>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-start">
+                                  <CmsImageField
+                                    label="Initiative Cover Photo"
+                                    value={sec.image || ""}
+                                    onChange={(url) => updateCurrentSec({ image: url })}
+                                    recommendedDimensions="800 × 600 px · Max 5MB"
+                                    placeholder="Upload image or enter custom URL..."
+                                  />
+                                  <div>
+                                    <label className="block text-xs font-semibold text-slate-700 dark:text-muted mb-2">
+                                      Image Alt Tag (SEO &amp; Accessibility)
+                                    </label>
+                                    <input
+                                      type="text"
+                                      value={sec.extra?.alt || ""}
+                                      onChange={(e) => updateExtra({ alt: e.target.value })}
+                                      placeholder="e.g. Children smiling in rural bridge school"
+                                      className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-border bg-white dark:bg-panel text-xs text-slate-900 dark:text-text-primary placeholder:text-slate-400 focus:outline-none focus:border-slate-800 font-medium"
+                                    />
+                                    <p className="text-[10px] text-slate-500 mt-1">
+                                      Displayed to search engines and shown as text fallback if the image is missing.
+                                    </p>
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Key Feature Pills */}
+                              <div className="p-4 rounded-xl bg-slate-50 dark:bg-bg border border-slate-200 dark:border-border space-y-2">
+                                <label className="block text-xs font-bold text-slate-900 dark:text-text-primary uppercase">
+                                  Key Feature Pills (comma-separated tags with checkmarks)
+                                </label>
+                                <input
+                                  type="text"
+                                  value={(sec.extra?.features || []).join(", ")}
+                                  onChange={(e) => {
+                                    const feats = e.target.value.split(",").map((s) => s.trim()).filter(Boolean);
+                                    updateExtra({ features: feats });
+                                  }}
+                                  placeholder="RURAL BRIDGE SCHOOLS, TEACHER TRAINING, SCHOLARSHIPS, RESOURCE SUPPORT"
+                                  className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-border bg-white dark:bg-panel text-xs text-slate-900 dark:text-text-primary placeholder:text-slate-400 focus:outline-none focus:border-slate-800 font-medium"
+                                />
+                                <div className="flex flex-wrap gap-1.5 pt-1">
+                                  {(sec.extra?.features || []).map((f: string, i: number) => (
+                                    <span key={i} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-orange-100 text-slate-900 text-[11px] font-bold">
+                                      <Check size={11} className="text-[#E8542A]" />
+                                      {f}
+                                    </span>
+                                  ))}
+                                </div>
+                              </div>
+
+                              {/* Common Questions (FAQs) */}
+                              <div className="p-4 rounded-xl bg-slate-50 dark:bg-bg border border-slate-200 dark:border-border space-y-3">
+                                <div className="flex items-center justify-between">
+                                  <label className="block text-xs font-bold text-slate-900 dark:text-text-primary uppercase flex items-center gap-1.5">
+                                    <HelpCircle size={14} className="text-[#E8542A]" />
+                                    Common Questions (FAQs Accordion)
+                                  </label>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      const currentFaqs = sec.extra?.faqs || [];
+                                      updateExtra({
+                                        faqs: [...currentFaqs, { question: "NEW QUESTION?", answer: "Answer details..." }],
+                                      });
+                                    }}
+                                    className="text-[11px] text-[#E8542A] hover:underline font-bold flex items-center gap-1 cursor-pointer"
+                                  >
+                                    <Plus size={12} /> Add FAQ
+                                  </button>
+                                </div>
+                                {(sec.extra?.faqs || []).map((faq: any, fIndex: number) => (
+                                  <div key={fIndex} className="p-3 bg-white dark:bg-panel rounded-xl border border-slate-200 dark:border-border space-y-2">
+                                    <div className="flex items-center justify-between gap-2">
+                                      <input
+                                        type="text"
+                                        value={faq.question || ""}
+                                        onChange={(e) => {
+                                          const updatedFaqs = [...(sec.extra?.faqs || [])];
+                                          updatedFaqs[fIndex] = { ...updatedFaqs[fIndex], question: e.target.value };
+                                          updateExtra({ faqs: updatedFaqs });
+                                        }}
+                                        placeholder="WHAT IS A BRIDGE SCHOOL?"
+                                        className="flex-1 px-2.5 py-1.5 rounded-lg border border-slate-300 dark:border-border text-xs font-bold uppercase text-slate-900 bg-white placeholder:text-slate-400 focus:outline-none focus:border-slate-800"
+                                      />
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          const updatedFaqs = (sec.extra?.faqs || []).filter((_: any, i: number) => i !== fIndex);
+                                          updateExtra({ faqs: updatedFaqs });
+                                        }}
+                                        className="text-red-500 hover:text-red-700 p-1 cursor-pointer"
+                                      >
+                                        <Trash2 size={13} />
+                                      </button>
+                                    </div>
+                                    <textarea
+                                      rows={2}
+                                      value={faq.answer || ""}
+                                      onChange={(e) => {
+                                        const updatedFaqs = [...(sec.extra?.faqs || [])];
+                                        updatedFaqs[fIndex] = { ...updatedFaqs[fIndex], answer: e.target.value };
+                                        updateExtra({ faqs: updatedFaqs });
+                                      }}
+                                      placeholder="Bridge schools are transitional educational centres..."
+                                      className="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 dark:border-border text-xs text-slate-800 dark:text-text-primary bg-white placeholder:text-slate-400 focus:outline-none focus:border-slate-800 leading-relaxed font-medium"
+                                    />
+                                  </div>
+                                ))}
+                              </div>
+
+                              {/* Impact Metrics */}
+                              <div className="p-4 rounded-xl bg-slate-50 dark:bg-bg border border-slate-200 dark:border-border space-y-3">
+                                <label className="block text-xs font-bold text-slate-900 dark:text-text-primary uppercase flex items-center gap-1.5">
+                                  <Layers size={14} className="text-[#E8542A]" />
+                                  Impact Metrics (Shown in Dark Navy Card)
+                                </label>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                  {[0, 1, 2, 3].map((mIndex) => {
+                                    const metric = (sec.extra?.impactMetrics || [])[mIndex] || { value: "", label: "" };
+                                    return (
+                                      <div key={mIndex} className="p-3 bg-white dark:bg-panel rounded-xl border border-slate-200 dark:border-border flex gap-2 items-center">
+                                        <div className="w-1/2">
+                                          <label className="block text-[10px] text-slate-600 font-semibold mb-0.5">Value (e.g. 100,000+)</label>
+                                          <input
+                                            type="text"
+                                            value={metric.value || ""}
+                                            onChange={(e) => {
+                                              const metrics = [...(sec.extra?.impactMetrics || [])];
+                                              while (metrics.length <= mIndex) metrics.push({ value: "", label: "" });
+                                              metrics[mIndex] = { ...metrics[mIndex], value: e.target.value };
+                                              updateExtra({ impactMetrics: metrics });
+                                            }}
+                                            placeholder="100,000+"
+                                            className="w-full px-2 py-1 rounded-lg border border-slate-300 dark:border-border text-xs font-bold text-[#E8542A] bg-white placeholder:text-slate-400 focus:outline-none focus:border-slate-800"
+                                          />
+                                        </div>
+                                        <div className="w-1/2">
+                                          <label className="block text-[10px] text-slate-600 font-semibold mb-0.5">Label (e.g. STUDENTS ENROLLED)</label>
+                                          <input
+                                            type="text"
+                                            value={metric.label || ""}
+                                            onChange={(e) => {
+                                              const metrics = [...(sec.extra?.impactMetrics || [])];
+                                              while (metrics.length <= mIndex) metrics.push({ value: "", label: "" });
+                                              metrics[mIndex] = { ...metrics[mIndex], label: e.target.value };
+                                              updateExtra({ impactMetrics: metrics });
+                                            }}
+                                            placeholder="STUDENTS ENROLLED"
+                                            className="w-full px-2 py-1 rounded-lg border border-slate-300 dark:border-border text-xs uppercase font-bold text-slate-900 bg-white placeholder:text-slate-400 focus:outline-none focus:border-slate-800"
+                                          />
+                                        </div>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              </div>
                             </div>
+                          );
+                        });
+                      })()}
+
+                      {/* Unified Bottom Save Bar for Our Work */}
+                      <div className="p-4 rounded-2xl bg-[#0f2347] text-white flex flex-col sm:flex-row items-center justify-between gap-4 shadow-lg sticky bottom-4 z-20">
+                        <div className="flex items-center gap-3 text-left">
+                          <div className="w-10 h-10 rounded-xl bg-[#E8542A] flex items-center justify-center shrink-0">
+                            <Save size={20} className="text-white" />
+                          </div>
+                          <div>
+                            <h4 className="text-sm font-bold text-white">Save All Initiatives</h4>
+                            <p className="text-xs text-gray-300">
+                              One-click save: Updates all initiatives, photos, FAQs, and impact metrics instantly.
+                            </p>
+                          </div>
+                        </div>
+                        <button
+                          type="submit"
+                          disabled={isSaving}
+                          className="w-full sm:w-auto px-6 py-2.5 bg-[#E8542A] hover:bg-[#d4431b] disabled:opacity-50 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2 shrink-0 cursor-pointer"
+                        >
+                          {isSaving ? (
+                            <>
+                              <Loader2 size={16} className="animate-spin" />
+                              <span>Saving Live Data...</span>
+                            </>
+                          ) : (
+                            <>
+                              <Save size={16} />
+                              <span>Save All Initiatives</span>
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* 2.6 Get Involved / Volunteers CMS */}
+                  {activeSlug === "get-involved" && (
+                    <div className="bg-white dark:bg-panel rounded-2xl border border-gray-100 dark:border-border p-6 shadow-sm space-y-8">
+                      <div className="border-b border-gray-100 dark:border-border pb-4">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                          <div>
+                            <h3 className="text-sm font-bold text-[#0f2347] dark:text-text-primary flex items-center gap-2">
+                              <HeartHandshake size={16} className="text-[#E8542A]" />
+                              Get Involved &amp; Volunteers — Section-wise Content Manager
+                            </h3>
+                            <p className="text-xs text-gray-500 mt-1">
+                              Manage volunteer recruitment hero banner, live impact statistics, volunteer culture/perks, and FAQ accordion.
+                            </p>
+                          </div>
+                          <span className="text-xs bg-orange-50 text-[#E8542A] border border-orange-200 px-3 py-1.5 rounded-xl font-semibold flex items-center gap-1.5 self-start sm:self-auto">
+                            <span className="w-2 h-2 rounded-full bg-[#E8542A] animate-pulse" />
+                            4 Sections Active
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Get Involved Sub-Tabs */}
+                      <div className="flex items-center gap-1.5 p-1.5 bg-gray-50 dark:bg-bg rounded-xl border border-gray-200 dark:border-border overflow-x-auto shadow-xs">
+                        {[
+                          { id: "all", label: "All Sections" },
+                          { id: "hero", label: "1. Hero Banner & Header" },
+                          { id: "impact_numbers", label: "2. Impact Numbers" },
+                          { id: "volunteer_perks", label: "3. Volunteer Perks & Culture" },
+                          { id: "faqs", label: "4. Frequently Asked Questions" },
+                        ].map((tab) => {
+                          const isActive = getInvolvedSubTab === tab.id;
+                          return (
+                            <button
+                              key={tab.id}
+                              type="button"
+                              onClick={() => setGetInvolvedSubTab(tab.id)}
+                              className={`px-3.5 py-2 rounded-lg text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 cursor-pointer ${
+                                isActive
+                                  ? "bg-[#0f2347] text-white shadow-xs"
+                                  : "text-gray-600 dark:text-muted hover:text-[#0f2347] hover:bg-white dark:hover:bg-panel"
+                              }`}
+                            >
+                              <span>{tab.label}</span>
+                            </button>
                           );
                         })}
                       </div>
 
-                      {/* Selected Initiative Form */}
-                      {formData.sections && formData.sections[activeInitiativeIndex] && (() => {
-                        const sec = formData.sections[activeInitiativeIndex];
-                        const updateCurrentSec = (partial: Partial<CmsSection>) => {
-                          const updated = [...formData.sections!];
-                          updated[activeInitiativeIndex] = {
-                            ...updated[activeInitiativeIndex],
-                            ...partial,
-                          };
-                          setFormData({ ...formData, sections: updated });
-                        };
-                        const updateExtra = (partialExtra: Record<string, any>) => {
-                          const updated = [...formData.sections!];
-                          updated[activeInitiativeIndex] = {
-                            ...updated[activeInitiativeIndex],
-                            extra: {
-                              ...(updated[activeInitiativeIndex].extra || {}),
-                              ...partialExtra,
-                            },
-                          };
-                          setFormData({ ...formData, sections: updated });
-                        };
-
-                        return (
-                          <div className="space-y-5 pt-2">
-                            <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-border">
-                              <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-                                Editing: {sec.name || sec.title || sec.key}
-                              </span>
-                              <button
-                                type="button"
-                                disabled={isDeletingInitiative}
-                                onClick={() => handleDeleteInitiative(sec, activeInitiativeIndex)}
-                                className="text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/20 px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors disabled:opacity-50"
-                              >
-                                {isDeletingInitiative &&
-                                  deletingInitiativeKey === (sec.key || String(activeInitiativeIndex)) ? (
-                                  <>
-                                    <Loader2 size={13} className="animate-spin" />
-                                    <span>Deleting from server...</span>
-                                  </>
-                                ) : (
-                                  <>
-                                    <Trash2 size={13} />
-                                    <span>Delete This Initiative</span>
-                                  </>
-                                )}
-                              </button>
-                            </div>
-
-                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                              <div>
-                                <label className="block text-xs font-bold text-slate-900 dark:text-text-primary uppercase mb-1">
-                                  Initiative Name / Title
-                                </label>
-                                <input
-                                  type="text"
-                                  value={sec.title || sec.name || ""}
-                                  onChange={(e) => updateCurrentSec({ title: e.target.value, name: e.target.value })}
-                                  placeholder="e.g. VIDHYA (EDUCATION)"
-                                  className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-border bg-white dark:bg-bg text-xs font-bold text-slate-900 dark:text-text-primary placeholder:text-slate-400 focus:outline-none focus:border-slate-800"
-                                />
+                      {/* Section 1: Hero Banner & Header */}
+                      {(getInvolvedSubTab === "all" || getInvolvedSubTab === "hero") && (
+                        <div className="p-5 rounded-2xl bg-gray-50 dark:bg-bg border border-gray-200 dark:border-border space-y-4 shadow-sm">
+                          <div className="flex items-center justify-between pb-3 border-b border-gray-200 dark:border-border">
+                            <div className="flex items-center gap-2">
+                              <div className="w-8 h-8 rounded-lg bg-orange-100 dark:bg-orange-950/40 flex items-center justify-center">
+                                <ImageIcon size={15} className="text-[#E8542A]" />
                               </div>
                               <div>
-                                <label className="block text-xs font-bold text-slate-900 dark:text-text-primary uppercase mb-1">
-                                  Slug / Key (URL Identifier)
-                                </label>
-                                <input
-                                  type="text"
-                                  value={sec.key || ""}
-                                  onChange={(e) => updateCurrentSec({ key: e.target.value.toLowerCase().replace(/\s+/g, "-") })}
-                                  placeholder="e.g. vidhya"
-                                  className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-border bg-white dark:bg-bg text-xs font-mono text-slate-900 dark:text-text-primary placeholder:text-slate-400 focus:outline-none focus:border-slate-800"
-                                />
-                              </div>
-                              <div>
-                                <label className="block text-xs font-bold text-slate-900 dark:text-text-primary uppercase mb-1">
-                                  Eyebrow Tag
-                                </label>
-                                <input
-                                  type="text"
-                                  value={sec.extra?.eyebrow || "OUR INITIATIVES"}
-                                  onChange={(e) => updateExtra({ eyebrow: e.target.value })}
-                                  placeholder="e.g. OUR INITIATIVES"
-                                  className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-border bg-white dark:bg-bg text-xs font-semibold text-slate-900 dark:text-text-primary placeholder:text-slate-400 focus:outline-none focus:border-slate-800"
-                                />
+                                <h4 className="text-xs font-bold text-[#0f2347] dark:text-text-primary uppercase tracking-wider">
+                                  1. Hero Banner &amp; Header
+                                </h4>
+                                <span className="text-[10px] text-gray-400 font-mono">Top Volunteer Header</span>
                               </div>
                             </div>
+                            <button
+                              type="button"
+                              disabled={savingSectionKey === "get_involved_hero"}
+                              onClick={() => handleSaveSection("get_involved_hero", "Get Involved Hero Banner")}
+                              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 transition-all shadow-sm cursor-pointer ${
+                                savedSectionKey === "get_involved_hero"
+                                  ? "bg-emerald-500 text-white"
+                                  : "bg-[#E8542A] hover:bg-[#d4431b] text-white"
+                              }`}
+                            >
+                              {savingSectionKey === "get_involved_hero" ? (
+                                <>
+                                  <Loader2 size={13} className="animate-spin" />
+                                  <span>Saving...</span>
+                                </>
+                              ) : savedSectionKey === "get_involved_hero" ? (
+                                <>
+                                  <Check size={13} />
+                                  <span>Saved!</span>
+                                </>
+                              ) : (
+                                <>
+                                  <Save size={13} />
+                                  <span>Save Hero Banner</span>
+                                </>
+                              )}
+                            </button>
+                          </div>
 
-                            {/* Subtitle / Lead Quote */}
+                          <div className="space-y-4">
                             <div>
-                              <label className="block text-xs font-bold text-slate-900 dark:text-text-primary uppercase mb-1">
-                                Lead Summary / Quote (Paragraph 1)
-                              </label>
-                              <textarea
-                                rows={2}
-                                value={sec.subtitle || ""}
-                                onChange={(e) => updateCurrentSec({ subtitle: e.target.value })}
-                                placeholder="Rural children often leave school to support their families..."
-                                className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-border bg-white dark:bg-bg text-xs text-slate-900 dark:text-text-primary placeholder:text-slate-400 focus:outline-none focus:border-slate-800 leading-relaxed font-medium"
-                              />
-                            </div>
-
-                            {/* Full Story / Description */}
-                            <div>
-                              <label className="block text-xs font-bold text-slate-900 dark:text-text-primary uppercase mb-1">
-                                Detailed Description Narrative (Paragraph 2)
-                              </label>
-                              <textarea
-                                rows={4}
-                                value={sec.description || ""}
-                                onChange={(e) => updateCurrentSec({ description: e.target.value })}
-                                placeholder="The 'Vidhya (Education)' Program is a robust, nationwide initiative..."
-                                className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-border bg-white dark:bg-bg text-xs text-slate-900 dark:text-text-primary placeholder:text-slate-400 focus:outline-none focus:border-slate-800 leading-relaxed font-medium"
-                              />
-                            </div>
-
-                            {/* Image & Alt Tag */}
-                            <div className="p-4 rounded-xl bg-orange-50/40 dark:bg-bg border border-orange-100 dark:border-border space-y-4">
-                              <h4 className="text-xs font-bold text-slate-900 dark:text-text-primary uppercase flex items-center gap-1.5">
-                                <ImageIcon size={14} className="text-[#E8542A]" />
-                                Initiative Photo &amp; SEO Alt Tag
-                              </h4>
-                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-start">
-                                <CmsImageField
-                                  label="Initiative Cover Photo"
-                                  value={sec.image || ""}
-                                  onChange={(url) => updateCurrentSec({ image: url })}
-                                  recommendedDimensions="800 × 600 px · Max 5MB"
-                                  placeholder="Upload image or enter custom URL..."
-                                />
-                                <div>
-                                  <label className="block text-xs font-semibold text-slate-700 dark:text-muted mb-2">
-                                    Image Alt Tag (SEO &amp; Accessibility)
-                                  </label>
-                                  <input
-                                    type="text"
-                                    value={sec.extra?.alt || ""}
-                                    onChange={(e) => updateExtra({ alt: e.target.value })}
-                                    placeholder="e.g. Children smiling in rural bridge school"
-                                    className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-border bg-white dark:bg-panel text-xs text-slate-900 dark:text-text-primary placeholder:text-slate-400 focus:outline-none focus:border-slate-800 font-medium"
-                                  />
-                                  <p className="text-[10px] text-slate-500 mt-1">
-                                    Displayed to search engines and shown as text fallback if the image is missing.
-                                  </p>
-                                </div>
-                              </div>
-                            </div>
-
-                            {/* Key Feature Pills */}
-                            <div className="p-4 rounded-xl bg-slate-50 dark:bg-bg border border-slate-200 dark:border-border space-y-2">
-                              <label className="block text-xs font-bold text-slate-900 dark:text-text-primary uppercase">
-                                Key Feature Pills (comma-separated tags with checkmarks)
+                              <label className="block text-xs font-semibold text-gray-700 dark:text-muted mb-1">
+                                Main Catchy Title
                               </label>
                               <input
                                 type="text"
-                                value={(sec.extra?.features || []).join(", ")}
-                                onChange={(e) => {
-                                  const feats = e.target.value.split(",").map((s) => s.trim()).filter(Boolean);
-                                  updateExtra({ features: feats });
-                                }}
-                                placeholder="RURAL BRIDGE SCHOOLS, TEACHER TRAINING, SCHOLARSHIPS, RESOURCE SUPPORT"
-                                className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-border bg-white dark:bg-panel text-xs text-slate-900 dark:text-text-primary placeholder:text-slate-400 focus:outline-none focus:border-slate-800 font-medium"
+                                value={formData.title || ""}
+                                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                                placeholder="Your time is the most valuable thing you can give"
+                                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-border bg-white dark:bg-panel text-xs text-[#0f2347] dark:text-text-primary font-semibold focus:outline-none"
                               />
-                              <div className="flex flex-wrap gap-1.5 pt-1">
-                                {(sec.extra?.features || []).map((f: string, i: number) => (
-                                  <span key={i} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-orange-100 text-slate-900 text-[11px] font-bold">
-                                    <Check size={11} className="text-[#E8542A]" />
-                                    {f}
-                                  </span>
-                                ))}
-                              </div>
                             </div>
 
-                            {/* Common Questions (FAQs) */}
-                            <div className="p-4 rounded-xl bg-slate-50 dark:bg-bg border border-slate-200 dark:border-border space-y-3">
-                              <div className="flex items-center justify-between">
-                                <label className="block text-xs font-bold text-slate-900 dark:text-text-primary uppercase flex items-center gap-1.5">
-                                  <HelpCircle size={14} className="text-[#E8542A]" />
-                                  Common Questions (FAQs Accordion)
-                                </label>
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    const currentFaqs = sec.extra?.faqs || [];
-                                    updateExtra({
-                                      faqs: [...currentFaqs, { question: "NEW QUESTION?", answer: "Answer details..." }],
-                                    });
-                                  }}
-                                  className="text-[11px] text-[#E8542A] hover:underline font-bold flex items-center gap-1"
-                                >
-                                  <Plus size={12} /> Add FAQ
-                                </button>
+                            <div className="space-y-4">
+                              <CmsImageField
+                                label="Hero Banner Background Image"
+                                value={formData.bannerImage || ""}
+                                onChange={(url) => setFormData({ ...formData, bannerImage: url })}
+                                recommendedDimensions="1920 × 700 px · Max 5MB"
+                                placeholder="Upload volunteer hero photo..."
+                              />
+
+                              <CmsVideoField
+                                label="Hero Banner Video (Optional)"
+                                value={formData.bannerVideo || ""}
+                                onChange={(url) => setFormData({ ...formData, bannerVideo: url })}
+                                recommended="MP4 / WebM video URL · Takes priority over image in hero background"
+                                placeholder="Paste video URL (e.g. /uploads/video.mp4 or https://...)"
+                              />
+                            </div>
+
+                            <div>
+                              <label className="block text-xs font-semibold text-gray-700 dark:text-muted mb-1">
+                                Subtitle / Mission Statement
+                              </label>
+                              <textarea
+                                rows={2}
+                                value={formData.subtitle || ""}
+                                onChange={(e) => setFormData({ ...formData, subtitle: e.target.value })}
+                                placeholder="We do not need your money. We need your hands, your mind, and your heart. Whether you have 2 hours or 2 years — there is a place for you here."
+                                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-border bg-white dark:bg-panel text-xs text-[#0f2347] dark:text-text-primary focus:outline-none leading-relaxed"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Section 2: Impact Numbers */}
+                      {(getInvolvedSubTab === "all" || getInvolvedSubTab === "impact_numbers") && (
+                        <div className="p-5 rounded-2xl bg-gray-50 dark:bg-bg border border-gray-200 dark:border-border space-y-4 shadow-sm">
+                          <div className="flex items-center justify-between pb-3 border-b border-gray-200 dark:border-border">
+                            <div className="flex items-center gap-2">
+                              <div className="w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-950/40 flex items-center justify-center">
+                                <BarChart2 size={15} className="text-blue-600" />
                               </div>
-                              {(sec.extra?.faqs || []).map((faq: any, fIndex: number) => (
-                                <div key={fIndex} className="p-3 bg-white dark:bg-panel rounded-xl border border-slate-200 dark:border-border space-y-2">
+                              <div>
+                                <h4 className="text-xs font-bold text-[#0f2347] dark:text-text-primary uppercase tracking-wider">
+                                  2. Impact Numbers (4 Highlight Metrics)
+                                </h4>
+                                <span className="text-[10px] text-gray-400 font-mono">Key: impact_numbers</span>
+                              </div>
+                            </div>
+                            <button
+                              type="button"
+                              disabled={savingSectionKey === "impact_numbers"}
+                              onClick={() => handleSaveSection("impact_numbers", "Impact Numbers")}
+                              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 transition-all shadow-sm cursor-pointer ${
+                                savedSectionKey === "impact_numbers"
+                                  ? "bg-emerald-500 text-white"
+                                  : "bg-[#E8542A] hover:bg-[#d4431b] text-white"
+                              }`}
+                            >
+                              {savingSectionKey === "impact_numbers" ? (
+                                <>
+                                  <Loader2 size={13} className="animate-spin" />
+                                  <span>Saving...</span>
+                                </>
+                              ) : savedSectionKey === "impact_numbers" ? (
+                                <>
+                                  <Check size={13} />
+                                  <span>Saved!</span>
+                                </>
+                              ) : (
+                                <>
+                                  <Save size={13} />
+                                  <span>Save Impact Numbers</span>
+                                </>
+                              )}
+                            </button>
+                          </div>
+
+                          <div className="space-y-4">
+                            <div className="flex items-center justify-between">
+                              <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+                                Volunteer Statistics Cards ({getSection("impact_numbers")?.items?.length || 0})
+                              </label>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const curr = getSection("impact_numbers")?.items || [
+                                    { number: "200+", label: "ACTIVE VOLUNTEERS", sub: "Across 8 states" },
+                                    { number: "100%", label: "FIELD DIRECTED", sub: "Zero bureaucratic waste" },
+                                    { number: "8+", label: "ACTIVE REGIONS", sub: "Uttarakhand to Delhi NCR" },
+                                    { number: "15,000+", label: "HOURS INVESTED", sub: "Community service logged" },
+                                  ];
+                                  updateSection("impact_numbers", () => ({
+                                    items: [...curr, { number: "100+", label: "NEW METRIC", sub: "Community reach" }],
+                                  }));
+                                }}
+                                className="inline-flex items-center gap-1 px-3 py-1.5 bg-[#0f2347] text-white rounded-lg text-xs font-semibold hover:bg-[#1a3a6b] cursor-pointer"
+                              >
+                                <Plus size={12} /> Add Metric Card
+                              </button>
+                            </div>
+
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                              {(() => {
+                                const statsList = getSection("impact_numbers")?.items || [
+                                  { number: "200+", label: "ACTIVE VOLUNTEERS", sub: "Across 8 states" },
+                                  { number: "100%", label: "FIELD DIRECTED", sub: "Zero bureaucratic waste" },
+                                  { number: "8+", label: "ACTIVE REGIONS", sub: "Uttarakhand to Delhi NCR" },
+                                  { number: "15,000+", label: "HOURS INVESTED", sub: "Community service logged" },
+                                ];
+
+                                return statsList.map((st: any, idx: number) => (
+                                  <div
+                                    key={idx}
+                                    className="p-4 bg-white dark:bg-panel rounded-xl border border-gray-200 dark:border-border space-y-2.5 shadow-sm"
+                                  >
+                                    <div className="flex items-center justify-between">
+                                      <span className="text-[11px] font-bold text-[#E8542A] uppercase">
+                                        Stat #{idx + 1}
+                                      </span>
+                                      {statsList.length > 1 && (
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            const updated = statsList.filter((_: any, i: number) => i !== idx);
+                                            updateSection("impact_numbers", () => ({ items: updated }));
+                                          }}
+                                          className="text-slate-400 hover:text-red-500 p-1 rounded-lg cursor-pointer"
+                                          title="Remove Stat Card"
+                                        >
+                                          <Trash2 size={14} />
+                                        </button>
+                                      )}
+                                    </div>
+
+                                    <div>
+                                      <label className="block text-[10px] font-semibold text-slate-600 uppercase mb-1">
+                                        Big Number / Stat
+                                      </label>
+                                      <input
+                                        type="text"
+                                        value={st.number || ""}
+                                        onChange={(e) => {
+                                          const updated = [...statsList];
+                                          updated[idx] = { ...updated[idx], number: e.target.value };
+                                          updateSection("impact_numbers", () => ({ items: updated }));
+                                        }}
+                                        placeholder="200+"
+                                        className="w-full px-3 py-1.5 rounded-lg border border-slate-300 dark:border-border bg-white dark:bg-bg text-sm font-bold text-[#0f2347] dark:text-text-primary focus:outline-none"
+                                      />
+                                    </div>
+
+                                    <div>
+                                      <label className="block text-[10px] font-semibold text-slate-600 uppercase mb-1">
+                                        Label / Heading
+                                      </label>
+                                      <input
+                                        type="text"
+                                        value={st.label || ""}
+                                        onChange={(e) => {
+                                          const updated = [...statsList];
+                                          updated[idx] = { ...updated[idx], label: e.target.value };
+                                          updateSection("impact_numbers", () => ({ items: updated }));
+                                        }}
+                                        placeholder="ACTIVE VOLUNTEERS"
+                                        className="w-full px-3 py-1.5 rounded-lg border border-slate-300 dark:border-border bg-white dark:bg-bg text-xs font-bold uppercase text-slate-900 dark:text-text-primary focus:outline-none"
+                                      />
+                                    </div>
+
+                                    <div>
+                                      <label className="block text-[10px] font-semibold text-slate-600 uppercase mb-1">
+                                        Subtitle / Caption
+                                      </label>
+                                      <input
+                                        type="text"
+                                        value={st.sub || ""}
+                                        onChange={(e) => {
+                                          const updated = [...statsList];
+                                          updated[idx] = { ...updated[idx], sub: e.target.value };
+                                          updateSection("impact_numbers", () => ({ items: updated }));
+                                        }}
+                                        placeholder="Across 8 states"
+                                        className="w-full px-3 py-1.5 rounded-lg border border-slate-300 dark:border-border bg-white dark:bg-bg text-xs text-slate-600 dark:text-muted focus:outline-none"
+                                      />
+                                    </div>
+                                  </div>
+                                ));
+                              })()}
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Section 3: Volunteer Perks & Culture */}
+                      {(getInvolvedSubTab === "all" || getInvolvedSubTab === "volunteer_perks") && (
+                        <div className="p-5 rounded-2xl bg-gray-50 dark:bg-bg border border-gray-200 dark:border-border space-y-4 shadow-sm">
+                          <div className="flex items-center justify-between pb-3 border-b border-gray-200 dark:border-border">
+                            <div className="flex items-center gap-2">
+                              <div className="w-8 h-8 rounded-lg bg-emerald-100 dark:bg-emerald-950/40 flex items-center justify-center">
+                                <Award size={15} className="text-emerald-600" />
+                              </div>
+                              <div>
+                                <h4 className="text-xs font-bold text-[#0f2347] dark:text-text-primary uppercase tracking-wider">
+                                  3. Volunteer Perks &amp; Culture
+                                </h4>
+                                <span className="text-[10px] text-gray-400 font-mono">Key: volunteer_perks</span>
+                              </div>
+                            </div>
+                            <button
+                              type="button"
+                              disabled={savingSectionKey === "volunteer_perks"}
+                              onClick={() => handleSaveSection("volunteer_perks", "Volunteer Perks")}
+                              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 transition-all shadow-sm cursor-pointer ${
+                                savedSectionKey === "volunteer_perks"
+                                  ? "bg-emerald-500 text-white"
+                                  : "bg-[#E8542A] hover:bg-[#d4431b] text-white"
+                              }`}
+                            >
+                              {savingSectionKey === "volunteer_perks" ? (
+                                <>
+                                  <Loader2 size={13} className="animate-spin" />
+                                  <span>Saving...</span>
+                                </>
+                              ) : savedSectionKey === "volunteer_perks" ? (
+                                <>
+                                  <Check size={13} />
+                                  <span>Saved!</span>
+                                </>
+                              ) : (
+                                <>
+                                  <Save size={13} />
+                                  <span>Save Volunteer Perks</span>
+                                </>
+                              )}
+                            </button>
+                          </div>
+
+                          <div className="space-y-4">
+                            <div className="flex items-center justify-between">
+                              <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+                                Volunteer Perks &amp; Growth Highlights ({getSection("volunteer_perks")?.items?.length || 0})
+                              </label>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const curr = getSection("volunteer_perks")?.items || [
+                                    { title: "Direct Field Work", desc: "No middle layers — you work directly with rural families and children in need." },
+                                    { title: "Flexible Commitment", desc: "Whether you have 2 hours a weekend or 6 months for a full sabbatical, there is an impactful role for you." },
+                                    { title: "Official Certification", desc: "Receive recognized certificates, recommendation letters, and leadership credentials." },
+                                    { title: "Skill Exchange", desc: "Apply and hone your professional skillsets in real-world grassroots and crisis zones." },
+                                  ];
+                                  updateSection("volunteer_perks", () => ({
+                                    items: [...curr, { title: "NEW BENEFIT", desc: "Description of the volunteering perk." }],
+                                  }));
+                                }}
+                                className="inline-flex items-center gap-1 px-3 py-1.5 bg-[#0f2347] text-white rounded-lg text-xs font-semibold hover:bg-[#1a3a6b] cursor-pointer"
+                              >
+                                <Plus size={12} /> Add Perk Card
+                              </button>
+                            </div>
+
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                              {(() => {
+                                const perksList = getSection("volunteer_perks")?.items || [
+                                  { title: "Direct Field Work", desc: "No middle layers — you work directly with rural families, learning centres, and children in need." },
+                                  { title: "Flexible Commitment", desc: "Whether you have 2 hours a weekend or 6 months for a full sabbatical, there is an impactful role for you." },
+                                  { title: "Official Certification", desc: "Receive recognized certificates, recommendation letters, and leadership credentials for your service." },
+                                  { title: "Skill Exchange", desc: "Apply and hone your professional skillsets in real-world grassroots and crisis zones." },
+                                ];
+
+                                return perksList.map((pk: any, idx: number) => (
+                                  <div
+                                    key={idx}
+                                    className="p-4 bg-white dark:bg-panel rounded-xl border border-gray-200 dark:border-border space-y-2.5 shadow-sm"
+                                  >
+                                    <div className="flex items-center justify-between">
+                                      <span className="text-[11px] font-bold text-[#E8542A] uppercase">
+                                        Perk #{idx + 1}
+                                      </span>
+                                      {perksList.length > 1 && (
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            const updated = perksList.filter((_: any, i: number) => i !== idx);
+                                            updateSection("volunteer_perks", () => ({ items: updated }));
+                                          }}
+                                          className="text-slate-400 hover:text-red-500 p-1 rounded-lg cursor-pointer"
+                                          title="Remove Perk"
+                                        >
+                                          <Trash2 size={14} />
+                                        </button>
+                                      )}
+                                    </div>
+
+                                    <div>
+                                      <label className="block text-[10px] font-semibold text-slate-600 uppercase mb-1">
+                                        Perk Title
+                                      </label>
+                                      <input
+                                        type="text"
+                                        value={pk.title || ""}
+                                        onChange={(e) => {
+                                          const updated = [...perksList];
+                                          updated[idx] = { ...updated[idx], title: e.target.value };
+                                          updateSection("volunteer_perks", () => ({ items: updated }));
+                                        }}
+                                        placeholder="Direct Field Work"
+                                        className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-border bg-white dark:bg-bg text-xs font-bold text-[#0f2347] dark:text-text-primary focus:outline-none"
+                                      />
+                                    </div>
+
+                                    <div>
+                                      <label className="block text-[10px] font-semibold text-slate-600 uppercase mb-1">
+                                        Perk Description
+                                      </label>
+                                      <textarea
+                                        rows={2}
+                                        value={pk.desc || ""}
+                                        onChange={(e) => {
+                                          const updated = [...perksList];
+                                          updated[idx] = { ...updated[idx], desc: e.target.value };
+                                          updateSection("volunteer_perks", () => ({ items: updated }));
+                                        }}
+                                        placeholder="No middle layers — you work directly with beneficiaries..."
+                                        className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-border bg-white dark:bg-bg text-xs text-slate-700 dark:text-muted focus:outline-none leading-relaxed font-medium"
+                                      />
+                                    </div>
+                                  </div>
+                                ));
+                              })()}
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Section 4: Frequently Asked Questions (FAQs) */}
+                      {(getInvolvedSubTab === "all" || getInvolvedSubTab === "faqs") && (
+                        <div className="p-5 rounded-2xl bg-gray-50 dark:bg-bg border border-gray-200 dark:border-border space-y-4 shadow-sm">
+                          <div className="flex items-center justify-between pb-3 border-b border-gray-200 dark:border-border">
+                            <div className="flex items-center gap-2">
+                              <div className="w-8 h-8 rounded-lg bg-indigo-100 dark:bg-indigo-950/40 flex items-center justify-center">
+                                <HelpCircle size={15} className="text-indigo-600" />
+                              </div>
+                              <div>
+                                <h4 className="text-xs font-bold text-[#0f2347] dark:text-text-primary uppercase tracking-wider">
+                                  4. Frequently Asked Questions (Accordion)
+                                </h4>
+                                <span className="text-[10px] text-gray-400 font-mono">Key: faqs</span>
+                              </div>
+                            </div>
+                            <button
+                              type="button"
+                              disabled={savingSectionKey === "faqs"}
+                              onClick={() => handleSaveSection("faqs", "Volunteer FAQs")}
+                              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 transition-all shadow-sm cursor-pointer ${
+                                savedSectionKey === "faqs"
+                                  ? "bg-emerald-500 text-white"
+                                  : "bg-[#E8542A] hover:bg-[#d4431b] text-white"
+                              }`}
+                            >
+                              {savingSectionKey === "faqs" ? (
+                                <>
+                                  <Loader2 size={13} className="animate-spin" />
+                                  <span>Saving...</span>
+                                </>
+                              ) : savedSectionKey === "faqs" ? (
+                                <>
+                                  <Check size={13} />
+                                  <span>Saved!</span>
+                                </>
+                              ) : (
+                                <>
+                                  <Save size={13} />
+                                  <span>Save Volunteer FAQs</span>
+                                </>
+                              )}
+                            </button>
+                          </div>
+
+                          <div className="space-y-3">
+                            <div className="flex items-center justify-between">
+                              <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+                                Volunteer FAQ Questions ({getSection("faqs")?.items?.length || 0})
+                              </label>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const curr = getSection("faqs")?.items || [
+                                    { question: "Do I need prior experience to volunteer?", answer: "No prior experience is necessary. We provide complete orientation and ground training." },
+                                    { question: "Can I volunteer remotely?", answer: "Yes! We have roles in digital education, design, curriculum writing, and fundraising that can be done online." },
+                                    { question: "Will I receive a volunteer certificate?", answer: "Yes, all volunteers who complete at least 25 hours of active service receive official recognition certificates." },
+                                  ];
+                                  updateSection("faqs", () => ({
+                                    items: [...curr, { question: "NEW QUESTION?", answer: "Answer details..." }],
+                                  }));
+                                }}
+                                className="inline-flex items-center gap-1 px-3 py-1.5 bg-[#0f2347] text-white rounded-lg text-xs font-semibold hover:bg-[#1a3a6b] cursor-pointer"
+                              >
+                                <Plus size={12} /> Add FAQ Question
+                              </button>
+                            </div>
+
+                            {(() => {
+                              const faqsList = getSection("faqs")?.items || [
+                                { question: "Do I need prior experience to volunteer?", answer: "No prior experience is necessary. We provide complete orientation and ground training." },
+                                { question: "Can I volunteer remotely?", answer: "Yes! We have roles in digital education, design, curriculum writing, and fundraising that can be done online." },
+                                { question: "Will I receive a volunteer certificate?", answer: "Yes, all volunteers who complete at least 25 hours of active service receive official recognition certificates." },
+                              ];
+
+                              return faqsList.map((faq: any, fIndex: number) => (
+                                <div key={fIndex} className="p-3.5 bg-white dark:bg-panel rounded-xl border border-slate-200 dark:border-border space-y-2.5 shadow-sm">
                                   <div className="flex items-center justify-between gap-2">
                                     <input
                                       type="text"
-                                      value={faq.question || ""}
+                                      value={faq.question || faq.q || ""}
                                       onChange={(e) => {
-                                        const updatedFaqs = [...(sec.extra?.faqs || [])];
-                                        updatedFaqs[fIndex] = { ...updatedFaqs[fIndex], question: e.target.value };
-                                        updateExtra({ faqs: updatedFaqs });
+                                        const updated = [...faqsList];
+                                        updated[fIndex] = { ...updated[fIndex], question: e.target.value, q: e.target.value };
+                                        updateSection("faqs", () => ({ items: updated }));
                                       }}
-                                      placeholder="WHAT IS A BRIDGE SCHOOL?"
-                                      className="flex-1 px-2.5 py-1.5 rounded-lg border border-slate-300 dark:border-border text-xs font-bold uppercase text-slate-900 bg-white placeholder:text-slate-400 focus:outline-none focus:border-slate-800"
+                                      placeholder="DO I NEED PRIOR EXPERIENCE TO VOLUNTEER?"
+                                      className="flex-1 px-3 py-2 rounded-lg border border-slate-300 dark:border-border text-xs font-bold uppercase text-slate-900 dark:text-text-primary bg-white dark:bg-bg placeholder:text-slate-400 focus:outline-none"
                                     />
-                                    <button
-                                      type="button"
-                                      onClick={() => {
-                                        const updatedFaqs = (sec.extra?.faqs || []).filter((_: any, i: number) => i !== fIndex);
-                                        updateExtra({ faqs: updatedFaqs });
-                                      }}
-                                      className="text-red-500 hover:text-red-700 p-1"
-                                    >
-                                      <Trash2 size={13} />
-                                    </button>
+                                    {faqsList.length > 1 && (
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          const updated = faqsList.filter((_: any, i: number) => i !== fIndex);
+                                          updateSection("faqs", () => ({ items: updated }));
+                                        }}
+                                        className="text-slate-400 hover:text-red-500 p-1.5 cursor-pointer"
+                                        title="Delete FAQ"
+                                      >
+                                        <Trash2 size={14} />
+                                      </button>
+                                    )}
                                   </div>
                                   <textarea
                                     rows={2}
-                                    value={faq.answer || ""}
+                                    value={faq.answer || faq.a || ""}
                                     onChange={(e) => {
-                                      const updatedFaqs = [...(sec.extra?.faqs || [])];
-                                      updatedFaqs[fIndex] = { ...updatedFaqs[fIndex], answer: e.target.value };
-                                      updateExtra({ faqs: updatedFaqs });
+                                      const updated = [...faqsList];
+                                      updated[fIndex] = { ...updated[fIndex], answer: e.target.value, a: e.target.value };
+                                      updateSection("faqs", () => ({ items: updated }));
                                     }}
-                                    placeholder="Bridge schools are transitional educational centres..."
-                                    className="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 dark:border-border text-xs text-slate-800 dark:text-text-primary bg-white placeholder:text-slate-400 focus:outline-none focus:border-slate-800 leading-relaxed font-medium"
+                                    placeholder="No prior experience is necessary. We provide complete orientation and ground training."
+                                    className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-border text-xs text-slate-800 dark:text-text-primary bg-white dark:bg-bg placeholder:text-slate-400 focus:outline-none leading-relaxed font-medium"
                                   />
                                 </div>
-                              ))}
-                            </div>
-
-                            {/* Impact Metrics */}
-                            <div className="p-4 rounded-xl bg-slate-50 dark:bg-bg border border-slate-200 dark:border-border space-y-3">
-                              <label className="block text-xs font-bold text-slate-900 dark:text-text-primary uppercase flex items-center gap-1.5">
-                                <Layers size={14} className="text-[#E8542A]" />
-                                Impact Metrics (Shown in Dark Navy Card)
-                              </label>
-                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                {[0, 1, 2, 3].map((mIndex) => {
-                                  const metric = (sec.extra?.impactMetrics || [])[mIndex] || { value: "", label: "" };
-                                  return (
-                                    <div key={mIndex} className="p-3 bg-white dark:bg-panel rounded-xl border border-slate-200 dark:border-border flex gap-2 items-center">
-                                      <div className="w-1/2">
-                                        <label className="block text-[10px] text-slate-600 font-semibold mb-0.5">Value (e.g. 100,000+)</label>
-                                        <input
-                                          type="text"
-                                          value={metric.value || ""}
-                                          onChange={(e) => {
-                                            const metrics = [...(sec.extra?.impactMetrics || [])];
-                                            while (metrics.length <= mIndex) metrics.push({ value: "", label: "" });
-                                            metrics[mIndex] = { ...metrics[mIndex], value: e.target.value };
-                                            updateExtra({ impactMetrics: metrics });
-                                          }}
-                                          placeholder="100,000+"
-                                          className="w-full px-2 py-1 rounded-lg border border-slate-300 dark:border-border text-xs font-bold text-[#E8542A] bg-white placeholder:text-slate-400 focus:outline-none focus:border-slate-800"
-                                        />
-                                      </div>
-                                      <div className="w-1/2">
-                                        <label className="block text-[10px] text-slate-600 font-semibold mb-0.5">Label (e.g. STUDENTS ENROLLED)</label>
-                                        <input
-                                          type="text"
-                                          value={metric.label || ""}
-                                          onChange={(e) => {
-                                            const metrics = [...(sec.extra?.impactMetrics || [])];
-                                            while (metrics.length <= mIndex) metrics.push({ value: "", label: "" });
-                                            metrics[mIndex] = { ...metrics[mIndex], label: e.target.value };
-                                            updateExtra({ impactMetrics: metrics });
-                                          }}
-                                          placeholder="STUDENTS ENROLLED"
-                                          className="w-full px-2 py-1 rounded-lg border border-slate-300 dark:border-border text-xs uppercase font-bold text-slate-900 bg-white placeholder:text-slate-400 focus:outline-none focus:border-slate-800"
-                                        />
-                                      </div>
-                                    </div>
-                                  );
-                                })}
-                              </div>
-                            </div>
+                              ));
+                            })()}
                           </div>
-                        );
-                      })()}
+                        </div>
+                      )}
+
+                      {/* Unified Bottom Save Bar for Get Involved */}
+                      <div className="p-4 rounded-2xl bg-[#0f2347] text-white flex flex-col sm:flex-row items-center justify-between gap-4 shadow-lg sticky bottom-4 z-20">
+                        <div className="flex items-center gap-3 text-left">
+                          <div className="w-10 h-10 rounded-xl bg-[#E8542A] flex items-center justify-center shrink-0">
+                            <Save size={20} className="text-white" />
+                          </div>
+                          <div>
+                            <h4 className="text-sm font-bold text-white">Save All Get Involved Sections</h4>
+                            <p className="text-xs text-gray-300">
+                              One-click save: Updates volunteer hero banner, live impact stats, volunteer perks, and FAQs live on website.
+                            </p>
+                          </div>
+                        </div>
+                        <button
+                          type="submit"
+                          disabled={isSaving}
+                          className="w-full sm:w-auto px-6 py-2.5 bg-[#E8542A] hover:bg-[#d4431b] disabled:opacity-50 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2 shrink-0 cursor-pointer"
+                        >
+                          {isSaving ? (
+                            <>
+                              <Loader2 size={16} className="animate-spin" />
+                              <span>Saving Live Data...</span>
+                            </>
+                          ) : (
+                            <>
+                              <Save size={16} />
+                              <span>Save All Get Involved Sections</span>
+                            </>
+                          )}
+                        </button>
+                      </div>
                     </div>
                   )}
 
@@ -3880,6 +5094,38 @@ export default function CmsDashboardPage() {
                           </div>
                         </div>
                       </div>
+
+                      {/* Unified Bottom Save Bar for Header */}
+                      <div className="p-4 rounded-2xl bg-[#0f2347] text-white flex flex-col sm:flex-row items-center justify-between gap-4 shadow-lg sticky bottom-4 z-20">
+                        <div className="flex items-center gap-3 text-left">
+                          <div className="w-10 h-10 rounded-xl bg-[#E8542A] flex items-center justify-center shrink-0">
+                            <Save size={20} className="text-white" />
+                          </div>
+                          <div>
+                            <h4 className="text-sm font-bold text-white">Save Header Settings</h4>
+                            <p className="text-xs text-gray-300">
+                              One-click save: Updates helpline phone, email, banner, and analytics tags live on website.
+                            </p>
+                          </div>
+                        </div>
+                        <button
+                          type="submit"
+                          disabled={isSaving}
+                          className="w-full sm:w-auto px-6 py-2.5 bg-[#E8542A] hover:bg-[#d4431b] disabled:opacity-50 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2 shrink-0 cursor-pointer"
+                        >
+                          {isSaving ? (
+                            <>
+                              <Loader2 size={16} className="animate-spin" />
+                              <span>Saving Live Data...</span>
+                            </>
+                          ) : (
+                            <>
+                              <Save size={16} />
+                              <span>Save Header Settings</span>
+                            </>
+                          )}
+                        </button>
+                      </div>
                     </div>
                   )}
 
@@ -4125,6 +5371,38 @@ export default function CmsDashboardPage() {
                           </div>
                         </div>
                       </div>
+
+                      {/* Unified Bottom Save Bar for Footer */}
+                      <div className="p-4 rounded-2xl bg-[#0f2347] text-white flex flex-col sm:flex-row items-center justify-between gap-4 shadow-lg sticky bottom-4 z-20">
+                        <div className="flex items-center gap-3 text-left">
+                          <div className="w-10 h-10 rounded-xl bg-[#E8542A] flex items-center justify-center shrink-0">
+                            <Save size={20} className="text-white" />
+                          </div>
+                          <div>
+                            <h4 className="text-sm font-bold text-white">Save Footer Settings</h4>
+                            <p className="text-xs text-gray-300">
+                              One-click save: Updates address, CIN, Darpan ID, 80G tax status, and social media handles.
+                            </p>
+                          </div>
+                        </div>
+                        <button
+                          type="submit"
+                          disabled={isSaving}
+                          className="w-full sm:w-auto px-6 py-2.5 bg-[#E8542A] hover:bg-[#d4431b] disabled:opacity-50 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2 shrink-0 cursor-pointer"
+                        >
+                          {isSaving ? (
+                            <>
+                              <Loader2 size={16} className="animate-spin" />
+                              <span>Saving Live Data...</span>
+                            </>
+                          ) : (
+                            <>
+                              <Save size={16} />
+                              <span>Save Footer Settings</span>
+                            </>
+                          )}
+                        </button>
+                      </div>
                     </div>
                   )}
 
@@ -4214,6 +5492,38 @@ export default function CmsDashboardPage() {
                             </div>
                           </div>
                         )}
+
+                        {/* Unified Bottom Save Bar for Policies */}
+                        <div className="p-4 rounded-2xl bg-[#0f2347] text-white flex flex-col sm:flex-row items-center justify-between gap-4 shadow-lg sticky bottom-4 z-20">
+                          <div className="flex items-center gap-3 text-left">
+                            <div className="w-10 h-10 rounded-xl bg-[#E8542A] flex items-center justify-center shrink-0">
+                              <Save size={20} className="text-white" />
+                            </div>
+                            <div>
+                              <h4 className="text-sm font-bold text-white">Save Policy Document</h4>
+                              <p className="text-xs text-gray-300">
+                                One-click save: Updates policy clauses and publishes live to the website.
+                              </p>
+                            </div>
+                          </div>
+                          <button
+                            type="submit"
+                            disabled={isSaving}
+                            className="w-full sm:w-auto px-6 py-2.5 bg-[#E8542A] hover:bg-[#d4431b] disabled:opacity-50 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2 shrink-0 cursor-pointer"
+                          >
+                            {isSaving ? (
+                              <>
+                                <Loader2 size={16} className="animate-spin" />
+                                <span>Saving Live Data...</span>
+                              </>
+                            ) : (
+                              <>
+                                <Save size={16} />
+                                <span>Save Policy Document</span>
+                              </>
+                            )}
+                          </button>
+                        </div>
                       </div>
                     )}
                 </form>
