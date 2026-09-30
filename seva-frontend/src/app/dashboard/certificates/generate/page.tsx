@@ -75,6 +75,45 @@ const COUNTRY_CODES = [
   { code: "+966", country: "SA", flag: "🇸🇦" },
 ];
 
+function getCitationBody(
+  role: RecipientType,
+  certType: CertificateType,
+  programName: string
+): string {
+  const p = programName.trim() || "our humanitarian initiatives";
+  if (role === "DONOR") {
+    if (certType === "DONATION_ACKNOWLEDGEMENT") {
+      return `In deep appreciation and grateful acknowledgment for your generous financial contribution and heartfelt support towards the "${p}".`;
+    }
+    return `In sincere appreciation for your invaluable support, generosity, and selfless commitment towards the "${p}".`;
+  }
+  if (role === "VOLUNTEER") {
+    if (certType === "PARTICIPATION") {
+      return `In recognition of your active participation and dedicated volunteer service during the "${p}".`;
+    }
+    if (certType === "COMPLETION" || certType === "TRAINING") {
+      return `In recognition of successful completion and dedicated volunteer training for the "${p}".`;
+    }
+    return `In heartfelt recognition of your selfless service, exemplary dedication, and invaluable volunteer contribution towards the "${p}".`;
+  }
+  if (role === "INTERN") {
+    if (certType === "COMPLETION") {
+      return `In recognition of the successful completion of internship and outstanding contribution towards the "${p}".`;
+    }
+    if (certType === "TRAINING") {
+      return `In recognition of successful completion of professional training under the "${p}".`;
+    }
+    return `In appreciation for dedicated effort, diligent performance, and valuable contributions during the "${p}".`;
+  }
+  if (role === "BENEFICIARY") {
+    return `In honor of successful participation, achievement, and empowerment under the "${p}" initiative.`;
+  }
+  if (role === "STAFF") {
+    return `In highest esteem and appreciation for exceptional leadership, tireless dedication, and invaluable service towards the "${p}".`;
+  }
+  return `In recognition of your outstanding and dedicated contribution towards "${p}".`;
+}
+
 // ─── Field component ─────────────────────────────────────────────────────────
 
 function Field({
@@ -117,13 +156,13 @@ export default function GenerateCertificatePage() {
     recipientName: "",
     recipientEmail: "",
     recipientType: "DONOR" as RecipientType,
-    certificateType: "APPRECIATION" as CertificateType,
+    certificateType: "DONATION_ACKNOWLEDGEMENT" as CertificateType,
     programName: "",
     projectName: "",
     campaign: "",
     initiative: INITIATIVE_OPTIONS[0].name,
     volunteerProgram: VOLUNTEER_PROGRAMS[0],
-    body: "In recognition of your outstanding and dedicated contribution towards our humanitarian initiatives.",
+    body: "In deep appreciation and grateful acknowledgment for your generous contribution.",
     issueDate: new Date().toISOString().slice(0, 10),
   });
 
@@ -135,62 +174,193 @@ export default function GenerateCertificatePage() {
       .then((camps) => {
         setCampaigns(camps);
         if (camps.length > 0 && targetType === "CAMPAIGN" && !form.campaign) {
+          const firstCamp = camps[0];
           setForm((f) => ({
             ...f,
-            campaign: camps[0]._id,
-            programName: camps[0].name,
-            body: `In deep appreciation for your generous and heartfelt support towards the "${camps[0].name}" campaign.`,
+            campaign: firstCamp._id,
+            programName: firstCamp.name,
+            projectName: firstCamp.name,
+            body: getCitationBody(f.recipientType, f.certificateType, firstCamp.name),
           }));
         }
       })
       .catch(() => {});
   }, []);
 
+  // Handle Tab changes
   const handleTargetTypeChange = (type: "CAMPAIGN" | "INITIATIVE" | "VOLUNTEER" | "CUSTOM") => {
     setTargetType(type);
     if (type === "CAMPAIGN") {
       const selectedCamp = campaigns.find((c) => c._id === form.campaign) || campaigns[0];
       const campName = selectedCamp ? selectedCamp.name : "Grassroots Campaign";
+      const newRole: RecipientType = form.recipientType === "VOLUNTEER" || form.recipientType === "BENEFICIARY" ? "DONOR" : form.recipientType;
+      const newCertType: CertificateType = newRole === "DONOR" ? "DONATION_ACKNOWLEDGEMENT" : form.certificateType;
       setForm((f) => ({
         ...f,
-        recipientType: "DONOR",
-        certificateType: "APPRECIATION",
+        recipientType: newRole,
+        certificateType: newCertType,
         campaign: selectedCamp ? selectedCamp._id : "",
         programName: campName,
         projectName: campName,
-        body: `In deep appreciation for your generous and heartfelt support towards the "${campName}" campaign.`,
+        body: getCitationBody(newRole, newCertType, campName),
       }));
     } else if (type === "INITIATIVE") {
       const initName = form.initiative || INITIATIVE_OPTIONS[0].name;
+      const newCertType: CertificateType = form.recipientType === "DONOR" ? "APPRECIATION" : form.certificateType;
       setForm((f) => ({
         ...f,
-        recipientType: "DONOR",
-        certificateType: "APPRECIATION",
+        certificateType: newCertType,
         campaign: "",
+        initiative: initName,
         programName: initName,
         projectName: initName,
-        body: `In sincere appreciation for your invaluable contribution and support towards our "${initName}".`,
+        body: getCitationBody(f.recipientType, newCertType, initName),
       }));
     } else if (type === "VOLUNTEER") {
       const volProg = form.volunteerProgram || VOLUNTEER_PROGRAMS[0];
+      const newCertType: CertificateType = form.certificateType === "DONATION_ACKNOWLEDGEMENT" ? "APPRECIATION" : form.certificateType;
       setForm((f) => ({
         ...f,
         recipientType: "VOLUNTEER",
-        certificateType: "APPRECIATION",
+        certificateType: newCertType,
         campaign: "",
+        volunteerProgram: volProg,
         programName: volProg,
         projectName: volProg,
-        body: `In heartfelt recognition of your selfless service, commitment, and dedicated volunteer contribution towards the "${volProg}".`,
+        body: getCitationBody("VOLUNTEER", newCertType, volProg),
       }));
     } else {
+      const progName = form.programName || "Annual Community Service Initiative";
       setForm((f) => ({
         ...f,
         campaign: "",
-        programName: "",
-        projectName: "",
-        body: "In recognition of your outstanding and dedicated contribution towards our humanitarian initiatives.",
+        programName: progName,
+        projectName: progName,
+        body: getCitationBody(f.recipientType, f.certificateType, progName),
       }));
     }
+  };
+
+  // Handle Recipient Role Change (Dropdown)
+  const handleRecipientRoleChange = (role: RecipientType) => {
+    let newTargetType = targetType;
+    let newCertType = form.certificateType;
+    let newProgramName = form.programName;
+
+    if (role === "DONOR") {
+      if (targetType === "VOLUNTEER") {
+        newTargetType = "CAMPAIGN";
+        const selectedCamp = campaigns.find((c) => c._id === form.campaign) || campaigns[0];
+        newProgramName = selectedCamp ? selectedCamp.name : "Grassroots Campaign";
+      }
+      newCertType = "DONATION_ACKNOWLEDGEMENT";
+    } else if (role === "VOLUNTEER") {
+      newTargetType = "VOLUNTEER";
+      newCertType = form.certificateType === "DONATION_ACKNOWLEDGEMENT" ? "APPRECIATION" : form.certificateType;
+      newProgramName = form.volunteerProgram || VOLUNTEER_PROGRAMS[0];
+    } else if (role === "INTERN") {
+      if (targetType === "VOLUNTEER" || targetType === "CAMPAIGN") {
+        newTargetType = "INITIATIVE";
+        newProgramName = form.initiative || INITIATIVE_OPTIONS[0].name;
+      }
+      newCertType = "COMPLETION";
+    } else if (role === "BENEFICIARY") {
+      if (targetType === "VOLUNTEER" || targetType === "CAMPAIGN") {
+        newTargetType = "INITIATIVE";
+        newProgramName = form.initiative || INITIATIVE_OPTIONS[0].name;
+      }
+      newCertType = "COMPLETION";
+    } else if (role === "STAFF") {
+      newCertType = "APPRECIATION";
+    } else if (role === "OTHER") {
+      if (targetType === "VOLUNTEER" || targetType === "CAMPAIGN") {
+        newTargetType = "CUSTOM";
+      }
+      newCertType = "OTHER";
+    }
+
+    setTargetType(newTargetType);
+    setForm((f) => ({
+      ...f,
+      recipientType: role,
+      certificateType: newCertType,
+      programName: newProgramName,
+      projectName: newProgramName,
+      body: getCitationBody(role, newCertType, newProgramName),
+    }));
+  };
+
+  // Handle Certificate Type Change (Dropdown)
+  const handleCertificateTypeChange = (certType: CertificateType) => {
+    let newRole = form.recipientType;
+    let newTargetType = targetType;
+    let newProgramName = form.programName;
+
+    if (certType === "DONATION_ACKNOWLEDGEMENT") {
+      newRole = "DONOR";
+      if (targetType === "VOLUNTEER") {
+        newTargetType = "CAMPAIGN";
+        const selectedCamp = campaigns.find((c) => c._id === form.campaign) || campaigns[0];
+        newProgramName = selectedCamp ? selectedCamp.name : "Grassroots Campaign";
+      }
+    } else if (certType === "PARTICIPATION") {
+      if (form.recipientType === "DONOR") {
+        newRole = "VOLUNTEER";
+        newTargetType = "VOLUNTEER";
+        newProgramName = form.volunteerProgram || VOLUNTEER_PROGRAMS[0];
+      }
+    } else if (certType === "TRAINING" || certType === "COMPLETION") {
+      if (form.recipientType === "DONOR") {
+        newRole = "INTERN";
+        newTargetType = "INITIATIVE";
+        newProgramName = form.initiative || INITIATIVE_OPTIONS[0].name;
+      }
+    }
+
+    setTargetType(newTargetType);
+    setForm((f) => ({
+      ...f,
+      recipientType: newRole,
+      certificateType: certType,
+      programName: newProgramName,
+      projectName: newProgramName,
+      body: getCitationBody(newRole, certType, newProgramName),
+    }));
+  };
+
+  // Handle Campaign Dropdown Selection
+  const handleCampaignChange = (campaignId: string) => {
+    const selected = campaigns.find((c) => c._id === campaignId);
+    const name = selected ? selected.name : form.programName;
+    setForm((f) => ({
+      ...f,
+      campaign: campaignId,
+      programName: name,
+      projectName: name,
+      body: getCitationBody(f.recipientType, f.certificateType, name),
+    }));
+  };
+
+  // Handle Initiative Dropdown Selection
+  const handleInitiativeChange = (initName: string) => {
+    setForm((f) => ({
+      ...f,
+      initiative: initName,
+      programName: initName,
+      projectName: initName,
+      body: getCitationBody(f.recipientType, f.certificateType, initName),
+    }));
+  };
+
+  // Handle Volunteer Program Dropdown Selection
+  const handleVolunteerProgramChange = (progName: string) => {
+    setForm((f) => ({
+      ...f,
+      volunteerProgram: progName,
+      programName: progName,
+      projectName: progName,
+      body: getCitationBody(f.recipientType, f.certificateType, progName),
+    }));
   };
 
   const set = (field: keyof typeof form) => (
@@ -199,21 +369,9 @@ export default function GenerateCertificatePage() {
     const val = e.target.value;
     setForm((f) => {
       const updated = { ...f, [field]: val };
-      if (field === "campaign") {
-        const camp = campaigns.find((c) => c._id === val);
-        if (camp) {
-          updated.programName = camp.name;
-          updated.projectName = camp.name;
-          updated.body = `In deep appreciation for your generous and heartfelt support towards the "${camp.name}" campaign.`;
-        }
-      } else if (field === "initiative") {
-        updated.programName = val;
+      if (field === "programName") {
         updated.projectName = val;
-        updated.body = `In sincere appreciation for your invaluable contribution and support towards our "${val}".`;
-      } else if (field === "volunteerProgram") {
-        updated.programName = val;
-        updated.projectName = val;
-        updated.body = `In heartfelt recognition of your selfless service, commitment, and dedicated volunteer contribution towards the "${val}".`;
+        updated.body = getCitationBody(f.recipientType, f.certificateType, val);
       }
       return updated;
     });
@@ -261,17 +419,19 @@ export default function GenerateCertificatePage() {
     setPhoneNumber("");
     setCountryCode("+91");
     setTargetType("CAMPAIGN");
+    const defaultCamp = campaigns[0];
+    const campName = defaultCamp ? defaultCamp.name : "Grassroots Campaign";
     setForm({
       recipientName: "",
       recipientEmail: "",
       recipientType: "DONOR",
-      certificateType: "APPRECIATION",
-      programName: campaigns[0]?.name || "",
-      projectName: campaigns[0]?.name || "",
-      campaign: campaigns[0]?._id || "",
+      certificateType: "DONATION_ACKNOWLEDGEMENT",
+      programName: campName,
+      projectName: campName,
+      campaign: defaultCamp?._id || "",
       initiative: INITIATIVE_OPTIONS[0].name,
       volunteerProgram: VOLUNTEER_PROGRAMS[0],
-      body: "In recognition of your outstanding and dedicated contribution towards our humanitarian initiatives.",
+      body: getCitationBody("DONOR", "DONATION_ACKNOWLEDGEMENT", campName),
       issueDate: new Date().toISOString().slice(0, 10),
     });
   };
@@ -280,7 +440,7 @@ export default function GenerateCertificatePage() {
     <div>
       <PageHeader
         title="Generate Certificate"
-        subtitle="Issue and verify a certificate for donors, volunteers, and initiatives"
+        subtitle="Issue and verify an official certificate for donors, volunteers, and initiatives"
       />
 
       <form onSubmit={handleSubmit}>
@@ -335,7 +495,7 @@ export default function GenerateCertificatePage() {
                 <Field label="Recipient Role" required>
                   <select
                     value={form.recipientType}
-                    onChange={set("recipientType")}
+                    onChange={(e) => handleRecipientRoleChange(e.target.value as RecipientType)}
                     className={inputCls}
                   >
                     {RECIPIENT_TYPES.map((t) => (
@@ -399,7 +559,7 @@ export default function GenerateCertificatePage() {
                 <Field label="Certificate Type" required>
                   <select
                     value={form.certificateType}
-                    onChange={set("certificateType")}
+                    onChange={(e) => handleCertificateTypeChange(e.target.value as CertificateType)}
                     className={inputCls}
                   >
                     {CERT_TYPES.map((t) => (
@@ -415,7 +575,7 @@ export default function GenerateCertificatePage() {
                   <Field label="Select Campaign" required>
                     <select
                       value={form.campaign}
-                      onChange={set("campaign")}
+                      onChange={(e) => handleCampaignChange(e.target.value)}
                       className={inputCls}
                     >
                       {campaigns.length === 0 ? (
@@ -435,7 +595,7 @@ export default function GenerateCertificatePage() {
                   <Field label="Select Foundation Initiative" required>
                     <select
                       value={form.initiative}
-                      onChange={set("initiative")}
+                      onChange={(e) => handleInitiativeChange(e.target.value)}
                       className={inputCls}
                     >
                       {INITIATIVE_OPTIONS.map((init) => (
@@ -451,7 +611,7 @@ export default function GenerateCertificatePage() {
                   <Field label="Select Volunteer Drive / Program" required>
                     <select
                       value={form.volunteerProgram}
-                      onChange={set("volunteerProgram")}
+                      onChange={(e) => handleVolunteerProgramChange(e.target.value)}
                       className={inputCls}
                     >
                       {VOLUNTEER_PROGRAMS.map((prog) => (

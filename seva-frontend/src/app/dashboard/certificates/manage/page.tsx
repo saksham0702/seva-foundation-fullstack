@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import {
   Search,
   ChevronLeft,
@@ -36,7 +36,7 @@ const STATUS_CONFIG: Record<
   },
   REVOKED: {
     label: "Revoked",
-    className: "bg-red-400/10 text-red-400 border border-red-400/20",
+    className: "bg-red-400/10 text-red-400 border border-red-400/20 font-bold",
   },
 };
 
@@ -52,32 +52,80 @@ const TYPE_LABELS: Record<string, string> = {
 // ─── Detail Drawer ─────────────────────────────────────────────────────────────
 
 function CertificateDrawer({
-  cert,
+  cert: initialCert,
   onClose,
 }: {
   cert: Certificate;
   onClose: () => void;
 }) {
-  const { revokeCert, reactivateCert, deleteCert, actionLoading, actionError, refetch } =
-    useCertificates();
+  const {
+    certificates,
+    selectedCert,
+    revokeCert,
+    reactivateCert,
+    deleteCert,
+    actionLoading,
+    actionError,
+    refetch,
+  } = useCertificates();
+
+  const bodyRef = useRef<HTMLDivElement>(null);
+  const revokeInputRef = useRef<HTMLDivElement>(null);
+
+  // Dynamically resolve the most up-to-date certificate from context
+  const cert =
+    certificates.find((c) => c._id === initialCert._id) ||
+    (selectedCert && selectedCert._id === initialCert._id ? selectedCert : initialCert);
+
   const [revokeReason, setRevokeReason] = useState("");
   const [showRevokeInput, setShowRevokeInput] = useState(false);
   const [pdfLoading, setPdfLoading] = useState(false);
   const [pdfUrl, setPdfUrl] = useState<string | null>(cert.pdfUrl || null);
 
-  const cfg = STATUS_CONFIG[cert.status];
+  const cfg = STATUS_CONFIG[cert.status] || STATUS_CONFIG.ACTIVE;
   const campaignName =
     typeof cert.campaign === "object" ? cert.campaign?.name : cert.campaign;
 
+  const handleToggleRevokeInput = () => {
+    setShowRevokeInput((prev) => {
+      const next = !prev;
+      if (next) {
+        setTimeout(() => {
+          revokeInputRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        }, 80);
+      }
+      return next;
+    });
+  };
+
   const handleRevoke = async () => {
     if (!revokeReason.trim()) return;
-    await revokeCert(cert._id, revokeReason.trim());
-    setShowRevokeInput(false);
+    try {
+      await revokeCert(cert._id, revokeReason.trim());
+      setShowRevokeInput(false);
+      setRevokeReason("");
+      setTimeout(() => {
+        bodyRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+      }, 100);
+    } catch {
+      // actionError in context will display error message
+    }
+  };
+
+  const handleReactivate = async () => {
+    try {
+      await reactivateCert(cert._id);
+      setTimeout(() => {
+        bodyRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+      }, 100);
+    } catch {
+      // actionError in context will display error message
+    }
   };
 
   const handleDownload = async () => {
-    if (pdfUrl) {
-      window.open(getImageUrl(pdfUrl), "_blank");
+    if (pdfUrl || cert.pdfUrl) {
+      window.open(getImageUrl(pdfUrl || cert.pdfUrl!), "_blank");
       return;
     }
     setPdfLoading(true);
@@ -116,7 +164,24 @@ function CertificateDrawer({
         </div>
 
         {/* Body */}
-        <div className="flex-1 overflow-y-auto px-6 py-5 flex flex-col gap-5">
+        <div ref={bodyRef} className="flex-1 overflow-y-auto px-6 py-5 flex flex-col gap-5 scroll-smooth">
+          {/* Prominent Revoked Status Alert Banner if revoked */}
+          {cert.status === "REVOKED" && (
+            <div className="bg-red-500/15 border border-red-500/40 rounded-xl p-4 flex items-start gap-3 text-red-300">
+              <AlertTriangle size={20} className="text-red-400 shrink-0 mt-0.5" />
+              <div className="flex-1 text-xs space-y-1">
+                <p className="font-bold text-red-300 uppercase tracking-wide">
+                  This Certificate Has Been Revoked
+                </p>
+                {cert.revokedReason && (
+                  <p className="text-red-200/90 leading-relaxed">
+                    <span className="font-semibold text-red-300">Reason:</span> {cert.revokedReason}
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
+
           {/* Status badge */}
           <div className="flex items-center gap-2">
             <span
@@ -297,27 +362,28 @@ function CertificateDrawer({
 
           {/* Revoke input */}
           {showRevokeInput && cert.status === "ACTIVE" && (
-            <div className="bg-bg border border-border rounded-xl p-4">
-              <p className="label-eyebrow mb-2">Reason for Revocation</p>
+            <div ref={revokeInputRef} className="bg-bg border border-red-400/30 rounded-xl p-4 animate-in fade-in slide-in-from-bottom-2 duration-200">
+              <p className="label-eyebrow mb-2 text-red-400">Reason for Revocation</p>
               <textarea
                 value={revokeReason}
                 onChange={(e) => setRevokeReason(e.target.value)}
                 rows={3}
                 placeholder="Briefly describe the reason…"
-                className="w-full bg-panel border border-border rounded-lg px-3 py-2 text-sm text-text-primary placeholder:text-faint focus:outline-none resize-none"
+                className="w-full bg-panel border border-border rounded-lg px-3 py-2 text-sm text-text-primary placeholder:text-faint focus:outline-none focus:border-red-400/60 resize-none"
+                autoFocus
               />
               <div className="flex gap-2 mt-3">
                 <button
                   onClick={handleRevoke}
                   disabled={actionLoading || !revokeReason.trim()}
-                  className="flex items-center gap-1.5 bg-red-500 text-white text-xs font-semibold px-4 py-2 rounded-lg disabled:opacity-50"
+                  className="flex items-center gap-1.5 bg-red-500 hover:bg-red-600 text-white text-xs font-semibold px-4 py-2 rounded-lg disabled:opacity-50 transition-colors"
                 >
                   {actionLoading && <Loader2 size={12} className="animate-spin" />}
                   Confirm Revoke
                 </button>
                 <button
                   onClick={() => setShowRevokeInput(false)}
-                  className="border border-border text-xs text-muted px-4 py-2 rounded-lg"
+                  className="border border-border text-xs text-muted hover:text-text-primary px-4 py-2 rounded-lg transition-colors"
                 >
                   Cancel
                 </button>
@@ -345,7 +411,7 @@ function CertificateDrawer({
           {/* Revoke / Reactivate */}
           {cert.status === "ACTIVE" ? (
             <button
-              onClick={() => setShowRevokeInput((v) => !v)}
+              onClick={handleToggleRevokeInput}
               disabled={actionLoading}
               className="flex items-center justify-center gap-2 border border-red-400/30 text-red-400 text-sm px-3 py-2.5 rounded-lg hover:bg-red-400/10 transition-colors"
             >
@@ -353,7 +419,7 @@ function CertificateDrawer({
             </button>
           ) : (
             <button
-              onClick={() => reactivateCert(cert._id)}
+              onClick={handleReactivate}
               disabled={actionLoading}
               className="flex items-center justify-center gap-2 border border-green-400/30 text-green-400 text-sm px-3 py-2.5 rounded-lg hover:bg-green-400/10 transition-colors"
             >

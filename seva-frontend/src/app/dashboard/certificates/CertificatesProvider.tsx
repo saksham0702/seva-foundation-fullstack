@@ -165,13 +165,22 @@ export function CertificatesProvider({ children }: { children: ReactNode }) {
     setActionError(null);
     try {
       await apiRevoke(id, reason);
+      setCertificates((prev) =>
+        prev.map((c) =>
+          c._id === id ? { ...c, status: "REVOKED", revokedReason: reason } : c
+        )
+      );
+      setSelectedCert((prev) =>
+        prev && prev._id === id
+          ? { ...prev, status: "REVOKED", revokedReason: reason }
+          : prev
+      );
       await fetchCertificates();
       await fetchStats();
-      setSelectedCert((prev) =>
-        prev && prev._id === id ? { ...prev, status: "REVOKED", revokedReason: reason } : prev
-      );
     } catch (err: any) {
-      setActionError(err?.response?.data?.message || err?.message || "Failed to revoke");
+      const msg = err?.response?.data?.message || err?.message || "Failed to revoke certificate";
+      setActionError(msg);
+      throw err;
     } finally {
       setActionLoading(false);
     }
@@ -182,13 +191,22 @@ export function CertificatesProvider({ children }: { children: ReactNode }) {
     setActionError(null);
     try {
       await apiReactivate(id);
+      setCertificates((prev) =>
+        prev.map((c) =>
+          c._id === id ? { ...c, status: "ACTIVE", revokedReason: undefined } : c
+        )
+      );
+      setSelectedCert((prev) =>
+        prev && prev._id === id
+          ? { ...prev, status: "ACTIVE", revokedReason: undefined }
+          : prev
+      );
       await fetchCertificates();
       await fetchStats();
-      setSelectedCert((prev) =>
-        prev && prev._id === id ? { ...prev, status: "ACTIVE", revokedReason: undefined } : prev
-      );
     } catch (err: any) {
-      setActionError(err?.response?.data?.message || err?.message || "Failed to reactivate");
+      const msg = err?.response?.data?.message || err?.message || "Failed to reactivate certificate";
+      setActionError(msg);
+      throw err;
     } finally {
       setActionLoading(false);
     }

@@ -80,7 +80,7 @@ const getAllCertificates = async (query: {
   campaign?: string;
   search?: string;
 }): Promise<ICertificate[]> => {
-  const filter: any = { isDeleted: false };
+  const filter: any = { isDeleted: { $ne: true } };
   if (query.recipientType) filter.recipientType = query.recipientType;
   if (query.status) filter.status = query.status;
   if (query.campaign) filter.campaign = query.campaign;
@@ -98,7 +98,7 @@ const getAllCertificates = async (query: {
 };
 
 const getCertificateById = async (id: string): Promise<ICertificate | null> => {
-  return CertificateModel.findOne({ _id: id, isDeleted: false })
+  return CertificateModel.findOne({ _id: id, isDeleted: { $ne: true } })
     .populate("campaign", "name")
     .populate("donor", "name email");
 };
@@ -110,7 +110,7 @@ const getCertificateByCertificateNo = async (certificateNo: string): Promise<ICe
   // 1. Match exact or case-insensitive certificateNo
   let cert: any = await CertificateModel.findOne({
     certificateNo: { $regex: new RegExp(`^${cleaned}$`, "i") },
-    isDeleted: false,
+    isDeleted: { $ne: true },
   }).populate("campaign", "name");
 
   if (cert) return cert;
@@ -119,12 +119,12 @@ const getCertificateByCertificateNo = async (certificateNo: string): Promise<ICe
   if (cleaned.toUpperCase().includes("REC")) {
     const donation = await DonationModel.findOne({
       receiptNumber: { $regex: new RegExp(`^${cleaned}$`, "i") },
-      isDeleted: false,
+      isDeleted: { $ne: true },
     });
     if (donation?.donor) {
       cert = await CertificateModel.findOne({
         donor: donation.donor,
-        isDeleted: false,
+        isDeleted: { $ne: true },
       }).populate("campaign", "name");
       if (cert) return cert;
 
@@ -138,13 +138,13 @@ const getCertificateByCertificateNo = async (certificateNo: string): Promise<ICe
 
   // 3. If valid MongoDB ObjectId
   if (isValidObjectId(cleaned)) {
-    cert = await CertificateModel.findOne({ _id: cleaned, isDeleted: false }).populate("campaign", "name");
+    cert = await CertificateModel.findOne({ _id: cleaned, isDeleted: { $ne: true } }).populate("campaign", "name");
     if (cert) return cert;
 
-    cert = await CertificateModel.findOne({ donor: cleaned, isDeleted: false }).populate("campaign", "name");
+    cert = await CertificateModel.findOne({ donor: cleaned, isDeleted: { $ne: true } }).populate("campaign", "name");
     if (cert) return cert;
 
-    cert = await CertificateModel.findOne({ recipientRef: cleaned, isDeleted: false }).populate("campaign", "name");
+    cert = await CertificateModel.findOne({ recipientRef: cleaned, isDeleted: { $ne: true } }).populate("campaign", "name");
     if (cert) return cert;
 
     try {
@@ -156,7 +156,7 @@ const getCertificateByCertificateNo = async (certificateNo: string): Promise<ICe
   return null;
 };
 const getCertificateByDonor = async (donorId: string): Promise<ICertificate | null> => {
-  return CertificateModel.findOne({ donor: donorId, isDeleted: false })
+  return CertificateModel.findOne({ donor: donorId, isDeleted: { $ne: true } })
     .populate("campaign", "name");
 };
 const verifyCertificate = async (certificateNo: string) => {
@@ -166,24 +166,28 @@ const verifyCertificate = async (certificateNo: string) => {
 };
 
 const updateCertificate = async (id: string, payload: Partial<ICertificate>): Promise<ICertificate | null> => {
-  return CertificateModel.findOneAndUpdate({ _id: id, isDeleted: false }, { $set: payload }, { new: true, runValidators: true });
+  return CertificateModel.findOneAndUpdate(
+    { _id: id, isDeleted: { $ne: true } },
+    { $set: payload },
+    { new: true, runValidators: true }
+  ).populate("campaign", "name");
 };
 
 const revokeCertificate = async (id: string, reason: string, updatedBy?: string): Promise<ICertificate | null> => {
   const updateObj: Record<string, any> = { status: "REVOKED", revokedReason: reason };
   if (updatedBy && isValidObjectId(updatedBy)) updateObj.updatedBy = updatedBy;
-  const filter = isValidObjectId(id) ? { _id: id, isDeleted: false } : { certificateNo: id.toUpperCase().trim(), isDeleted: false };
+  const filter = isValidObjectId(id) ? { _id: id, isDeleted: { $ne: true } } : { certificateNo: id.toUpperCase().trim(), isDeleted: { $ne: true } };
   return CertificateModel.findOneAndUpdate(
     filter,
     { $set: updateObj },
     { new: true }
-  );
+  ).populate("campaign", "name");
 };
 
 const reactivateCertificate = async (id: string, updatedBy?: string): Promise<ICertificate | null> => {
   const updateObj: Record<string, any> = { status: "ACTIVE" };
   if (updatedBy && isValidObjectId(updatedBy)) updateObj.updatedBy = updatedBy;
-  const filter = isValidObjectId(id) ? { _id: id, isDeleted: false } : { certificateNo: id.toUpperCase().trim(), isDeleted: false };
+  const filter = isValidObjectId(id) ? { _id: id, isDeleted: { $ne: true } } : { certificateNo: id.toUpperCase().trim(), isDeleted: { $ne: true } };
   return CertificateModel.findOneAndUpdate(
     filter,
     {
@@ -191,7 +195,7 @@ const reactivateCertificate = async (id: string, updatedBy?: string): Promise<IC
       $unset: { revokedReason: 1 },
     },
     { new: true }
-  );
+  ).populate("campaign", "name");
 };
 
 const deleteCertificate = async (id: string): Promise<ICertificate | null> => {
@@ -246,18 +250,18 @@ const getCertificateStats = async () => {
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
   const [total, active, revoked, generatedToday, generatedThisMonth] = await Promise.all([
-    CertificateModel.countDocuments({ isDeleted: false }),
-    CertificateModel.countDocuments({ isDeleted: false, status: "ACTIVE" }),
-    CertificateModel.countDocuments({ isDeleted: false, status: "REVOKED" }),
-    CertificateModel.countDocuments({ isDeleted: false, createdAt: { $gte: startOfToday } }),
-    CertificateModel.countDocuments({ isDeleted: false, createdAt: { $gte: startOfMonth } }),
+    CertificateModel.countDocuments({ isDeleted: { $ne: true } }),
+    CertificateModel.countDocuments({ isDeleted: { $ne: true }, status: "ACTIVE" }),
+    CertificateModel.countDocuments({ isDeleted: { $ne: true }, status: "REVOKED" }),
+    CertificateModel.countDocuments({ isDeleted: { $ne: true }, createdAt: { $gte: startOfToday } }),
+    CertificateModel.countDocuments({ isDeleted: { $ne: true }, createdAt: { $gte: startOfMonth } }),
   ]);
 
   return { totalCertificates: total, activeCertificates: active, revokedCertificates: revoked, generatedToday, generatedThisMonth };
 };
 
 const regenerateCertificatePdf = async (id: string): Promise<ICertificate | null> => {
-  const certificate = await CertificateModel.findOne({ _id: id, isDeleted: false });
+  const certificate = await CertificateModel.findOne({ _id: id, isDeleted: { $ne: true } });
   if (!certificate) return null;
   certificate.pdfUrl = await generateCertificatePdf(certificate);
   await certificate.save();
