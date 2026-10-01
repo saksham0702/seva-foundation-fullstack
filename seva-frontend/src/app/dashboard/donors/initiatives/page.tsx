@@ -25,6 +25,7 @@ import {
 import { PermissionGuard } from "@/components/dashboard/PermissionGuard";
 import { getDonations, Donation } from "@/app/api/donation";
 import { Portal } from "@/components/shared/Portal";
+import { DonorsNavTabs } from "../components/DonorsNavTabs";
 
 // ─── Color & Avatar Helpers ────────────────────────────────────────────────
 function Avatar({ name }: { name: string }) {
@@ -338,17 +339,7 @@ function InitiativeDonationsInner() {
         </div>
 
         {/* ── View Switcher Tabs ── */}
-        <div className="flex items-center gap-2 border-b border-slate-200">
-          <Link
-            href="/dashboard/donors"
-            className="px-4 py-2.5 border-b-2 border-transparent text-slate-500 hover:text-black hover:border-slate-300 text-sm font-semibold tracking-tight transition-all"
-          >
-            Campaign Donors
-          </Link>
-          <span className="px-4 py-2.5 border-b-2 border-black text-black text-sm font-bold tracking-tight cursor-default">
-            Initiative Donations
-          </span>
-        </div>
+        <DonorsNavTabs />
 
         {/* ── Stats Metric Cards ── */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

@@ -6,6 +6,7 @@ import { DonorsStats } from "./components/DonorsStats";
 import { DonorsFilters } from "./components/DonorsFilters";
 import { DonorsTable } from "./components/DonorsTable";
 import { CreateDonorModal } from "./components/CreateDonorModal";
+import { DonorsNavTabs } from "./components/DonorsNavTabs";
 import { PermissionGuard } from "@/components/dashboard/PermissionGuard";
 
 function DonorsPageInner() {
@@ -35,18 +36,8 @@ function DonorsPageInner() {
           </div>
         </div>
 
-        {/* View Switcher Tabs */}
-        <div className="flex items-center gap-2 border-b border-slate-200 mb-8">
-          <span className="px-4 py-2.5 border-b-2 border-black text-black text-sm font-bold tracking-tight cursor-default">
-            Campaign Donors
-          </span>
-          <a
-            href="/dashboard/donors/initiatives"
-            className="px-4 py-2.5 border-b-2 border-transparent text-slate-500 hover:text-black hover:border-slate-300 text-sm font-semibold tracking-tight transition-all"
-          >
-            Initiative Donations
-          </a>
-        </div>
+        {/* Navigation Tabs */}
+        <DonorsNavTabs />
 
         {/* Stats */}
         <div className="mb-10">   

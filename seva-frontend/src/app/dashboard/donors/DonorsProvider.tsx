@@ -103,12 +103,19 @@ export function DonorsProvider({ children }: { children: ReactNode }) {
     setLoading(true);
     setError(null);
     try {
-      const rawData = await getDonors();
+      const rawData = await getDonors({ targetType: "CAMPAIGN" });
+
+      // Ensure only campaign donors are included (exclude any initiative donors)
+      const campaignDonors = rawData.filter((d) => {
+        if (d.targetType === "INITIATIVE") return false;
+        if (d.initiative && !d.campaign) return false;
+        return true;
+      });
 
       // Group / Deduplicate donors with the same email or phone number
       const groupedMap = new Map<string, Donor>();
 
-      for (const donor of rawData) {
+      for (const donor of campaignDonors) {
         const emailKey = donor.email ? donor.email.toLowerCase().trim() : "";
         const phoneKey = donor.phone ? donor.phone.replace(/\D/g, "").trim() : "";
         const groupKey = emailKey || (phoneKey ? `phone_${phoneKey}` : donor._id);

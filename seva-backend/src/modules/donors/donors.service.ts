@@ -85,7 +85,36 @@ const getAllDonors = async (query: {
   }
 
   if (query.targetType && query.targetType !== "all") {
-    filter.targetType = query.targetType;
+    if (query.targetType === "CAMPAIGN") {
+      filter.$and = [
+        ...(filter.$and || []),
+        {
+          $or: [
+            { targetType: "CAMPAIGN" },
+            { targetType: { $exists: false }, campaign: { $exists: true, $ne: null } },
+          ],
+        },
+        {
+          $or: [
+            { initiative: { $exists: false } },
+            { initiative: null },
+            { initiative: "" },
+          ],
+        },
+      ];
+    } else if (query.targetType === "INITIATIVE") {
+      filter.$and = [
+        ...(filter.$and || []),
+        {
+          $or: [
+            { targetType: "INITIATIVE" },
+            { initiative: { $exists: true, $nin: [null, ""] } },
+          ],
+        },
+      ];
+    } else {
+      filter.targetType = query.targetType;
+    }
   }
 
   if (query.initiative && query.initiative !== "all") {

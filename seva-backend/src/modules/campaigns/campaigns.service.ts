@@ -262,11 +262,13 @@ const getCampaignDonorsBySlug = async (
   if (!campaign) return null;
 
   const skip = (page - 1) * limit;
- const filter = {
-  campaign: campaign._id,
-  paymentStatus: "SUCCESS" as const,
-  isDeleted: false,
-};
+  const filter: any = {
+    campaign: campaign._id,
+    targetType: { $ne: "INITIATIVE" },
+    $or: [{ initiative: { $exists: false } }, { initiative: null }, { initiative: "" }],
+    paymentStatus: "SUCCESS" as const,
+    isDeleted: false,
+  };
 
   const [rawDonations, total] = await Promise.all([
     DonationModel.find(filter)

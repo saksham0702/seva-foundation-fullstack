@@ -91,20 +91,21 @@ const renderTemplate = (
   template: IMailTemplate,
   variables: Record<string, string | number>
 ): { subject: string; html: string } => {
-  const siteUrl = process.env.FRONTEND_URL || "http://187.126.112.144:3000";
-  // Backend public URL — used to construct absolute image/asset URLs in emails
-  const backendUrl =
+  const siteUrl = (process.env.FRONTEND_URL || "http://187.126.112.144:3000").replace(/\/$/, "");
+  // Backend public URL fallback
+  const backendUrl = (
     process.env.BACKEND_PUBLIC_URL ||
     process.env.API_URL ||
-    "http://187.126.112.144:5000";
-  const defaultLogo = `${backendUrl}/assets/seva-logo.png`;
+    "http://187.126.112.144:5000"
+  ).replace(/\/$/, "");
+  const defaultLogo = `${siteUrl}/assets/seva-logo.png`;
 
   // Resolve relative logoUrl to an absolute URL so email clients and previews can fetch it
   let logoUrl = String(variables.logoUrl || "");
   if (!logoUrl) {
     logoUrl = defaultLogo;
   } else if (logoUrl.startsWith("/")) {
-    logoUrl = `${backendUrl}${logoUrl}`;
+    logoUrl = `${siteUrl}${logoUrl}`;
   }
 
   const mergedVariables: Record<string, string | number> = {

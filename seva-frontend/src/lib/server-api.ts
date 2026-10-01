@@ -20,10 +20,12 @@ async function safeServerFetch<T>(
 ): Promise<T | null> {
   try {
     const url = `${API_URL}${endpoint.startsWith("/") ? endpoint : `/${endpoint}`}`;
-    const fetchOptions: RequestInit =
-      revalidateSeconds > 0
+    const fetchOptions: RequestInit = {
+      ...(revalidateSeconds > 0
         ? { next: { revalidate: revalidateSeconds, tags } }
-        : { cache: "no-store" };
+        : { cache: "no-store" }),
+      signal: AbortSignal.timeout(5000),
+    };
 
     const res = await fetch(url, fetchOptions);
 

@@ -113,9 +113,9 @@ const initiatePaymentOrder = async (input: InitiatePaymentInput) => {
       donor._id,
       {
         $set: {
-          campaign: campaign?._id || donor.campaign,
+          campaign: campaign?._id || (targetType === "INITIATIVE" ? undefined : donor.campaign),
           targetType: targetType || donor.targetType,
-          initiative: initiative || donor.initiative,
+          initiative: initiative || (targetType === "CAMPAIGN" ? undefined : donor.initiative),
           frequency: frequency || donor.frequency,
           tribute: tribute || donor.tribute,
           message: message || donor.message,

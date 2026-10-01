@@ -97,12 +97,6 @@ const NAV_CONFIG: NavSection[] = [
         permission: "departments",
       },
       {
-        label: "Donors",
-        href: "/dashboard/donors",
-        icon: Wallet,
-        permission: "donations",
-      },
-      {
         label: "Volunteers",
         href: "/dashboard/volunteers",
         icon: Heart,
@@ -137,15 +131,21 @@ const NAV_CONFIG: NavSection[] = [
     anyPermission: ["donations"],
     items: [
       {
-        label: "Donor Vault",
+        label: "Campaign Donors",
         href: "/dashboard/donors",
         icon: Wallet,
         permission: "donations",
       },
       {
-        label: "Initiative Donations",
+        label: "Initiative Donors",
         href: "/dashboard/donors/initiatives",
         icon: Heart,
+        permission: "donations",
+      },
+      {
+        label: "Payment Transactions",
+        href: "/dashboard/donors/payments",
+        icon: Receipt,
         permission: "donations",
       },
     ],

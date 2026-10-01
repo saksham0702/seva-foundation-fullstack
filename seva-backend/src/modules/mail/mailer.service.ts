@@ -97,12 +97,20 @@ const sendTemplatedMail = async (
 
     const logoPath = path.join(process.cwd(), "assets", "seva-logo.png");
     const finalAttachments: any[] = [...(input.attachments || [])];
-    if (fs.existsSync(logoPath) && !finalAttachments.some((a: any) => a.cid === "seva-logo")) {
-      finalAttachments.push({
-        filename: "seva-logo.png",
-        path: logoPath,
-        cid: "seva-logo",
-      });
+    let emailHtml = html;
+
+    if (fs.existsSync(logoPath)) {
+      if (!finalAttachments.some((a: any) => a.cid === "seva-logo")) {
+        finalAttachments.push({
+          filename: "seva-logo.png",
+          path: logoPath,
+          cid: "seva-logo",
+        });
+      }
+      // Replace external or relative logo URLs with cid:seva-logo for guaranteed display across all email clients
+      emailHtml = emailHtml
+        .replace(/https?:\/\/[^"'>\s]+\/assets\/seva-logo\.png/gi, "cid:seva-logo")
+        .replace(/"\/assets\/seva-logo\.png"/gi, '"cid:seva-logo"');
     }
 
     const info = await transporter.sendMail({
@@ -111,7 +119,7 @@ const sendTemplatedMail = async (
       cc: input.cc,
       replyTo,
       subject,
-      html,
+      html: emailHtml,
       attachments: finalAttachments,
     });
 
